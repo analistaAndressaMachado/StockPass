@@ -1,120 +1,285 @@
-# StockPass — Sistema de Controle de Estoque
+# StockPass
+# Sistema de Controle de Estoque
 
-API REST + aplicativo mobile para controle, gestão e rastreabilidade de estoque.
+Aplicação web de controle, gestão e rastreabilidade de estoque, com **API REST** e interface em **React + TypeScript**.
 
-Projeto acadêmico desenvolvido para a disciplina de Laboratório de Engenharia de Software — FATEC Praia Grande - SP.
+Projeto acadêmico desenvolvido para a disciplina de **Laboratório de Engenharia de Software** — **FATEC Praia Grande - SP**.
+
+---
+
+## Índice
+
+- [Visão geral](#visão-geral)
+- [Funcionalidades](#funcionalidades)
+- [Controle de acesso](#controle-de-acesso)
+- [Tecnologias](#tecnologias)
+- [Como executar (local)](#como-executar-local)
+  - [Pré-requisitos](#pré-requisitos)
+  - [Backend (Spring Boot)](#backend-spring-boot)
+  - [Frontend (React)](#frontend-react)
+- [Banco de dados](#banco-de-dados)
+- [API](#api)
+- [Dados de teste](#dados-de-teste)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Testes](#testes)
+- [GitHub](#github)
+- [Autores](#autores)
+- [Licença](#licença)
+
+---
 
 ## Visão geral
 
-O StockPass permite cadastrar produtos, categorias, fornecedores e usuários, registrar entradas e saídas de estoque, consultar movimentações, acompanhar estoque mínimo e visualizar alertas.
+O **StockPass** foi desenvolvido para auxiliar no controle de produtos e na rastreabilidade das movimentações de estoque.
 
-A estrutura segue o formato do projeto de referência: um repositório com `backend/` e `frontend/`.
+A aplicação é organizada em duas partes:
+
+- **Backend:** API REST responsável pelas regras de negócio, autenticação, controle de usuários e persistência dos dados.
+- **Frontend:** aplicação web responsável pela interação do usuário com o sistema.
+
+A primeira etapa do projeto contempla a estrutura inicial do sistema e as **rotinas de controle de acesso**, conforme o acompanhamento da disciplina.
+
+O projeto está preparado para evoluir posteriormente para as rotinas completas de produtos, categorias, fornecedores, entradas, saídas e alertas de estoque.
+
+---
+
+## Funcionalidades
+
+### Hello World
+
+- Endpoint inicial da API
+- Validação de comunicação com o backend
+- Mensagem `Hello World - StockPass`
+
+### Controle de acesso
+
+- Cadastro de usuário
+- Login com e-mail e senha
+- Senhas armazenadas com **BCrypt**
+- Autenticação por token JWT
+- Página de perfil
+- Consulta dos dados do usuário autenticado
+- Troca de senha
+- Logout no frontend
+- Proteção das rotas da API que exigem autenticação
+
+### Usuários
+
+- Cadastro de usuários
+- Identificação por e-mail
+- Perfil de acesso (`USER`, `GESTOR` ou `ADMIN`)
+- Consulta dos usuários autenticados
+
+### Próximas rotinas do estoque
+
+A arquitetura foi organizada para receber as próximas funcionalidades do StockPass:
+
+- Produtos
+- Categorias
+- Fornecedores
+- Entradas de estoque
+- Saídas de estoque
+- Histórico de movimentações
+- Estoque mínimo
+- Alertas
+- Dashboard
+
+---
+
+## Controle de acesso
+
+O fluxo inicial do sistema é:
+
+```text
+Cadastro / Usuário existente
+          ↓
+        Login
+          ↓
+     Validação de e-mail
+          ↓
+     Validação da senha
+          ↓
+       Token JWT
+          ↓
+   Área autenticada
+      ↙       ↘
+   Perfil    Sistema
+      ↓
+ Troca de senha
+```
+
+### Regras
+
+- O e-mail do usuário deve ser único.
+- A senha deve possuir pelo menos **6 caracteres**.
+- A senha não é armazenada em texto puro: é protegida utilizando **BCrypt**.
+- O login retorna um token JWT.
+- Endpoints protegidos exigem o cabeçalho:
+
+```text
+Authorization: Bearer SEU_TOKEN
+```
+
+---
 
 ## Tecnologias
 
-Backend:
-- Laravel 12
-- PHP 8.2+
-- MySQL
-- API REST JSON
+### Backend
 
-Frontend:
-- Expo
-- React Native
-- TypeScript
+- **Java 17+**
+- **Spring Boot 3.5**
+- Spring Web
+- Spring Data JPA
+- Spring Security
+- BCrypt
+- JWT
+
+### Frontend
+
+- **React**
+- **TypeScript**
+- **Vite**
 - Axios
 
-## Estrutura
+### Banco de dados
 
-```text
-/
-├── backend/                 # API REST Laravel
-│   ├── app/
-│   ├── database/
-│   ├── routes/
-│   ├── tests/
-│   ├── .env.example
-│   ├── artisan
-│   └── composer.json
-├── frontend/                # Aplicativo mobile Expo
-│   ├── src/
-│   ├── App.tsx
-│   ├── app.json
-│   └── package.json
-└── README.md
-```
+- **SQLite**
+- Hibernate/JPA
 
-## Pré-requisitos
+### Testes
 
-- PHP 8.2 ou superior
-- Composer
-- MySQL 8+ ou MariaDB
-- Node.js 18+
-- Expo Go no celular ou emulador Android/iOS
+- JUnit
+- Spring Boot Test
 
-## Executar o backend
+---
+
+## Como executar (local)
+
+### Pré-requisitos
+
+- **Java 17 ou superior**
+- **Maven 3.9+**
+- **Node.js 18+**
+- **npm**
+
+O SQLite é utilizado como banco local e não exige a instalação de um servidor MySQL.
+
+---
+
+### Backend (Spring Boot)
+
+1. Entre na pasta do backend:
 
 ```bash
 cd backend
-composer install
-copy .env.example .env
-php artisan key:generate
 ```
 
-No Linux/macOS:
+2. Execute o projeto:
 
 ```bash
-cp .env.example .env
+mvn spring-boot:run
 ```
 
-Crie um banco chamado `stockpass` no MySQL/phpMyAdmin e confira o `.env`:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=stockpass
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-Depois:
-
-```bash
-php artisan migrate --seed
-php artisan storage:link
-php artisan serve --host=0.0.0.0 --port=8000
-```
-
-A API ficará em:
+3. O backend será iniciado em:
 
 ```text
-http://localhost:8000/api
+http://localhost:8080
 ```
 
-Teste:
+A API ficará disponível em:
 
 ```text
-GET http://localhost:8000/api/hello-world
+http://localhost:8080/api
 ```
 
-## Executar o aplicativo Expo
+4. Teste o Hello World:
+
+```text
+GET http://localhost:8080/api/hello-world
+```
+
+Resposta esperada:
+
+```json
+{
+  "message": "Hello World - StockPass"
+}
+```
+
+Na primeira execução, o arquivo `backend/stockpass.db` será criado automaticamente.
+
+---
+
+### Frontend (React)
 
 Em outro terminal:
 
+1. Entre na pasta do frontend:
+
 ```bash
 cd frontend
-npm install
-npx expo start
 ```
 
-No arquivo `frontend/src/services/api.ts`, coloque o IP do computador na rede local. Exemplo:
+2. Instale as dependências:
+
+```bash
+npm install
+```
+
+3. Rode o projeto:
+
+```bash
+npm run dev
+```
+
+4. O Vite disponibilizará a aplicação em um endereço semelhante a:
+
+```text
+http://localhost:5173
+```
+
+O endereço da API está configurado em:
+
+```text
+frontend/src/services/api.ts
+```
+
+Por padrão:
 
 ```ts
-const API_URL = "http://192.168.0.10:8000/api";
+baseURL: "http://localhost:8080/api"
 ```
 
-Para celular físico, o celular e o computador precisam estar na mesma rede Wi-Fi.
+---
+
+## Banco de dados
+
+O projeto utiliza **SQLite** para manter a mesma proposta de banco local do projeto de referência.
+
+O banco é criado automaticamente pelo Spring Boot/JPA a partir das entidades do projeto.
+
+### Tabela inicial
+
+A primeira tabela principal é:
+
+```text
+users
+```
+
+Com informações como:
+
+```text
+id
+name
+email
+password
+role
+created_at
+```
+
+A senha é armazenada utilizando hash BCrypt.
+
+---
 
 ## API
 
@@ -124,124 +289,142 @@ Para celular físico, o celular e o computador precisam estar na mesma rede Wi-F
 GET /api/hello-world
 ```
 
-### Dashboard
+Não exige autenticação.
+
+### Autenticação
 
 ```text
-GET /api/dashboard
+POST /api/auth/login
+POST /api/auth/register
+GET  /api/auth/profile
+PUT  /api/auth/password
 ```
 
-### Categorias
-
-```text
-GET    /api/categories
-POST   /api/categories
-GET    /api/categories/{id}
-PUT    /api/categories/{id}
-DELETE /api/categories/{id}
-```
-
-### Fornecedores
-
-```text
-GET    /api/suppliers
-POST   /api/suppliers
-GET    /api/suppliers/{id}
-PUT    /api/suppliers/{id}
-DELETE /api/suppliers/{id}
-```
-
-### Produtos
-
-```text
-GET    /api/products
-POST   /api/products
-GET    /api/products/{id}
-PUT    /api/products/{id}
-DELETE /api/products/{id}
-GET    /api/products/search/{term}
-```
+`login` e `register` são públicos. `profile` e `password` exigem autenticação.
 
 ### Usuários
 
 ```text
-GET    /api/users
-POST   /api/users
-PUT    /api/users/{id}
-DELETE /api/users/{id}
+GET /api/users
 ```
 
-### Movimentações
+Exige autenticação.
 
-```text
-GET  /api/movements
-POST /api/movements
-GET  /api/movements/{id}
-```
-
-### Alertas
-
-```text
-GET /api/alerts
-GET /api/alerts/{id}
-PUT /api/alerts/{id}
-```
-
-## Produto com foto
-
-O cadastro de produto aceita `multipart/form-data`:
-
-```text
-code
-name
-description
-quantity
-minimum_stock
-expiration_date
-category_id
-supplier_id
-photo
-```
-
-A foto é armazenada em `storage/app/public/products`.
+---
 
 ## Dados de teste
 
-Após `php artisan migrate --seed`:
+Na primeira execução, o backend cria automaticamente dois usuários para facilitar a apresentação:
+
+### Administrador
 
 ```text
-Administrador
-e-mail: admin@stockpass.com
-senha: 123456
-
-Gestor
-e-mail: gestor@stockpass.com
-senha: 123456
+E-mail: admin@stockpass.com
+Senha: 123456
+Perfil: ADMIN
 ```
 
-Também é criado um produto de exemplo.
+### Gestor
+
+```text
+E-mail: gestor@stockpass.com
+Senha: 123456
+Perfil: GESTOR
+```
+
+> Essas credenciais são destinadas somente ao ambiente acadêmico/local. Em um ambiente real, devem ser substituídas por senhas seguras.
+
+---
+
+## Estrutura do repositório
+
+```text
+/
+├── backend/                         # API REST Spring Boot
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/stockpass/
+│   │   │   │   ├── config/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── dto/
+│   │   │   │   ├── model/
+│   │   │   │   ├── repository/
+│   │   │   │   ├── security/
+│   │   │   │   └── service/
+│   │   │   └── resources/
+│   │   │       └── application.properties
+│   │   └── test/
+│   │       └── java/com/stockpass/
+│   ├── pom.xml
+│   └── stockpass.db
+│
+├── frontend/                        # Aplicação web React
+│   ├── src/
+│   │   ├── services/
+│   │   ├── types.ts
+│   │   ├── main.tsx
+│   │   └── styles.css
+│   ├── App.tsx
+│   ├── index.html
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vite.config.ts
+│
+├── .gitignore
+└── README.md
+```
+
+---
 
 ## Testes
 
+Para executar os testes do backend:
+
 ```bash
 cd backend
-php artisan test
+mvn test
 ```
+
+---
 
 ## GitHub
 
+O projeto está versionado no GitHub:
+
+urlRepositório StockPass no GitHubhttps://github.com/analistaAndressaMachado/StockPass/tree/main/StockPass
+
+Para enviar as alterações:
+
 ```bash
-git init
 git add .
-git commit -m "feat: cria sistema StockPass"
-git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/StockPass.git
-git push -u origin main
+git commit -m "feat: adiciona controle de acesso do StockPass"
+git push origin main
 ```
 
-Não envie o arquivo `.env`, a pasta `vendor` ou credenciais para o GitHub.
+### Arquivos que não devem ser enviados
+
+Não envie arquivos com informações sensíveis ou dependências geradas automaticamente, como:
+
+```text
+.env
+backend/stockpass.db
+backend/target/
+frontend/node_modules/
+frontend/dist/
+```
+
+---
 
 ## Autores
 
-Andressa Rosa de Lima Gonçalves Machado  
-Henry Bittenbinder Dias de Oliveira  
-Mariana Martins Nunes
+- **Andressa Rosa de Lima Gonçalves Machado**
+- **Henry Bittenbinder Dias de Oliveira**
+- **Mariana Martins Nunes**
+
+Projeto acadêmico desenvolvido para a **FATEC Praia Grande - SP**.
+
+---
+
+## Licença
+
+Este projeto foi desenvolvido para fins **acadêmicos**, na disciplina de **Laboratório de Engenharia de Software — FATEC Praia Grande - SP**.
