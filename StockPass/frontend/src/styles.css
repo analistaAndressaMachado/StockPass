@@ -4,3 +4,21 @@
   min-height: 100vh;
   background: #f9fafb;
 }
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.painel-header,
+.panel-card,
+.stat-card {
+  box-shadow: none;
+  position: static;
+}
+
+.painel h1,
+.painel h2,
+.painel p {
+  margin: 0;
+}

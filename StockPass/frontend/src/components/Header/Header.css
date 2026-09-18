@@ -1,0 +1,68 @@
+.app-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: white;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.app-header-eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+ color: #111827;
+ }
+
+.app-header-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.app-header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.app-header-user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.app-header-user-role {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.app-header-menu {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.app-header-menu:hover {
+  color: #111827;
+}

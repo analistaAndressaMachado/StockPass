@@ -3,7 +3,17 @@ import { api } from './services/api';
 import { Login } from './pages/Login/Login';
 import { Painel } from './pages/Painel/Painel';
 import { Sidebar } from './components/Sidebar/Sidebar';
+import { Header } from './components/Header/Header';
 import type { User } from './types';
+import { Perfil } from './pages/Perfil/Perfil';
+const PAGE_TITLES: Record<string, string> = {
+  painel: 'Painel',
+  catalogo: 'Catálogo de Produtos',
+  entrada: 'Entrada de Estoque',
+  saida: 'Saída de Estoque',
+  relatorios: 'Relatórios',
+  clientes: 'Clientes',
+};
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,13 +42,18 @@ export function App() {
   return (
     <div className="app-shell">
       <Sidebar active={page} onNavigate={setPage} />
-      {page === 'painel' ? (
-        <Painel user={user} />
-      ) : (
-        <div className="painel">
-          <p className="muted">Essa área ainda está em construção 🚧</p>
+      <div className="app-content">
+        <Header title={PAGE_TITLES[page] ?? 'Perfil'} user={user} onProfileClick={() => setPage('perfil')} />
+        <div className="app-body">
+          {page === 'painel' ? (
+            <Painel />
+          ) : page === 'perfil' ? (
+            <Perfil user={user} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
+          ) : (
+            <p className="muted">Essa área ainda está em construção 🚧</p>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
