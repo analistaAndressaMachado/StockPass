@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { TodosItensModal } from './TodosItensModal';
 
 const STATS = [
   { label: 'Estoque Total', value: '1.248', hint: 'Produtos em todos os armazéns' },
@@ -16,6 +17,16 @@ const ALERTS = [
   { produto: 'Caderno A5 Pautado', sku: 'NB-A5-L', atual: 22, ponto: 60, fornecedor: 'PaperMill Co.', status: 'Reposição agendada' },
 ];
 
+// Provisório: até existir backend de Produto, reaproveitamos os dados
+// da tabela de alertas como se fosse o "catálogo" de produtos existentes.
+const PRODUTOS_MOCK = ALERTS.map((a) => ({
+  sku: a.sku,
+  nome: a.produto,
+  fornecedor: a.fornecedor,
+}));
+
+const MOTIVOS_SAIDA = ['Venda', 'Perda', 'Devolução', 'Outro'];
+
 function statusClass(status: string) {
   if (status === 'Repor agora' || status === 'Sem estoque') return 'badge badge-red';
   if (status === 'Estoque baixo') return 'badge badge-orange';
@@ -25,6 +36,18 @@ function statusClass(status: string) {
 
 export function Painel() {
   const [showProduto, setShowProduto] = useState(false);
+  const [showEntrada, setShowEntrada] = useState(false);
+  const [showSaida, setShowSaida] = useState(false);
+  const [showTodos, setShowTodos] = useState(false);
+
+  const [entradaProdutoSku, setEntradaProdutoSku] = useState('');
+  const [entradaFornecedor, setEntradaFornecedor] = useState('');
+
+  function handleEntradaProdutoChange(sku: string) {
+    setEntradaProdutoSku(sku);
+    const produto = PRODUTOS_MOCK.find((p) => p.sku === sku);
+    setEntradaFornecedor(produto ? produto.fornecedor : '');
+  }
 
   return (
     <div className="painel">
@@ -58,7 +81,14 @@ export function Painel() {
             </p>
           </div>
 
-          <a className="link-sm" href="#">
+<a
+            className="link-sm"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowTodos(true);
+            }}
+          >
             Ver todos os itens com baixo estoque
           </a>
         </div>
@@ -104,11 +134,11 @@ export function Painel() {
 
         <div className="quick-actions">
 
-          <button className="btn-primary">
+          <button className="btn-primary" onClick={() => setShowEntrada(true)}>
             Nova Entrada de Estoque
           </button>
 
-          <button className="btn-secondary">
+          <button className="btn-secondary" onClick={() => setShowSaida(true)}>
             Registrar Saída de Estoque
           </button>
 
@@ -214,6 +244,96 @@ export function Painel() {
           </form>
         </Modal>
       )}
+
+      {showEntrada && (
+        <Modal title="Nova Entrada de Estoque" onClose={() => setShowEntrada(false)}>
+          <form
+            className="modal-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              // A data não é escolhida pelo usuário: quando isso salvar de
+              // verdade no backend, a data/hora vai ser gravada automaticamente
+              // no momento do registro.
+              alert('Entrada registrada! Em breve isso será salvo no banco.');
+              setShowEntrada(false);
+              setEntradaProdutoSku('');
+              setEntradaFornecedor('');
+            }}
+          >
+            <label>
+              Produto
+              <select
+                value={entradaProdutoSku}
+                onChange={(e) => handleEntradaProdutoChange(e.target.value)}
+                required
+              >
+                <option value="" disabled>Selecione um produto</option>
+                {PRODUTOS_MOCK.map((p) => (
+                  <option key={p.sku} value={p.sku}>{p.nome}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Quantidade recebida
+              <input type="number" min={1} placeholder="Ex: 30" required />
+            </label>
+
+            <label>
+              Fornecedor
+              <input type="text" value={entradaFornecedor} readOnly />
+            </label>
+
+            <button className="btn-primary" type="submit">
+              Registrar Entrada
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {showSaida && (
+        <Modal title="Registrar Saída de Estoque" onClose={() => setShowSaida(false)}>
+          <form
+            className="modal-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              alert('Saída registrada! Em breve isso será salvo no banco.');
+              setShowSaida(false);
+            }}
+          >
+            <label>
+              Produto
+              <select defaultValue="" required>
+                <option value="" disabled>Selecione um produto</option>
+                {PRODUTOS_MOCK.map((p) => (
+                  <option key={p.sku} value={p.sku}>{p.nome}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Quantidade que saiu
+              <input type="number" min={1} placeholder="Ex: 5" required />
+            </label>
+
+            <label>
+              Motivo
+              <select defaultValue="" required>
+                <option value="" disabled>Selecione um motivo</option>
+                {MOTIVOS_SAIDA.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </label>
+
+            <button className="btn-primary" type="submit">
+              Registrar Saída
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {showTodos && <TodosItensModal onClose={() => setShowTodos(false)} />}
 
     </div>
   );

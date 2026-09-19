@@ -67,3 +67,17 @@
   border-radius: 8px;
   font-size: 14px;
 }
+
+.modal-box-large {
+  max-width: none;
+  width: calc(100% - 64px);
+  height: calc(100% - 64px);
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-box-large .modal-body {
+  flex: 1;
+  overflow-y: auto;
+}
