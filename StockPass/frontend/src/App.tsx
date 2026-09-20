@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { api } from './services/api';
 import { Login } from './pages/Login/Login';
 import { Painel } from './pages/Painel/Painel';
+import { Perfil } from './pages/Perfil/Perfil';
+import { Relatorios } from './pages/Relatorios/Relatorios';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { Header } from './components/Header/Header';
 import type { User } from './types';
-import { Perfil } from './pages/Perfil/Perfil';
+
 const PAGE_TITLES: Record<string, string> = {
   painel: 'Painel',
   catalogo: 'Catálogo de Produtos',
@@ -49,6 +51,8 @@ export function App() {
             <Painel />
           ) : page === 'perfil' ? (
             <Perfil user={user} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
+          ) : page === 'relatorios' ? (
+            <Relatorios />
           ) : (
             <p className="muted">Essa área ainda está em construção 🚧</p>
           )}
