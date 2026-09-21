@@ -4,6 +4,7 @@ import { Login } from './pages/Login/Login';
 import { Painel } from './pages/Painel/Painel';
 import { Perfil } from './pages/Perfil/Perfil';
 import { Relatorios } from './pages/Relatorios/Relatorios';
+import { Catalogo } from './pages/Catalogo/Catalogo';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { Header } from './components/Header/Header';
 import type { User } from './types';
@@ -47,15 +48,17 @@ export function App() {
       <div className="app-content">
         <Header title={PAGE_TITLES[page] ?? 'Perfil'} user={user} onProfileClick={() => setPage('perfil')} />
         <div className="app-body">
-          {page === 'painel' ? (
-            <Painel />
-          ) : page === 'perfil' ? (
-            <Perfil user={user} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
-          ) : page === 'relatorios' ? (
-            <Relatorios />
-          ) : (
-            <p className="muted">Essa área ainda está em construção 🚧</p>
-          )}
+         {page === 'painel' ? (
+           <Painel />
+         ) : page === 'perfil' ? (
+           <Perfil user={user} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
+         ) : page === 'catalogo' ? (
+           <Catalogo />
+         ) : page === 'relatorios' ? (
+           <Relatorios />
+         ) : (
+           <p className="muted">Essa área ainda está em construção 🚧</p>
+         )}
         </div>
       </div>
     </div>
