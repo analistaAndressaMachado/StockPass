@@ -111,28 +111,28 @@ function setaDoCampo(campo: CampoOrdenacao) {
 
   return (
     <div className="catalogo">
-                     <div className="catalogo-cards">
-                       <div className="catalogo-stat-card">
-                         <span className="catalogo-stat-label">Estoque total</span>
-                         <span className="catalogo-stat-value">{estoqueTotal.toLocaleString('pt-BR')} unid.</span>
-                         <span className="catalogo-stat-sub">Soma de todos os produtos</span>
-                       </div>
-                       <div className="catalogo-stat-card catalogo-stat-card--elevado">
-                         <span className="catalogo-stat-label">Alerta de mínimo</span>
-                         <span className="catalogo-stat-value">{alertaMinimo} itens</span>
-                         <span className="catalogo-stat-sub">Abaixo do estoque de segurança</span>
-                       </div>
-                       <div className="catalogo-stat-card">
-                         <span className="catalogo-stat-label">Valor estimado</span>
-                         <span className="catalogo-stat-value">{formatarPreco(valorEstimado)}</span>
-                         <span className="catalogo-stat-sub">Baseado no preço de venda</span>
-                       </div>
-                       <div className="catalogo-stat-card catalogo-stat-card--elevado">
-                         <span className="catalogo-stat-label">SKU ativos</span>
-                         <span className="catalogo-stat-value">{skuAtivos}</span>
-                         <span className="catalogo-stat-sub">Produtos disponíveis</span>
-                       </div>
-                     </div>
+                          <div className="catalogo-cards">
+                            <div className="catalogo-stat-card">
+                              <span className="catalogo-stat-label">Estoque total</span>
+                              <span className="catalogo-stat-value">{estoqueTotal.toLocaleString('pt-BR')} unid.</span>
+                              <span className="catalogo-stat-sub">Soma de todos os produtos</span>
+                            </div>
+                            <div className="catalogo-stat-card">
+                              <span className="catalogo-stat-label">Alerta de mínimo</span>
+                              <span className="catalogo-stat-value">{alertaMinimo} itens</span>
+                              <span className="catalogo-stat-sub">Abaixo do estoque de segurança</span>
+                            </div>
+                            <div className="catalogo-stat-card">
+                              <span className="catalogo-stat-label">Valor estimado</span>
+                              <span className="catalogo-stat-value">{formatarPreco(valorEstimado)}</span>
+                              <span className="catalogo-stat-sub">Baseado no preço de venda</span>
+                            </div>
+                            <div className="catalogo-stat-card">
+                              <span className="catalogo-stat-label">SKU ativos</span>
+                              <span className="catalogo-stat-value">{skuAtivos}</span>
+                              <span className="catalogo-stat-sub">Produtos disponíveis</span>
+                            </div>
+                          </div>
 
       <div className="catalogo-lista">
         <div className="catalogo-lista-topo">
@@ -163,8 +163,16 @@ function setaDoCampo(campo: CampoOrdenacao) {
         </div>
 
         <div className="catalogo-tabela-wrap">
-        <table className="table">
-          <thead>
+                <table className="table">
+                  <colgroup>
+                    <col className="col-nome" />
+                    <col className="col-sku" />
+                    <col className="col-categoria" />
+                    <col className="col-quantidade" />
+                    <col className="col-preco" />
+                    <col className="col-acoes" />
+                  </colgroup>
+                  <thead>
             <tr>
               <th onClick={() => alternarOrdenacao('nome')}>Nome {setaDoCampo('nome')}</th>
               <th onClick={() => alternarOrdenacao('sku')}>Código {setaDoCampo('sku')}</th>
@@ -210,9 +218,13 @@ function setaDoCampo(campo: CampoOrdenacao) {
                       <td>{produto.categoria}</td>
                       <td>{produto.quantidade}</td>
                       <td>{formatarPreco(produto.preco)}</td>
-                      <td className="acoes-col">
-                        <button className="icon-btn" onClick={() => iniciarEdicao(produto)} title="Editar">✏️</button>
-                      </td>
+                            <td className="acoes-col">
+                                                                                                                      <button className="icon-btn" onClick={() => iniciarEdicao(produto)} title="Editar">
+                                                                                                                        <svg viewBox="0 0 24 24">
+                                                                                                                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                                                                                                                        </svg>
+                                                                                                                      </button>
+                            </td>
                     </>
                   )}
                 </tr>
