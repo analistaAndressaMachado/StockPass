@@ -72,10 +72,9 @@ export function Painel() {
       </section>
 
 
-      <section className="panel-card">
-        <div className="card-header">
-          <div>
-            <h2>Alertas de estoque mínimo</h2>
+      <section className="panel-card panel-card--soft">              <div className="card-header">
+                <div>
+                  <h2>Alertas de estoque mínimo</h2>
             <p className="muted-sm">
               Priorize a reposição dos SKUs mais críticos
             </p>
@@ -125,8 +124,8 @@ export function Painel() {
       </section>
 
 
-      <section className="panel-card">
-        <h2>Ações rápidas</h2>
+            <section className="panel-card panel-card--soft-padrao">
+                    <h2>Ações rápidas</h2>
 
         <p className="muted-sm">
           Registre movimentações e gerencie o catálogo
