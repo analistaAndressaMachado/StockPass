@@ -5,6 +5,9 @@ import { Painel } from './pages/Painel/Painel';
 import { Perfil } from './pages/Perfil/Perfil';
 import { Relatorios } from './pages/Relatorios/Relatorios';
 import { Catalogo } from './pages/Catalogo/Catalogo';
+import { EntradaEstoque } from './pages/EntradaEstoque/EntradaEstoque';
+import { SaidaEstoque } from './pages/SaidaEstoque/SaidaEstoque';
+import { Usuarios } from './pages/Usuarios/Usuarios';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { Header } from './components/Header/Header';
 import type { User } from './types';
@@ -16,6 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   saida: 'Saída de Estoque',
   relatorios: 'Relatórios',
   clientes: 'Clientes',
+    usuarios: 'Usuários e Permissões',
 };
 
 export function App() {
@@ -44,7 +48,7 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar active={page} onNavigate={setPage} />
+    <Sidebar active={page} onNavigate={setPage} role={user.role} />
       <div className="app-content">
         <Header title={PAGE_TITLES[page] ?? 'Perfil'} user={user} onProfileClick={() => setPage('perfil')} />
         <div className="app-body">
@@ -54,6 +58,12 @@ export function App() {
            <Perfil user={user} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
          ) : page === 'catalogo' ? (
            <Catalogo />
+             ) : page === 'entrada' ? (
+                      <EntradaEstoque user={user} />
+                       ) : page === 'saida' ? (
+                                 <SaidaEstoque user={user} />
+                     ) : page === 'usuarios' ? (
+                             <Usuarios user={user} />
          ) : page === 'relatorios' ? (
            <Relatorios />
          ) : (

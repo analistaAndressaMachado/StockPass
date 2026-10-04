@@ -1,6 +1,8 @@
-import { useState } from 'react';
-
-type NavItem = { key: string; label: string };
+type NavItem = {
+  key: string;
+  label: string;
+  roles?: string[]; // se existir, só esses perfis enxergam o item no menu
+};
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'painel', label: 'Painel' },
@@ -9,14 +11,18 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'saida', label: 'Saída de Estoque' },
   { key: 'relatorios', label: 'Relatórios' },
   { key: 'clientes', label: 'Clientes' },
+  { key: 'usuarios', label: 'Usuários e Permissões', roles: ['ADMIN', 'GESTOR'] },
 ];
 
 type Props = {
   active: string;
   onNavigate: (key: string) => void;
+  role: string; // perfil de quem está logado (USER, GESTOR ou ADMIN)
 };
 
-export function Sidebar({ active, onNavigate }: Props) {
+export function Sidebar({ active, onNavigate, role }: Props) {
+  const itensVisiveis = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
+
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -24,7 +30,7 @@ export function Sidebar({ active, onNavigate }: Props) {
         <span className="sidebar-logo-text">Armazém Pro</span>
       </div>
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
+        {itensVisiveis.map((item) => (
           <button
             key={item.key}
             className={`sidebar-nav-item ${active === item.key ? 'active' : ''}`}
