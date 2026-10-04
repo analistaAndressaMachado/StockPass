@@ -1,20 +1,20 @@
-import { useState } from 'react';
-import { Modal } from '../../components/Modal/Modal';
-import './TodosItensModal.css';
+   import { useState } from 'react';
+   import { Modal } from '../../components/Modal/Modal';
+   import './TodosItensModal.css';
 
-type Item = {
-  sku: string;
-  produto: string;
-  categoria: string;
-  atual: number;
-  ponto: number;
-  fornecedor: string;
-  status: string;
-};
+   export type Item = {
+     sku: string;
+     produto: string;
+     categoria: string;
+     atual: number;
+     ponto: number;
+     fornecedor: string;
+     status: string;
+   };
 
 // Mock provisório com mais itens, só pra testar ordenação e paginação.
 // As categorias reais vocês ainda vão decidir.
-const ITENS_INICIAIS: Item[] = [
+export const ITENS_INICIAIS: Item[] = [
   { sku: 'WB-750-BLK', produto: 'Garrafa Reutilizável 750ml', categoria: 'Utilidades', atual: 8, ponto: 40, fornecedor: 'EcoFlow Supplies', status: 'Repor agora' },
   { sku: 'WM-PRO-GRY', produto: 'Mouse Sem Fio Pro', categoria: 'Eletrônicos', atual: 15, ponto: 50, fornecedor: 'Digital Gear Ltd', status: 'Estoque baixo' },
   { sku: 'BOX-MED-25', produto: 'Caixa de Envio Média', categoria: 'Embalagens', atual: 120, ponto: 200, fornecedor: 'PackRight', status: 'Monitorar' },

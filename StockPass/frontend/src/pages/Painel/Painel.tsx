@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
-import { TodosItensModal } from './TodosItensModal';
+import { TodosItensModal, ITENS_INICIAIS } from './TodosItensModal';
 
 const STATS = [
   { label: 'Estoque Total', value: '1.248', hint: 'Produtos em todos os armazéns' },
@@ -25,6 +25,10 @@ const PRODUTOS_MOCK = ALERTS.map((a) => ({
   fornecedor: a.fornecedor,
 }));
 
+const ALERTAS_TABELA = ITENS_INICIAIS.filter((i) => i.status !== 'OK');
+
+const MINIMO_LINHAS = 5;
+
 const MOTIVOS_SAIDA = ['Venda', 'Perda', 'Devolução', 'Outro'];
 
 function statusClass(status: string) {
@@ -39,7 +43,29 @@ export function Painel() {
   const [showEntrada, setShowEntrada] = useState(false);
   const [showSaida, setShowSaida] = useState(false);
   const [showTodos, setShowTodos] = useState(false);
+  // Quantas linhas de alerta cabem na tela agora (recalculado ao redimensionar).
+  const [linhasVisiveis, setLinhasVisiveis] = useState(MINIMO_LINHAS);
+  const areaTabelaRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const area = areaTabelaRef.current;
+    if (!area) return;
+
+    const calcular = () => {
+      const cabecalho = area.querySelector('thead');
+      const linha = area.querySelector('tbody tr');
+      if (!cabecalho || !linha) return;
+      const alturaCabecalho = cabecalho.getBoundingClientRect().height;
+      const alturaLinha = linha.getBoundingClientRect().height;
+      const cabem = Math.floor((area.clientHeight - alturaCabecalho) / alturaLinha);
+      setLinhasVisiveis(Math.max(MINIMO_LINHAS, cabem));
+    };
+
+    calcular();
+    const observer = new ResizeObserver(calcular);
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, []);
   const [entradaProdutoSku, setEntradaProdutoSku] = useState('');
   const [entradaFornecedor, setEntradaFornecedor] = useState('');
 
@@ -91,7 +117,7 @@ export function Painel() {
             Ver todos os itens com baixo estoque
           </a>
         </div>
-
+  <div className="alertas-area" ref={areaTabelaRef}>
         <table className="table">
           <thead>
             <tr>
@@ -105,7 +131,7 @@ export function Painel() {
           </thead>
 
           <tbody>
-            {ALERTS.map((a) => (
+              {ALERTAS_TABELA.slice(0, linhasVisiveis).map((a) => (
               <tr key={a.sku}>
                 <td>{a.produto}</td>
                 <td>{a.sku}</td>
@@ -121,6 +147,7 @@ export function Painel() {
             ))}
           </tbody>
         </table>
+        </div>
       </section>
 
 
