@@ -1,0 +1,92 @@
+/*
+  Mesma estrutura da tela de Entrada (classes com prefixo saida-).
+  Usa classes que já existem em Painel.css (carregado no projeto inteiro):
+  .panel-card, .panel-card--soft-padrao, .stats-grid, .stat-card, .stat-label,
+  .stat-value, .stat-hint, .table, .btn-primary, .btn-secondary, .muted-sm.
+*/
+
+.saida {
+  height: 100%;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.saida-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.saida-hint-curto {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* O card do histórico ocupa o espaço que sobra na tela (monitor grande) */
+.saida-historico {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.saida-historico-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.saida-filtros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.saida-filtros input,
+.saida-filtros select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+}
+
+.saida-filtros input {
+  width: 240px;
+}
+
+.saida-tabela-area {
+  flex: 1;
+  min-height: 250px;
+  overflow: hidden;
+}
+
+.saida-vazio {
+  padding: 24px 10px;
+}
+
+.saida-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.saida-paginacao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.saida-paginacao button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
