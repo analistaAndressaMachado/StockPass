@@ -1,0 +1,179 @@
+/*
+  Usa classes que já existem em Painel.css (carregado no projeto inteiro):
+  .panel-card, .panel-card--soft-padrao, .stats-grid, .stat-card, .stat-label,
+  .stat-value, .stat-hint, .table, .badge-*, .btn-primary, .btn-secondary, .muted-sm.
+*/
+
+.badge-gray {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.usuarios {
+  height: 100%;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.usuarios-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Linha escrita dizendo se a pessoa pode editar ou só ver */
+.usuarios-acesso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.usuarios-topo button:disabled,
+.usuarios-acoes button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* O card principal ocupa o espaço que sobra na tela (monitor grande) */
+.usuarios-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.usuarios-abas {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 14px;
+}
+
+.usuarios-abas button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.usuarios-abas button.ativa {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.usuarios-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.usuarios-filtros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.usuarios-filtros input,
+.usuarios-filtros select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+}
+
+.usuarios-filtros input {
+  width: 260px;
+}
+
+.usuarios-legenda {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+/* Se tiver muita linha, rola só aqui dentro (o cabeçalho da tabela fica fixo) */
+.usuarios-area {
+  flex: 1;
+  min-height: 250px;
+  overflow-y: auto;
+  contain: size;
+}
+
+.usuarios-area thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+
+.usuarios-vazio {
+  padding: 24px 10px;
+}
+
+.usuarios-nome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.usuarios-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.usuarios-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.usuarios-acoes button {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* Tabela de permissões */
+.usuarios-matriz th small,
+.usuarios-matriz td small {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.usuarios-matriz .coluna-voce {
+  background: #f5f9ff;
+}
+
+.usuarios-nota {
+  margin-top: 14px;
+}
+
+.usuarios-erro {
+  color: #b91c1c;
+  font-size: 13px;
+}
