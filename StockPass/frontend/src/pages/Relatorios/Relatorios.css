@@ -11,7 +11,7 @@
 */
 
 .relatorios {
-  flex: 1;
+  height: 100%;
   padding: 24px 32px;
   display: flex;
   flex-direction: column;
@@ -129,4 +129,37 @@
   height: 60px;
   display: block;
   margin-bottom: 10px;
+}
+
+/* Cabeçalho do card "Produtos no período" (título à esquerda, botão à direita) */
+.produtos-periodo-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Um único quadro com Entradas / Saídas / Estoque atual */
+.resumo-unico {
+  display: flex;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.resumo-item {
+  flex: 1;
+  padding: 12px 16px;
+}
+
+.resumo-item + .resumo-item {
+  border-left: 1px solid #e5e7eb;
+}
+
+.resumo-item .stat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }

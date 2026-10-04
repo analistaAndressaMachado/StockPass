@@ -1,5 +1,8 @@
 import './Relatorios.css';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
+import { PRODUTOS_RELATORIO, pontosParaLinha } from './produtosPeriodo';
+import { ProdutosPeriodoTabela } from './ProdutosPeriodoTabela';
+import { TodosProdutosModal } from './TodosProdutosModal';
 
 // ======================================================================
 // DADOS MOCKADOS — igual ao Painel.tsx, tudo aqui só existe no frontend,
@@ -29,110 +32,16 @@ const TENDENCIA_POR_PERIODO: Record<Periodo, { entradas: number[]; saidas: numbe
   },
 };
 
-type ProdutoRelatorio = {
-  sku: string;
-  produto: string;
-  fornecedor: string;
-  status: string;
-  entradasPeriodo: number;
-  saidasPeriodo: number;
-  estoqueAtual: number;
-  tendencia: number[];
-};
-
-const PRODUTOS_RELATORIO: ProdutoRelatorio[] = [
-  {
-    sku: 'WB-750-BLK',
-    produto: 'Garrafa Reutilizável 750ml',
-    fornecedor: 'EcoFlow Supplies',
-    status: 'Repor agora',
-    entradasPeriodo: 120,
-    saidasPeriodo: 142,
-    estoqueAtual: 8,
-    tendencia: [20, 28, 35, 30, 48, 55, 68, 74, 80],
-  },
-  {
-    sku: 'WM-PRO-GRY',
-    produto: 'Mouse Sem Fio Pro',
-    fornecedor: 'Digital Gear Ltd',
-    status: 'Estoque baixo',
-    entradasPeriodo: 60,
-    saidasPeriodo: 55,
-    estoqueAtual: 15,
-    tendencia: [40, 38, 42, 35, 30, 28, 25, 20, 18],
-  },
-  {
-    sku: 'BOX-MED-25',
-    produto: 'Caixa de Envio Média',
-    fornecedor: 'PackRight',
-    status: 'Monitorar',
-    entradasPeriodo: 200,
-    saidasPeriodo: 180,
-    estoqueAtual: 120,
-    tendencia: [60, 65, 62, 70, 75, 72, 78, 74, 76],
-  },
-  {
-    sku: 'CAB-USBC-1M',
-    produto: 'Cabo de Carregamento USB-C 1m',
-    fornecedor: 'Connectix',
-    status: 'Sem estoque',
-    entradasPeriodo: 30,
-    saidasPeriodo: 80,
-    estoqueAtual: 0,
-    tendencia: [50, 45, 40, 32, 25, 18, 10, 4, 0],
-  },
-  {
-    sku: 'NB-A5-L',
-    produto: 'Caderno A5 Pautado',
-    fornecedor: 'PaperMill Co.',
-    status: 'Reposição agendada',
-    entradasPeriodo: 90,
-    saidasPeriodo: 68,
-    estoqueAtual: 22,
-    tendencia: [15, 18, 20, 19, 22, 21, 24, 23, 22],
-  },
-];
-
-function statusClass(status: string) {
-  if (status === 'Repor agora' || status === 'Sem estoque') return 'badge badge-red';
-  if (status === 'Estoque baixo') return 'badge badge-orange';
-  if (status === 'Monitorar') return 'badge badge-yellow';
-  return 'badge badge-green';
-}
-
-function pontosParaLinha(valores: number[], largura: number, altura: number) {
-  const max = Math.max(...valores);
-  const min = Math.min(...valores);
-  const range = max - min || 1;
-  const passo = largura / (valores.length - 1 || 1);
-
-  return valores
-    .map((v, i) => {
-      const x = i * passo;
-      const y = altura - ((v - min) / range) * altura;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-}
-
 export function Relatorios() {
   const [periodo, setPeriodo] = useState<Periodo>('mes');
-  const [linhaAberta, setLinhaAberta] = useState<string | null>(null);
+  const [showTodos, setShowTodos] = useState(false);
 
   const resumo = RESUMO_POR_PERIODO[periodo];
   const tendenciaGeral = TENDENCIA_POR_PERIODO[periodo];
 
-  function toggleLinha(sku: string) {
-    setLinhaAberta((atual) => (atual === sku ? null : sku));
-  }
-
-  function verHistoricoCompleto(produto: string) {
-    alert(`Em breve: histórico completo de "${produto}" (depende da tela de Catálogo).`);
-  }
-
   return (
     <div className="relatorios">
-      <section className="panel-card relatorios-filtro">
+      <section className="panel-card panel-card--soft-padrao relatorios-filtro">
         <div>
           <h2>Relatórios</h2>
           <p className="muted-sm">Resumo das movimentações de estoque no período selecionado</p>
@@ -176,7 +85,7 @@ export function Relatorios() {
         </div>
       </section>
 
-      <section className="panel-card">
+      <section className="panel-card panel-card--soft-padrao">
         <h2>Tendência do período</h2>
         <p className="muted-sm">Entradas x saídas ao longo do tempo</p>
 
@@ -212,90 +121,22 @@ export function Relatorios() {
         </div>
       </section>
 
-      <section className="panel-card">
-        <h2>Produtos no período</h2>
-        <p className="muted-sm">Clique num produto pra ver o resumo de movimentações dele</p>
+      <section className="panel-card panel-card--soft-padrao">
+        <div className="produtos-periodo-header">
+          <div>
+            <h2>Produtos no período</h2>
+            <p className="muted-sm">Clique num produto pra ver o resumo de movimentações dele</p>
+          </div>
 
-        <table className="table">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Produto</th>
-              <th>Código do Produto</th>
-              <th>Fornecedor</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+          <button className="btn-primary" onClick={() => setShowTodos(true)}>
+            Ver todos
+          </button>
+        </div>
 
-          <tbody>
-            {PRODUTOS_RELATORIO.map((p) => {
-              const aberto = linhaAberta === p.sku;
-
-              return (
-                <Fragment key={p.sku}>
-                  <tr className="linha-clicavel" onClick={() => toggleLinha(p.sku)}>
-                    <td className="col-seta">
-                      <span className={`seta ${aberto ? 'seta-aberta' : ''}`}>›</span>
-                    </td>
-                    <td>{p.produto}</td>
-                    <td>{p.sku}</td>
-                    <td>{p.fornecedor}</td>
-                    <td>
-                      <span className={statusClass(p.status)}>{p.status}</span>
-                    </td>
-                  </tr>
-
-                  {aberto && (
-                    <tr className="linha-detalhe">
-                      <td colSpan={5}>
-                        <div className="mini-stats">
-                          <div className="mini-stat">
-                            <span className="stat-label">Entradas (período)</span>
-                            <p className="stat-value">{p.entradasPeriodo} un</p>
-                          </div>
-                          <div className="mini-stat">
-                            <span className="stat-label">Saídas (período)</span>
-                            <p className="stat-value">{p.saidasPeriodo} un</p>
-                          </div>
-                          <div className="mini-stat">
-                            <span className="stat-label">Estoque atual</span>
-                            <p className="stat-value">{p.estoqueAtual} un</p>
-                          </div>
-                        </div>
-
-                        <svg
-                          viewBox="0 0 300 60"
-                          className="mini-svg"
-                          role="img"
-                          aria-label={`Tendência de estoque de ${p.produto}`}
-                        >
-                          <polyline
-                            points={pontosParaLinha(p.tendencia, 300, 50)}
-                            fill="none"
-                            stroke="#ea580c"
-                            strokeWidth={2}
-                          />
-                        </svg>
-
-                        <a
-                          className="link-sm"
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            verHistoricoCompleto(p.produto);
-                          }}
-                        >
-                          Ver histórico completo do produto →
-                        </a>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+        <ProdutosPeriodoTabela produtos={PRODUTOS_RELATORIO.slice(0, 5)} />
       </section>
+
+      {showTodos && <TodosProdutosModal onClose={() => setShowTodos(false)} />}
     </div>
   );
 }
