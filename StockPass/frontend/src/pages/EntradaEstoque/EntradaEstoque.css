@@ -1,0 +1,91 @@
+/*
+  Usa classes que já existem em Painel.css (carregado no projeto inteiro):
+  .panel-card, .panel-card--soft-padrao, .stats-grid, .stat-card, .stat-label,
+  .stat-value, .stat-hint, .table, .btn-primary, .btn-secondary, .muted-sm.
+*/
+
+.entrada {
+  height: 100%;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.entrada-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.entrada-hint-curto {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* O card do histórico ocupa o espaço que sobra na tela (monitor grande) */
+.entrada-historico {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.entrada-historico-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.entrada-filtros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.entrada-filtros input,
+.entrada-filtros select {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+}
+
+.entrada-filtros input {
+  width: 260px;
+}
+
+.entrada-tabela-area {
+  flex: 1;
+  min-height: 250px;
+  overflow: hidden;
+}
+
+.entrada-vazio {
+  padding: 24px 10px;
+}
+
+.entrada-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.entrada-paginacao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.entrada-paginacao button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
