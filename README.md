@@ -419,7 +419,7 @@ frontend/dist/
 
 - **Andressa Rosa de Lima Gonçalves Machado**
 - **Henry Bittenbinder Dias de Oliveira**
-- **Mariana Martins Nunes**
+- **Gabriela Hormina de Oliveira Sousa**
 
 Projeto acadêmico desenvolvido para a **FATEC Praia Grande - SP**.
 
