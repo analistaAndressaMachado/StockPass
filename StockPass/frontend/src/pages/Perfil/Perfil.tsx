@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '../../services/api';
 import type { User } from '../../types';
 import { mensagemErro } from '../../services/stockApi';
+import { nomePerfil } from '../../utils/perfil';
 
 type Props = {
   user: User;
@@ -83,7 +84,7 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
               </label>
             </>
           )}
-          <p><b>Perfil:</b> {user.role}</p>
+          <p><b>Perfil:</b> {nomePerfil(user.role)}</p>
           <button className="btn-primary" type="submit" disabled={savingProfile}>
             {savingProfile ? 'Salvando...' : 'Salvar informações'}
           </button>

@@ -1,4 +1,5 @@
 import type { User } from '../../types';
+import { nomePerfil } from '../../utils/perfil';
 
 type Props = {
   title: string;
@@ -15,7 +16,7 @@ export function Header({ title, user, onProfileClick }: Props) {
         <div className="app-header-avatar">{user.name.charAt(0).toUpperCase()}</div>
         <div>
           <p className="app-header-user-name">{user.name}</p>
-          <p className="app-header-user-role">{user.role}</p>
+          <p className="app-header-user-role">{nomePerfil(user.role)}</p>
         </div>
         <button className="app-header-menu">⋮</button>
       </div>
