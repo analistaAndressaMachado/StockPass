@@ -126,6 +126,7 @@
 
 .catalogo-lista table {
   width: 100%;
+  min-width: 980px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -136,11 +137,13 @@
   Como table-layout é fixed, essas porcentagens são respeitadas de verdade
   em vez de cada coluna esticar pelo conteúdo.
 */
-.col-nome { width: 30%; }
-.col-sku { width: 14%; }
-.col-categoria { width: 16%; }
-.col-quantidade { width: 13%; }
-.col-preco { width: 14%; }
+.col-nome { width: 18%; }
+.col-sku { width: 12%; }
+.col-categoria { width: 12%; }
+.col-quantidade { width: 8%; }
+.col-fornecedor { width: 16%; }
+.col-reposicao { width: 11%; }
+.col-preco { width: 11%; }
 .col-acoes { width: 48px; }
 
 .catalogo-lista th {
@@ -240,3 +243,4 @@
   display: block;
   padding-right: 10px;
 }
+

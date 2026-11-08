@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import './EntradaEstoque.css';
-import type { User } from '../../types';
-import { ENTRADAS_INICIAIS, ehHoje, formatarDataHora, formatarHora, nomeDoDia } from './entradasMock';
+import type { Produto } from '../../types';
+import { ehHoje, formatarDataHora, formatarHora, nomeDoDia } from './entradasMock';
 import type { Entrada } from './entradasMock';
 import { NovaEntradaModal } from './NovaEntradaModal';
 import type { NovaEntradaDados } from './NovaEntradaModal';
+import { listarEntradas, listarProdutos, mensagemErro, registrarEntrada as registrarEntradaApi } from '../../services/stockApi';
 
 type Periodo = 'todos' | 'hoje' | '7dias' | 'mes';
 
@@ -20,19 +21,31 @@ function noPeriodo(iso: string, periodo: Periodo) {
 }
 
 type Props = {
-  user: User;
+  openNovaEntrada?: boolean;
+  reposicao?: { productId: number; quantity: number; replenishmentId?: number } | null;
 };
 
-export function EntradaEstoque({ user }: Props) {
-  const [entradas, setEntradas] = useState<Entrada[]>(ENTRADAS_INICIAIS);
+export function EntradaEstoque({ openNovaEntrada = false, reposicao = null }: Props) {
+  const [entradas, setEntradas] = useState<Entrada[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [erro, setErro] = useState('');
   const [periodo, setPeriodo] = useState<Periodo>('todos');
   const [busca, setBusca] = useState('');
   const [pagina, setPagina] = useState(1);
-  const [showNova, setShowNova] = useState(false);
+  const [showNova, setShowNova] = useState(openNovaEntrada || Boolean(reposicao));
 
   // Quantas linhas cabem na tela agora (mesma ideia do Painel).
   const [linhasPorPagina, setLinhasPorPagina] = useState(MINIMO_LINHAS);
   const areaTabelaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    Promise.all([listarEntradas(), listarProdutos()])
+      .then(([historico, catalogo]) => {
+        setEntradas(historico);
+        setProdutos(catalogo);
+      })
+      .catch((error: unknown) => setErro(mensagemErro(error)));
+  }, []);
 
   useEffect(() => {
     const area = areaTabelaRef.current;
@@ -73,23 +86,19 @@ export function EntradaEstoque({ user }: Props) {
   const fornecedores = new Set(filtradas.map((e) => e.fornecedor)).size;
   const ultima = entradas[0];
 
-  function registrarEntrada(dados: NovaEntradaDados) {
-    // Por enquanto só entra na lista em memória (no navegador). Com o backend,
-    // aqui vai uma chamada POST /api/entradas e o servidor grava a data/hora
-    // e o usuário logado automaticamente.
-    const nova: Entrada = {
-      id: Date.now(),
-      dataHora: new Date().toISOString(),
-      sku: dados.sku,
-      produto: dados.produto,
-      fornecedor: dados.fornecedor,
-      quantidade: dados.quantidade,
-      registradoPor: user.name,
-      notaFiscal: dados.notaFiscal,
-    };
-    setEntradas((prev) => [nova, ...prev]);
-    setPagina(1);
-    setShowNova(false);
+  async function registrarEntrada(dados: NovaEntradaDados) {
+    try {
+      const nova = await registrarEntradaApi(dados.productId, dados.quantidade, dados.notaFiscal, dados.replenishmentId);
+      setEntradas((prev) => [nova, ...prev]);
+      setProdutos((prev) => prev.map((produto) => produto.id === dados.productId
+        ? { ...produto, quantidade: produto.quantidade + dados.quantidade }
+        : produto));
+      setPagina(1);
+      setErro('');
+      setShowNova(false);
+    } catch (error) {
+      setErro(mensagemErro(error));
+    }
   }
 
   return (
@@ -104,6 +113,8 @@ export function EntradaEstoque({ user }: Props) {
           Nova Entrada de Estoque
         </button>
       </section>
+
+      {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
 
       <section className="stats-grid">
         <div className="stat-card">
@@ -224,7 +235,14 @@ export function EntradaEstoque({ user }: Props) {
         </div>
       </section>
 
-      {showNova && <NovaEntradaModal onClose={() => setShowNova(false)} onSave={registrarEntrada} />}
+      {showNova && (
+        <NovaEntradaModal
+          products={produtos}
+          reposicao={reposicao}
+          onClose={() => setShowNova(false)}
+          onSave={registrarEntrada}
+        />
+      )}
     </div>
   );
 }

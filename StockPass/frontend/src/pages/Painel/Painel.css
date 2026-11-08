@@ -16,8 +16,13 @@
 .alertas-area {
   flex: 1;
   min-height: 250px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
   contain: size;
+}
+
+.alertas-area .table {
+  min-width: 820px;
 }
 
 .painel-header {
@@ -253,3 +258,4 @@
 .panel-card table tbody tr:nth-child(even) {
   background: #eef0f3;
 }
+

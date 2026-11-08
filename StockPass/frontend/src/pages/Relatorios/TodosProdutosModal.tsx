@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
-import { PRODUTOS_RELATORIO } from './produtosPeriodo';
 import { ProdutosPeriodoTabela } from './ProdutosPeriodoTabela';
+import type { ProdutoRelatorio } from './produtosPeriodo';
 
 const ITENS_POR_PAGINA = 8;
 
 type OrdemOpcao = 'nome-asc' | 'nome-desc' | 'saidas-desc' | 'estoque-asc';
 
 type Props = {
+  produtos: ProdutoRelatorio[];
   onClose: () => void;
+  onSchedule?: (produto: ProdutoRelatorio) => void;
+  onReceive?: (produto: ProdutoRelatorio) => void;
+  schedulingSku?: string | null;
 };
 
-export function TodosProdutosModal({ onClose }: Props) {
+export function TodosProdutosModal({ produtos, onClose, onSchedule, onReceive, schedulingSku }: Props) {
   const [ordem, setOrdem] = useState<OrdemOpcao>('nome-asc');
   const [pagina, setPagina] = useState(1);
 
-  const ordenados = [...PRODUTOS_RELATORIO].sort((a, b) => {
+  const ordenados = [...produtos].sort((a, b) => {
     switch (ordem) {
       case 'nome-asc': return a.produto.localeCompare(b.produto);
       case 'nome-desc': return b.produto.localeCompare(a.produto);
@@ -54,7 +58,7 @@ export function TodosProdutosModal({ onClose }: Props) {
         </div>
 
         <div className="todos-itens-table-wrap">
-          <ProdutosPeriodoTabela produtos={daPagina} />
+          <ProdutosPeriodoTabela produtos={daPagina} onSchedule={onSchedule} onReceive={onReceive} schedulingSku={schedulingSku} />
         </div>
 
         <div className="todos-itens-footer">

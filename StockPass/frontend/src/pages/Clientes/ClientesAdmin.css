@@ -1,0 +1,37 @@
+.clientes-admin { height: 100%; overflow-y: auto; padding: 24px 32px; box-sizing: border-box; }
+.clientes-admin-topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.clientes-admin-topo h2, .clientes-admin-identidade h2 { margin: 0; font-size: 19px; color: #17212b; overflow-wrap: anywhere; }
+.clientes-admin-topo p, .clientes-admin-identidade p { margin: 5px 0 0; color: #66717c; font-size: 13px; overflow-wrap: anywhere; }
+.clientes-admin-topo input { width: min(320px, 100%); box-sizing: border-box; padding: 10px 12px; border: 1px solid #d0d5dd; border-radius: 6px; background: white; font: inherit; font-size: 13px; }
+.clientes-admin-layout { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 24px; border-top: 1px solid #dfe3e8; }
+.clientes-admin-lista { min-width: 0; padding-top: 12px; }
+.clientes-admin-cliente { display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px; border: 0; border-left: 3px solid transparent; background: transparent; text-align: left; cursor: pointer; }
+.clientes-admin-cliente:hover { background: #eaf0f4; }
+.clientes-admin-cliente.selecionado { border-left-color: #3478bd; background: #e7f1f8; }
+.clientes-admin-cliente strong { color: #17212b; font-size: 14px; overflow-wrap: anywhere; }
+.clientes-admin-cliente span, .clientes-admin-identidade span { color: #66717c; font-size: 12px; overflow-wrap: anywhere; }
+.clientes-admin-detalhes { min-width: 0; padding: 20px 0 24px; }
+.clientes-admin-detalhes > p, .clientes-admin-lista > p { color: #66717c; font-size: 13px; }
+.clientes-admin-identidade span { display: block; margin-top: 8px; }
+.clientes-admin-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 24px; }
+.clientes-admin-titulo h3 { margin: 0; color: #17212b; font-size: 16px; }
+.clientes-admin-titulo span, .clientes-admin-pedido-cabecalho span, .clientes-admin-pedido-rodape span { color: #66717c; font-size: 12px; }
+.clientes-admin-pedido { padding: 16px 0; border-bottom: 1px solid #dfe3e8; }
+.clientes-admin-pedido-cabecalho, .clientes-admin-pedido-rodape { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.clientes-admin-pedido-cabecalho strong, .clientes-admin-pedido-rodape strong { color: #17212b; font-size: 14px; }
+.clientes-admin-pedido ul { display: flex; flex-direction: column; gap: 10px; padding: 12px 0; margin: 0; list-style: none; }
+.clientes-admin-pedido li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; color: #53616d; font-size: 13px; }
+.clientes-admin-pedido li div { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.clientes-admin-pedido li div strong, .clientes-admin-pedido li > strong { color: #17212b; }
+.clientes-admin-pedido li div span { font-size: 12px; }
+@media (max-width: 700px) {
+  .clientes-admin { padding: 18px 14px; }
+  .clientes-admin-topo { align-items: stretch; flex-direction: column; }
+  .clientes-admin-topo input { width: 100%; }
+  .clientes-admin-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .clientes-admin-lista { max-height: 240px; overflow-y: auto; }
+  .clientes-admin-detalhes { border-top: 1px solid #dfe3e8; }
+  .clientes-admin-pedido-cabecalho, .clientes-admin-pedido-rodape { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .clientes-admin-pedido li { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+  .clientes-admin-pedido li div { grid-column: 1 / -1; }
+}

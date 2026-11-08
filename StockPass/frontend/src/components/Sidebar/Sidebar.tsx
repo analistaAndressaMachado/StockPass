@@ -4,20 +4,24 @@ type NavItem = {
   roles?: string[]; // se existir, só esses perfis enxergam o item no menu
 };
 
+const ROLES_INTERNOS = ['USER', 'GESTOR', 'ADMIN'];
+
 const NAV_ITEMS: NavItem[] = [
-  { key: 'painel', label: 'Painel' },
-  { key: 'catalogo', label: 'Catálogo de Produtos' },
-  { key: 'entrada', label: 'Entrada de Estoque' },
-  { key: 'saida', label: 'Saída de Estoque' },
-  { key: 'relatorios', label: 'Relatórios' },
-  { key: 'clientes', label: 'Clientes' },
+  { key: 'painel', label: 'Painel', roles: ROLES_INTERNOS },
+  { key: 'catalogo', label: 'Catálogo de Produtos', roles: ROLES_INTERNOS },
+  { key: 'entrada', label: 'Entrada de Estoque', roles: ROLES_INTERNOS },
+  { key: 'saida', label: 'Saída de Estoque', roles: ROLES_INTERNOS },
+  { key: 'relatorios', label: 'Relatórios', roles: ROLES_INTERNOS },
+  { key: 'clientes-admin', label: 'Clientes', roles: ROLES_INTERNOS },
+  { key: 'clientes', label: 'Loja do Cliente', roles: ['CLIENTE'] },
+  { key: 'fornecedores', label: 'Fornecedores', roles: [...ROLES_INTERNOS, 'FORNECEDOR'] },
   { key: 'usuarios', label: 'Usuários e Permissões', roles: ['ADMIN', 'GESTOR'] },
 ];
 
 type Props = {
   active: string;
   onNavigate: (key: string) => void;
-  role: string; // perfil de quem está logado (USER, GESTOR ou ADMIN)
+  role: string;
 };
 
 export function Sidebar({ active, onNavigate, role }: Props) {

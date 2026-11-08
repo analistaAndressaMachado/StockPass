@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import './SaidaEstoque.css';
-import type { User } from '../../types';
+import type { Produto } from '../../types';
 import {
   MOTIVOS_SAIDA,
-  SAIDAS_INICIAIS,
   ehHoje,
   formatarDataHora,
   formatarHora,
@@ -13,6 +12,7 @@ import {
 import type { Saida } from './saidasMock';
 import { NovaSaidaModal } from './NovaSaidaModal';
 import type { NovaSaidaDados } from './NovaSaidaModal';
+import { listarProdutos, listarSaidas, mensagemErro, registrarSaida as registrarSaidaApi } from '../../services/stockApi';
 
 type Periodo = 'todos' | 'hoje' | '7dias' | 'mes';
 
@@ -28,20 +28,31 @@ function noPeriodo(iso: string, periodo: Periodo) {
 }
 
 type Props = {
-  user: User;
+  openNovaSaida?: boolean;
 };
 
-export function SaidaEstoque({ user }: Props) {
-  const [saidas, setSaidas] = useState<Saida[]>(SAIDAS_INICIAIS);
+export function SaidaEstoque({ openNovaSaida = false }: Props) {
+  const [saidas, setSaidas] = useState<Saida[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [erro, setErro] = useState('');
   const [periodo, setPeriodo] = useState<Periodo>('todos');
   const [motivoFiltro, setMotivoFiltro] = useState('Todos');
   const [busca, setBusca] = useState('');
   const [pagina, setPagina] = useState(1);
-  const [showNova, setShowNova] = useState(false);
+  const [showNova, setShowNova] = useState(openNovaSaida);
 
   // Quantas linhas cabem na tela agora (mesma ideia do Painel e da Entrada).
   const [linhasPorPagina, setLinhasPorPagina] = useState(MINIMO_LINHAS);
   const areaTabelaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    Promise.all([listarSaidas(), listarProdutos()])
+      .then(([historico, catalogo]) => {
+        setSaidas(historico);
+        setProdutos(catalogo);
+      })
+      .catch((error: unknown) => setErro(mensagemErro(error)));
+  }, []);
 
   useEffect(() => {
     const area = areaTabelaRef.current;
@@ -88,23 +99,19 @@ export function SaidaEstoque({ user }: Props) {
   });
   const principal = Object.entries(contagemMotivos).sort((a, b) => b[1] - a[1])[0];
 
-  function registrarSaida(dados: NovaSaidaDados) {
-    // Por enquanto só entra na lista em memória (no navegador). Com o backend,
-    // aqui vai uma chamada POST /api/saidas e o servidor grava a data/hora
-    // e o usuário logado automaticamente (e também desconta do estoque).
-    const nova: Saida = {
-      id: Date.now(),
-      dataHora: new Date().toISOString(),
-      sku: dados.sku,
-      produto: dados.produto,
-      quantidade: dados.quantidade,
-      motivo: dados.motivo,
-      registradoPor: user.name,
-      observacao: dados.observacao,
-    };
-    setSaidas((prev) => [nova, ...prev]);
-    setPagina(1);
-    setShowNova(false);
+  async function registrarSaida(dados: NovaSaidaDados) {
+    try {
+      const nova = await registrarSaidaApi(dados.productId, dados.quantidade, dados.motivo, dados.observacao);
+      setSaidas((prev) => [nova, ...prev]);
+      setProdutos((prev) => prev.map((produto) => produto.id === dados.productId
+        ? { ...produto, quantidade: produto.quantidade - dados.quantidade }
+        : produto));
+      setPagina(1);
+      setErro('');
+      setShowNova(false);
+    } catch (error) {
+      setErro(mensagemErro(error));
+    }
   }
 
   return (
@@ -119,6 +126,8 @@ export function SaidaEstoque({ user }: Props) {
           Registrar Saída de Estoque
         </button>
       </section>
+
+      {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
 
       <section className="stats-grid">
         <div className="stat-card">
@@ -253,7 +262,7 @@ export function SaidaEstoque({ user }: Props) {
         </div>
       </section>
 
-      {showNova && <NovaSaidaModal onClose={() => setShowNova(false)} onSave={registrarSaida} />}
+      {showNova && <NovaSaidaModal products={produtos} onClose={() => setShowNova(false)} onSave={registrarSaida} />}
     </div>
   );
 }

@@ -1,36 +1,51 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Modal } from '../../components/Modal/Modal';
+import { atualizarProduto, criarProduto, listarProdutos, mensagemErro } from '../../services/stockApi';
 import type { Produto } from '../../types';
+import type { NovoProduto } from '../../services/stockApi';
 import './Catalogo.css';
-
-// Mock provisório, só pra visualizar a tela funcionando.
-// Quando o backend de Produto existir, isso vira uma chamada real à API
-// (troca useState(PRODUTOS_MOCK) por um useEffect que busca em /api/produtos).
-const PRODUTOS_MOCK: Produto[] = [
-  { sku: 'SKU-00123', nome: 'Camiseta Básica Algodão Branca', categoria: 'Vestuário', quantidade: 240, preco: 59.9, fornecedor: 'TextilBrasil', pontoReposicao: 100 },
-  { sku: 'SKU-00457', nome: 'Calça Jeans Slim Azul', categoria: 'Vestuário', quantidade: 120, preco: 159.9, fornecedor: 'TextilBrasil', pontoReposicao: 80 },
-  { sku: 'SKU-00890', nome: 'Tênis Esportivo Conforto', categoria: 'Calçados', quantidade: 65, preco: 249.9, fornecedor: 'StepUp Calçados', pontoReposicao: 50 },
-  { sku: 'SKU-00210', nome: 'Mochila Executiva Preta', categoria: 'Acessórios', quantidade: 34, preco: 189.9, fornecedor: 'UrbanBag Co.', pontoReposicao: 40 },
-  { sku: 'SKU-01005', nome: 'Fone de Ouvido Bluetooth', categoria: 'Eletrônicos', quantidade: 82, preco: 129.9, fornecedor: 'Digital Gear Ltd', pontoReposicao: 30 },
-  { sku: 'SKU-01006', nome: 'Carregador Rápido USB-C 20W', categoria: 'Eletrônicos', quantidade: 310, preco: 89.9, fornecedor: 'Digital Gear Ltd', pontoReposicao: 100 },
-  { sku: 'SKU-02011', nome: 'Copo Térmico Inox 500ml', categoria: 'Casa & Cozinha', quantidade: 150, preco: 79.9, fornecedor: 'EcoFlow Supplies', pontoReposicao: 60 },
-  { sku: 'SKU-03001', nome: 'Caderno Universitário 200 folhas', categoria: 'Papelaria', quantidade: 420, preco: 22.9, fornecedor: 'PaperMill Co.', pontoReposicao: 150 },
-];
 
 type CampoOrdenacao = 'nome' | 'sku' | 'categoria' | 'quantidade' | 'preco';
 type DirecaoOrdenacao = 'asc' | 'desc';
+type FormNovoProduto = Omit<NovoProduto, 'quantidadeInicial' | 'preco' | 'pontoReposicao'> & {
+  quantidadeInicial: string;
+  preco: string;
+  pontoReposicao: string;
+};
+
+const NOVO_PRODUTO_VAZIO: FormNovoProduto = {
+  sku: '', nome: '', categoria: '', quantidadeInicial: '',
+  preco: '', fornecedor: '', pontoReposicao: '',
+};
 
 function formatarPreco(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export function Catalogo() {
-  const [produtos, setProdutos] = useState<Produto[]>(PRODUTOS_MOCK);
+type Props = {
+  openNovoProduto?: boolean;
+};
+
+export function Catalogo({ openNovoProduto = false }: Props) {
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [showNovoProduto, setShowNovoProduto] = useState(openNovoProduto);
+  const [novo, setNovo] = useState<FormNovoProduto>(NOVO_PRODUTO_VAZIO);
+  const [salvando, setSalvando] = useState(false);
   const [busca, setBusca] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
   const [campoOrdenacao, setCampoOrdenacao] = useState<CampoOrdenacao | null>(null);
   const [direcao, setDirecao] = useState<DirecaoOrdenacao>('desc');
   const [editandoSku, setEditandoSku] = useState<string | null>(null);
   const [rascunho, setRascunho] = useState<Produto | null>(null);
+
+  useEffect(() => {
+    listarProdutos()
+      .then(setProdutos)
+      .catch((error: unknown) => setErro(mensagemErro(error)))
+      .finally(() => setCarregando(false));
+  }, []);
 
   // Lista de categorias únicas, calculada a partir dos produtos que existem.
   const categorias = ['Todas', ...new Set(produtos.map((p) => p.categoria))];
@@ -94,19 +109,43 @@ function setaDoCampo(campo: CampoOrdenacao) {
     setRascunho(null);
   }
 
-  function salvarEdicao() {
+  async function salvarEdicao() {
     if (!rascunho) return;
-    // Por enquanto só atualiza em memória. Quando o backend de Produto
-    // existir, aqui entra uma chamada PUT/PATCH pra API de verdade.
-    setProdutos((prev) => prev.map((p) => (p.sku === rascunho.sku ? rascunho : p)));
-    setEditandoSku(null);
-    setRascunho(null);
+    try {
+      const atualizado = await atualizarProduto(rascunho);
+      setProdutos((prev) => prev.map((produto) => produto.id === atualizado.id ? atualizado : produto));
+      setErro('');
+      setEditandoSku(null);
+      setRascunho(null);
+    } catch (error) {
+      setErro(mensagemErro(error));
+    }
   }
 
   function novoProduto() {
-    // Placeholder por enquanto — depois vamos reaproveitar o mesmo Modal
-    // de "Adicionar Novo Produto" que já existe no Painel.
-    alert('Em breve: formulário de novo produto aqui no Catálogo.');
+    setNovo({ ...NOVO_PRODUTO_VAZIO });
+    setErro('');
+    setShowNovoProduto(true);
+  }
+
+  async function salvarNovoProduto(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSalvando(true);
+    try {
+      const criado = await criarProduto({
+        ...novo,
+        quantidadeInicial: Number(novo.quantidadeInicial),
+        preco: Number(novo.preco),
+        pontoReposicao: Number(novo.pontoReposicao),
+      });
+      setProdutos((prev) => [...prev, criado].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setShowNovoProduto(false);
+      setErro('');
+    } catch (error) {
+      setErro(mensagemErro(error));
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -135,6 +174,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
                           </div>
 
       <div className="catalogo-lista">
+        {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
         <div className="catalogo-lista-topo">
           <div>
             <h3>Lista de produtos</h3>
@@ -169,6 +209,8 @@ function setaDoCampo(campo: CampoOrdenacao) {
                     <col className="col-sku" />
                     <col className="col-categoria" />
                     <col className="col-quantidade" />
+                    <col className="col-fornecedor" />
+                    <col className="col-reposicao" />
                     <col className="col-preco" />
                     <col className="col-acoes" />
                   </colgroup>
@@ -178,6 +220,8 @@ function setaDoCampo(campo: CampoOrdenacao) {
               <th onClick={() => alternarOrdenacao('sku')}>Código {setaDoCampo('sku')}</th>
               <th onClick={() => alternarOrdenacao('categoria')}>Categoria {setaDoCampo('categoria')}</th>
               <th onClick={() => alternarOrdenacao('quantidade')}>Quantidade {setaDoCampo('quantidade')}</th>
+              <th>Fornecedor</th>
+              <th>Ponto de reposição</th>
               <th onClick={() => alternarOrdenacao('preco')}>Preço {setaDoCampo('preco')}</th>
               <th></th>
             </tr>
@@ -193,14 +237,24 @@ function setaDoCampo(campo: CampoOrdenacao) {
                         <input className="edit-input" value={rascunho.nome}
                           onChange={(e) => setRascunho({ ...rascunho, nome: e.target.value })} />
                       </td>
-                      <td>{produto.sku}</td>
+                      <td>
+                        <input className="edit-input" value={rascunho.sku}
+                          onChange={(e) => setRascunho({ ...rascunho, sku: e.target.value.toUpperCase() })} />
+                      </td>
                       <td>
                         <input className="edit-input" value={rascunho.categoria}
                           onChange={(e) => setRascunho({ ...rascunho, categoria: e.target.value })} />
                       </td>
                       <td>
-                        <input className="edit-input edit-input-num" type="number" min={0} value={rascunho.quantidade}
-                          onChange={(e) => setRascunho({ ...rascunho, quantidade: Number(e.target.value) })} />
+                        <span title="O saldo é alterado por entradas e saídas registradas">{rascunho.quantidade}</span>
+                      </td>
+                      <td>
+                        <input className="edit-input" value={rascunho.fornecedor}
+                          onChange={(e) => setRascunho({ ...rascunho, fornecedor: e.target.value })} />
+                      </td>
+                      <td>
+                        <input className="edit-input edit-input-num" type="number" min={0} step={1} value={rascunho.pontoReposicao}
+                          onChange={(e) => setRascunho({ ...rascunho, pontoReposicao: Number(e.target.value) })} />
                       </td>
                       <td>
                         <input className="edit-input edit-input-num" type="number" min={0} step="0.01" value={rascunho.preco}
@@ -217,6 +271,8 @@ function setaDoCampo(campo: CampoOrdenacao) {
                       <td>{produto.sku}</td>
                       <td>{produto.categoria}</td>
                       <td>{produto.quantidade}</td>
+                      <td>{produto.fornecedor}</td>
+                      <td>{produto.pontoReposicao}</td>
                       <td>{formatarPreco(produto.preco)}</td>
                             <td className="acoes-col">
                                                                                                                       <button className="icon-btn" onClick={() => iniciarEdicao(produto)} title="Editar">
@@ -234,10 +290,26 @@ function setaDoCampo(campo: CampoOrdenacao) {
         </table>
         </div>
 
-        {ordenados.length === 0 && (
+        {carregando ? <p className="muted-sm">Carregando produtos...</p> : ordenados.length === 0 && (
           <p className="muted-sm">Nenhum produto encontrado com esses filtros.</p>
         )}
       </div>
+
+      {showNovoProduto && (
+        <Modal title="Adicionar Novo Produto" onClose={() => setShowNovoProduto(false)}>
+          <form className="modal-form" onSubmit={salvarNovoProduto}>
+            <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} required /></label>
+            <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} required /></label>
+            <label>Categoria<input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} required /></label>
+            <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} required /></label>
+            <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} required /></label>
+            <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} required /></label>
+            <label>Ponto de reposição<input type="number" min={0} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} required /></label>
+            {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
+            <button className="btn-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Adicionar Produto'}</button>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

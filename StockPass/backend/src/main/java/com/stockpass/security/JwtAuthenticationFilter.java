@@ -6,5 +6,7 @@ import java.io.IOException; import java.nio.charset.StandardCharsets; import jav
 @Component public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
  @Value("${app.jwt.secret}") private String secret;
- @Override protected void doFilterInternal(HttpServletRequest req,HttpServletResponse res,FilterChain chain)throws ServletException,IOException{String h=req.getHeader("Authorization"); if(h!=null&&h.startsWith("Bearer ")){try{var key=Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));String email=Jwts.parser().verifyWith(key).build().parseSignedClaims(h.substring(7)).getPayload().getSubject();var auth=new UsernamePasswordAuthenticationToken(email,null,List.of(new SimpleGrantedAuthority("ROLE_USER")));SecurityContextHolder.getContext().setAuthentication(auth);}catch(Exception ignored){}} chain.doFilter(req,res);}
+ private final com.stockpass.repository.UserRepository users;
+ public JwtAuthenticationFilter(com.stockpass.repository.UserRepository users){this.users=users;}
+ @Override protected void doFilterInternal(HttpServletRequest req,HttpServletResponse res,FilterChain chain)throws ServletException,IOException{String h=req.getHeader("Authorization"); if(h!=null&&h.startsWith("Bearer ")){try{var key=Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));String email=Jwts.parser().verifyWith(key).build().parseSignedClaims(h.substring(7)).getPayload().getSubject();String role=users.findByEmailIgnoreCase(email).map(com.stockpass.model.User::getRole).orElse("USER");var auth=new UsernamePasswordAuthenticationToken(email,null,List.of(new SimpleGrantedAuthority("ROLE_"+role)));SecurityContextHolder.getContext().setAuthentication(auth);}catch(Exception ignored){}} chain.doFilter(req,res);}
 }

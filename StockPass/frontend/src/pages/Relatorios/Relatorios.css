@@ -48,13 +48,14 @@
 
 .tendencia-svg {
   width: 100%;
-  height: 160px;
+  height: 230px;
   display: block;
 }
 
 .grafico-legenda {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px 18px;
   margin-top: 10px;
 }
 
@@ -64,6 +65,36 @@
   gap: 6px;
   font-size: 13px;
   color: #6b7280;
+}
+
+.legenda-item strong {
+  color: #202b34;
+  font-variant-numeric: tabular-nums;
+}
+
+.linha-legenda {
+  display: inline-block;
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.eixo-grafico-label {
+  fill: #6b7280;
+  font-size: 10px;
+}
+
+.relatorios-atualizado {
+  color: #6b7280;
+  font-size: 12px;
+  text-align: right;
+  margin-top: 8px;
+}
+
+.relatorio-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .ponto {
@@ -162,4 +193,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+@media (max-width: 760px) {
+  .relatorios { padding: 18px 14px; }
+  .relatorios-filtro { align-items: flex-start; gap: 14px; flex-direction: column; }
+  .grafico-legenda { gap: 8px 12px; }
+  .legenda-item { font-size: 12px; }
+  .resumo-unico { flex-direction: column; }
+  .resumo-item + .resumo-item { border-left: 0; border-top: 1px solid #e5e7eb; }
 }

@@ -1,27 +1,28 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
-import { MOTIVOS_SAIDA, PRODUTOS_SAIDA } from './saidasMock';
+import { MOTIVOS_SAIDA } from './saidasMock';
+import type { Produto } from '../../types';
 
 export type NovaSaidaDados = {
-  sku: string;
-  produto: string;
+  productId: number;
   quantidade: number;
   motivo: string;
   observacao: string;
 };
 
 type Props = {
+  products: Produto[];
   onClose: () => void;
-  onSave: (dados: NovaSaidaDados) => void;
+  onSave: (dados: NovaSaidaDados) => void | Promise<void>;
 };
 
-export function NovaSaidaModal({ onClose, onSave }: Props) {
-  const [sku, setSku] = useState('');
+export function NovaSaidaModal({ products, onClose, onSave }: Props) {
+  const [productId, setProductId] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [motivo, setMotivo] = useState('');
   const [observacao, setObservacao] = useState('');
 
-  const produto = PRODUTOS_SAIDA.find((p) => p.sku === sku);
+  const produto = products.find((p) => p.id === Number(productId));
 
   return (
     <Modal title="Registrar Saída de Estoque" onClose={onClose}>
@@ -30,22 +31,16 @@ export function NovaSaidaModal({ onClose, onSave }: Props) {
         onSubmit={(e) => {
           e.preventDefault();
           if (!produto) return;
-          onSave({
-            sku: produto.sku,
-            produto: produto.nome,
-            quantidade: Number(quantidade),
-            motivo,
-            observacao: observacao.trim(),
-          });
+          void onSave({ productId: produto.id, quantidade: Number(quantidade), motivo, observacao: observacao.trim() });
         }}
       >
         <label>
           Produto
-          <select value={sku} onChange={(e) => setSku(e.target.value)} required>
-            <option value="" disabled>Selecione um produto</option>
-            {PRODUTOS_SAIDA.map((p) => (
-              <option key={p.sku} value={p.sku} disabled={p.disponivel === 0}>
-                {p.nome}{p.disponivel === 0 ? ' (sem estoque)' : ''}
+          <select value={productId} onChange={(e) => setProductId(e.target.value)} required>
+            <option value="" disabled>{products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}</option>
+            {products.map((p) => (
+              <option key={p.id} value={p.id} disabled={p.quantidade === 0}>
+                {p.nome} ({p.sku}){p.quantidade === 0 ? ' (sem estoque)' : ''}
               </option>
             ))}
           </select>
@@ -56,7 +51,7 @@ export function NovaSaidaModal({ onClose, onSave }: Props) {
           <input
             type="number"
             min={1}
-            max={produto ? produto.disponivel : undefined}
+            max={produto ? produto.quantidade : undefined}
             placeholder="Ex: 5"
             value={quantidade}
             onChange={(e) => setQuantidade(e.target.value)}
@@ -64,7 +59,7 @@ export function NovaSaidaModal({ onClose, onSave }: Props) {
           />
         </label>
 
-        {produto && <p className="muted-sm">Disponível em estoque: {produto.disponivel} Uni</p>}
+        {produto && <p className="muted-sm">Disponível em estoque: {produto.quantidade} Uni</p>}
 
         <label>
           Motivo
@@ -88,7 +83,7 @@ export function NovaSaidaModal({ onClose, onSave }: Props) {
 
         <p className="muted-sm">A data, a hora e o usuário são registrados automaticamente.</p>
 
-        <button className="btn-primary" type="submit">
+        <button className="btn-primary" type="submit" disabled={!produto}>
           Registrar Saída
         </button>
       </form>

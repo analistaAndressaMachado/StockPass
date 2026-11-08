@@ -4,12 +4,15 @@ import type { ProdutoRelatorio } from './produtosPeriodo';
 
 type Props = {
   produtos: ProdutoRelatorio[];
+  onSchedule?: (produto: ProdutoRelatorio) => void;
+  onReceive?: (produto: ProdutoRelatorio) => void;
+  schedulingSku?: string | null;
 };
 
 // Tabela de produtos com linhas clicáveis: ao clicar, a linha "abre" e mostra
 // o resumo de movimentação + gráfico daquele produto. Usada no card da página
 // de Relatórios e também dentro do modal "Ver todos".
-export function ProdutosPeriodoTabela({ produtos }: Props) {
+export function ProdutosPeriodoTabela({ produtos, onSchedule, onReceive, schedulingSku = null }: Props) {
   const [linhaAberta, setLinhaAberta] = useState<string | null>(null);
 
   function toggleLinha(sku: string) {
@@ -29,6 +32,7 @@ export function ProdutosPeriodoTabela({ produtos }: Props) {
           <th>Código do Produto</th>
           <th>Fornecedor</th>
           <th>Status</th>
+          {(onSchedule || onReceive) && <th>Ação</th>}
         </tr>
       </thead>
 
@@ -46,13 +50,33 @@ export function ProdutosPeriodoTabela({ produtos }: Props) {
                 <td>{p.sku}</td>
                 <td>{p.fornecedor}</td>
                 <td>
-                  <span className={statusClass(p.status)}>{p.status}</span>
+                  <div className="relatorio-status">
+                    <span className={statusClass(p.status)}>{p.status}</span>
+                    {p.reposicaoStatus && (
+                      <span className={statusClass(p.reposicaoStatus)}>{p.reposicaoStatus}</span>
+                    )}
+                  </div>
                 </td>
+                {(onSchedule || onReceive) && (
+                  <td>
+                    {p.reposicaoStatus === 'Reposição agendada' && onReceive ? (
+                      <button className="btn-primary" onClick={(event) => {
+                        event.stopPropagation();
+                        onReceive(p);
+                      }}>Registrar recebimento</button>
+                    ) : p.status !== 'OK' && p.reposicaoStatus !== 'Reposição feita' && onSchedule ? (
+                      <button className="btn-secondary" disabled={schedulingSku === p.sku} onClick={(event) => {
+                        event.stopPropagation();
+                        onSchedule(p);
+                      }}>{schedulingSku === p.sku ? 'Agendando...' : `Agendar +${p.quantidadeSugerida}`}</button>
+                    ) : <span className="muted-sm">—</span>}
+                  </td>
+                )}
               </tr>
 
               {aberto && (
                 <tr className="linha-detalhe">
-                  <td colSpan={5}>
+                  <td colSpan={onSchedule || onReceive ? 6 : 5}>
                     {/* Um único quadro com os 3 números, em vez de 3 cards separados */}
                     <div className="resumo-unico">
                       <div className="resumo-item">

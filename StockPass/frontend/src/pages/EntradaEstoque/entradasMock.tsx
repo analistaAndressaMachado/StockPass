@@ -1,12 +1,3 @@
-import { ITENS_INICIAIS } from '../Painel/TodosItensModal';
-
-// ======================================================================
-// DADOS MOCKADOS — só existem no frontend. Quando existir o backend de
-// Movimentação, o histórico vai vir de algo como GET /api/entradas e a
-// data/hora e o usuário vão ser gravados automaticamente pelo servidor.
-// Lembrar de atualizar o StockPass-itens-temporarios.md quando resolver.
-// ======================================================================
-
 export type Entrada = {
   id: number;
   dataHora: string; // data e hora em formato ISO (ex: 2026-10-04T14:32:00.000Z)
@@ -17,32 +8,6 @@ export type Entrada = {
   registradoPor: string;
   notaFiscal: string;
 };
-
-// Produtos que aparecem na lista de "Nova Entrada" (reaproveita os 20 do Painel).
-export const PRODUTOS_ENTRADA = ITENS_INICIAIS.map((i) => ({
-  sku: i.sku,
-  nome: i.produto,
-  fornecedor: i.fornecedor,
-}));
-
-const USUARIOS = ['Admin', 'Gestor', 'Henry', 'Mariana', 'Andressa'];
-
-// Histórico inventado, sempre "relativo a agora", pra ter entradas de hoje,
-// de ontem e dos últimos dias. Ordem: mais recente primeiro.
-export const ENTRADAS_INICIAIS: Entrada[] = Array.from({ length: 34 }, (_, n) => {
-  const item = ITENS_INICIAIS[(n * 7) % ITENS_INICIAIS.length];
-  const horasAtras = 1 + n * 9 + (n % 3) * 2;
-  return {
-    id: n + 1,
-    dataHora: new Date(Date.now() - horasAtras * 60 * 60 * 1000).toISOString(),
-    sku: item.sku,
-    produto: item.produto,
-    fornecedor: item.fornecedor,
-    quantidade: 20 + ((n * 37) % 180),
-    registradoPor: USUARIOS[n % USUARIOS.length],
-    notaFiscal: n % 4 === 0 ? '' : `NF-${4100 + n}`,
-  };
-});
 
 export function formatarDataHora(iso: string) {
   const d = new Date(iso);
