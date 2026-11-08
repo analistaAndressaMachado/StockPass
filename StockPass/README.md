@@ -125,6 +125,10 @@ Cadastro / Usuário existente
 - A senha deve possuir pelo menos **6 caracteres**.
 - A senha não é armazenada em texto puro: é protegida utilizando **BCrypt**.
 - O login retorna um token JWT.
+- A tela **Usuários e Permissões** consulta contas internas no SQLite. Administradores podem criar, editar, ativar e desativar contas; gestores podem consultá-las.
+- Alterações administrativas de contas são registradas a partir desta versão. A tabela de níveis de acesso é informativa e seus perfis são definidos no código; ela não permite configurar permissões individuais.
+- O último acesso é registrado nos próximos logins; acessos anteriores não estão disponíveis.
+- Relatórios são calculados a partir dos produtos e movimentações salvos; o relatório exibido não é armazenado como documento histórico.
 - Endpoints protegidos exigem o cabeçalho:
 
 ```text
@@ -292,6 +296,10 @@ baseURL: "http://localhost:8080/api"
 ## Banco de dados
 
 O projeto utiliza **SQLite** para manter a mesma proposta de banco local do projeto de referência.
+
+O arquivo `backend/stockpass.db` pode ser incluído no Git para levar os dados de demonstração a outro computador. **Ele contém cadastros, compras e hashes de senhas**; qualquer pessoa com acesso ao repositório poderá obter esses dados, inclusive de commits antigos. Use somente dados fictícios e não publique dados reais ou senhas reutilizadas. Tornar o repositório privado depois não remove dados já divulgados.
+
+Antes de adicionar o banco a um commit, encerre o backend normalmente para que todas as alterações sejam gravadas no arquivo. Os arquivos temporários do SQLite não são versionados. Inclua o arquivo no commit e faça o push; no outro computador, obtenha esse commit e inicie o backend na pasta `backend`. Alterações locais no banco não são enviadas automaticamente: exigem outro commit e push. Evite editar o banco nos dois computadores ao mesmo tempo, pois arquivos SQLite binários não podem ser mesclados automaticamente pelo Git.
 
 O banco é criado automaticamente pelo Spring Boot/JPA a partir das entidades do projeto.
 

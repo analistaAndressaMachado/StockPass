@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './Usuarios.css';
 import type { User } from '../../types';
+import { mensagemErro } from '../../services/stockApi';
+import { alterarStatusUsuario, criarUsuario, editarUsuario, listarAtividadesUsuarios, listarUsuarios } from '../../services/userManagementApi';
 import {
-  ATIVIDADES_INICIAIS,
   DESCRICAO_PERFIL,
   MODULOS,
   NIVEL_TEXTO,
   NOME_PERFIL,
   PERFIS,
-  USUARIOS_INICIAIS,
   formatarDataHora,
   nivelClass,
   nivelDoPerfil,
@@ -27,8 +27,10 @@ type Props = {
 };
 
 export function Usuarios({ user }: Props) {
-  const [usuarios, setUsuarios] = useState<UsuarioSistema[]>(USUARIOS_INICIAIS);
-  const [atividades, setAtividades] = useState<Atividade[]>(ATIVIDADES_INICIAIS);
+  const [usuarios, setUsuarios] = useState<UsuarioSistema[]>([]);
+  const [atividades, setAtividades] = useState<Atividade[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
   const [aba, setAba] = useState<Aba>('usuarios');
   const [busca, setBusca] = useState('');
   const [perfilFiltro, setPerfilFiltro] = useState<'todos' | Perfil>('todos');
@@ -49,47 +51,39 @@ export function Usuarios({ user }: Props) {
 
   const ativos = usuarios.filter((u) => u.ativo).length;
 
-  function registrarAtividade(acao: string) {
-    // Com o backend, o servidor é quem grava isso (com data/hora e usuário reais).
-    setAtividades((prev) => [
-      { id: Date.now(), dataHora: new Date().toISOString(), usuario: user.name, acao },
-      ...prev,
-    ]);
+  async function carregarDados() {
+    const [lista, historico] = await Promise.all([listarUsuarios(), listarAtividadesUsuarios()]);
+    setUsuarios(lista);
+    setAtividades(historico);
+    setErro('');
   }
 
-  function salvarUsuario(dados: UsuarioDados) {
+  useEffect(() => {
+    carregarDados().catch((error: unknown) => setErro(mensagemErro(error))).finally(() => setCarregando(false));
+  }, []);
+
+  async function salvarUsuario(dados: UsuarioDados) {
     if (modal?.tipo === 'editar') {
-      const antigo = modal.usuario;
-      setUsuarios((prev) =>
-        prev.map((u) => (u.id === antigo.id ? { ...u, nome: dados.nome, perfil: dados.perfil } : u)),
-      );
-      if (antigo.perfil !== dados.perfil) {
-        registrarAtividade(`Alterou o perfil de ${dados.nome} para ${NOME_PERFIL[dados.perfil]}`);
-      } else {
-        registrarAtividade(`Editou os dados de ${dados.nome}`);
-      }
+      await editarUsuario(modal.usuario.id, dados);
     } else {
-      const novo: UsuarioSistema = {
-        id: Date.now(),
-        nome: dados.nome,
-        email: dados.email,
-        perfil: dados.perfil,
-        ativo: true,
-        ultimoAcesso: null,
-      };
-      setUsuarios((prev) => [novo, ...prev]);
-      registrarAtividade(`Criou o usuário ${dados.nome} (${NOME_PERFIL[dados.perfil]})`);
+      await criarUsuario(dados);
     }
     setModal(null);
+    await carregarDados().catch((error: unknown) => setErro(mensagemErro(error)));
   }
 
-  function alternarStatus(alvo: UsuarioSistema) {
-    setUsuarios((prev) => prev.map((u) => (u.id === alvo.id ? { ...u, ativo: !u.ativo } : u)));
-    registrarAtividade(`${alvo.ativo ? 'Desativou' : 'Reativou'} o usuário ${alvo.nome}`);
+  async function alternarStatus(alvo: UsuarioSistema) {
+    try {
+      await alterarStatusUsuario(alvo.id, !alvo.ativo);
+      await carregarDados();
+    } catch (error: unknown) {
+      setErro(mensagemErro(error));
+    }
   }
 
   return (
     <div className="usuarios">
+      {erro && <p className="usuarios-erro" role="alert">{erro}</p>}
       <section className="panel-card panel-card--soft-padrao usuarios-topo">
         <div>
           <h2>Usuários e Permissões</h2>
@@ -172,9 +166,9 @@ export function Usuarios({ user }: Props) {
             </div>
 
             <div className="usuarios-area">
-              {filtrados.length === 0 ? (
+              {carregando ? <p className="muted-sm usuarios-vazio">Carregando usuários...</p> : filtrados.length === 0 && !erro ? (
                 <p className="muted-sm usuarios-vazio">Nenhum usuário encontrado.</p>
-              ) : (
+              ) : filtrados.length > 0 ? (
                 <table className="table">
                   <thead>
                     <tr>
@@ -207,7 +201,7 @@ export function Usuarios({ user }: Props) {
                                                    {u.ativo ? 'Ativo' : 'Inativo'}
                                                  </span>
                                                </td>
-                                               <td>{u.ultimoAcesso ? formatarDataHora(u.ultimoAcesso) : 'Nunca acessou'}</td>
+                                               <td>{u.ultimoAcesso ? formatarDataHora(u.ultimoAcesso) : 'Não registrado'}</td>
                                                <td>
                                                  {sou ? (
                                                    <span className="muted-sm">Você</span>
@@ -225,7 +219,7 @@ export function Usuarios({ user }: Props) {
                                                        className="btn-secondary"
                                                        disabled={!podeEditar}
                                                        title={podeEditar ? undefined : dicaSemPermissao}
-                                                       onClick={() => alternarStatus(u)}
+                                                       onClick={() => void alternarStatus(u)}
                                                      >
                                                        {u.ativo ? 'Desativar' : 'Reativar'}
                                                      </button>
@@ -237,7 +231,7 @@ export function Usuarios({ user }: Props) {
                                          })}
                                        </tbody>
                                      </table>
-                                   )}
+                                   ) : null}
                                  </div>
                                </>
                              )}
@@ -287,7 +281,7 @@ export function Usuarios({ user }: Props) {
                                    </table>
 
                                    <p className="muted-sm usuarios-nota">
-                                     Nesta versão a tabela é só de consulta. Depois, o Administrador poderá ajustar cada nível por aqui.
+                                     Os perfis são definidos pelo sistema; somente administradores podem alterar contas internas.
                                    </p>
                                  </div>
                                </>
@@ -296,10 +290,11 @@ export function Usuarios({ user }: Props) {
                              {aba === 'atividades' && (
                                <>
                                  <div className="usuarios-toolbar">
-                                   <span className="muted-sm">{atividades.length} registros · do mais recente para o mais antigo</span>
+                                   <span className="muted-sm">{atividades.length} alterações de usuários · do mais recente para o mais antigo</span>
                                  </div>
 
                                  <div className="usuarios-area">
+                                   {!carregando && !erro && atividades.length === 0 && <p className="muted-sm usuarios-vazio">Nenhuma alteração administrativa registrada.</p>}
                                    <table className="table">
                                      <thead>
                                        <tr>

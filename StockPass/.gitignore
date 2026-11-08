@@ -1,6 +1,9 @@
 # Backend
 backend/target/
 *.db
+*.db-wal
+*.db-shm
+*.db-journal
 
 # Frontend
 frontend/node_modules/
@@ -13,3 +16,4 @@ frontend/dist/
 .idea/
 StockPass/README.zip
 stockpass.db
+!backend/stockpass.db

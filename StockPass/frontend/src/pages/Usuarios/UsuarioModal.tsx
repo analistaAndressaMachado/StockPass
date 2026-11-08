@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import { DESCRICAO_PERFIL, NOME_PERFIL, PERFIS } from './usuariosMock';
 import type { Perfil, UsuarioSistema } from './usuariosMock';
+import { mensagemErro } from '../../services/stockApi';
 
 export type UsuarioDados = {
   nome: string;
@@ -14,7 +15,7 @@ type Props = {
   usuario?: UsuarioSistema; // se vier preenchido, estamos EDITANDO; senão, criando
   emailsExistentes: string[];
   onClose: () => void;
-  onSave: (dados: UsuarioDados) => void;
+  onSave: (dados: UsuarioDados) => Promise<void>;
 };
 
 export function UsuarioModal({ usuario, emailsExistentes, onClose, onSave }: Props) {
@@ -25,19 +26,27 @@ export function UsuarioModal({ usuario, emailsExistentes, onClose, onSave }: Pro
   const [perfil, setPerfil] = useState<Perfil>(usuario?.perfil ?? 'USER');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
+  const [salvando, setSalvando] = useState(false);
 
   return (
     <Modal title={editando ? 'Editar Usuário' : 'Novo Usuário'} onClose={onClose}>
       <form
         className="modal-form"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
           const emailLimpo = email.trim().toLowerCase();
           if (!editando && emailsExistentes.includes(emailLimpo)) {
             setErro('Já existe um usuário com esse e-mail.');
             return;
           }
-          onSave({ nome: nome.trim(), email: emailLimpo, perfil, senha });
+          setErro('');
+          setSalvando(true);
+          try {
+            await onSave({ nome: nome.trim(), email: emailLimpo, perfil, senha });
+          } catch (error: unknown) {
+            setErro(mensagemErro(error));
+            setSalvando(false);
+          }
         }}
       >
         <label>
@@ -87,8 +96,8 @@ export function UsuarioModal({ usuario, emailsExistentes, onClose, onSave }: Pro
 
         {erro && <p className="usuarios-erro">{erro}</p>}
 
-        <button className="btn-primary" type="submit">
-          {editando ? 'Salvar alterações' : 'Criar Usuário'}
+        <button className="btn-primary" type="submit" disabled={salvando}>
+          {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Criar Usuário'}
         </button>
       </form>
     </Modal>

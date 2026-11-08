@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -247,6 +248,43 @@ class StockPersistenceIntegrationTest {
         mockMvc.perform(get("/api/clients/" + client.id() + "/purchases").header("Authorization", "Bearer " + clientToken)).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/clients").header("Authorization", "Bearer " + jwt.generate(supplier.getEmail()))).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/clients")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void administrativeUsersArePersistedAndInactiveTokensAreRejected() throws Exception {
+        String suffix = UUID.randomUUID().toString();
+        String email = "managed-" + suffix + "@stockpass.test";
+        String adminToken = jwt.generate("admin@stockpass.com");
+        String createBody = objectMapper.writeValueAsString(java.util.Map.of(
+            "name", "Funcionário teste", "email", email, "role", "USER", "password", "senha-teste"));
+        mockMvc.perform(post("/api/users").header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON).content(createBody))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.active").value(true));
+        User managed = users.findByEmailIgnoreCase(email).orElseThrow();
+        assertTrue(!"senha-teste".equals(managed.getPassword()));
+        String userToken = jwt.generate(email);
+        mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + userToken)).andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/users/" + managed.getId()).header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Funcionário atualizado\",\"role\":\"GESTOR\"}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.role").value("GESTOR"));
+        mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + userToken)).andExpect(status().isOk());
+        mockMvc.perform(post("/api/users").header("Authorization", "Bearer " + userToken)
+            .contentType(MediaType.APPLICATION_JSON).content(createBody)).andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/users/" + managed.getId() + "/status").header("Authorization", "Bearer " + userToken)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"active\":false}"))
+            .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/users/" + managed.getId() + "/status").header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"active\":false}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.active").value(false));
+        mockMvc.perform(get("/api/users").header("Authorization", "Bearer " + userToken)).andExpect(status().isForbidden());
+        assertThrows(IllegalArgumentException.class,
+            () -> authService.login(new com.stockpass.dto.AuthDtos.LoginRequest(email, "senha-teste")));
+        mockMvc.perform(get("/api/users/activities").header("Authorization", "Bearer " + adminToken))
+            .andExpect(status().isOk()).andExpect(jsonPath("$[0].action").value("Desativou o usuário Funcionário atualizado."));
+        mockMvc.perform(put("/api/users/" + managed.getId() + "/status").header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"active\":true}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.active").value(true));
+        assertEquals("GESTOR", authService.login(new com.stockpass.dto.AuthDtos.LoginRequest(email, "senha-teste")).user().role());
     }
 
     @Test
