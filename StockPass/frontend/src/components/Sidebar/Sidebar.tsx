@@ -15,7 +15,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'saida', label: 'Saída de Estoque', roles: ROLES_INTERNOS },
   { key: 'relatorios', label: 'Relatórios', roles: ROLES_INTERNOS },
   { key: 'clientes-admin', label: 'Clientes', roles: ROLES_INTERNOS },
-  { key: 'clientes', label: 'Loja do Cliente', roles: ['CLIENTE'] },
+  { key: 'clientes', label: 'Área do Cliente', roles: ['CLIENTE'] },
   { key: 'fornecedores', label: 'Fornecedores', roles: [...ROLES_INTERNOS, 'FORNECEDOR'] },
   { key: 'usuarios', label: 'Usuários e Permissões', roles: ['ADMIN', 'GESTOR'] },
 ];

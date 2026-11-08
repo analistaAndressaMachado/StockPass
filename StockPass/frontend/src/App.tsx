@@ -21,7 +21,7 @@ const PAGE_TITLES: Record<string, string> = {
   entrada: 'Entrada de Estoque',
   saida: 'Saída de Estoque',
   relatorios: 'Relatórios',
-  clientes: 'Loja do Cliente',
+  clientes: 'Área do Cliente',
   'clientes-admin': 'Clientes',
   fornecedores: 'Fornecedores',
     usuarios: 'Usuários e Permissões',

@@ -105,7 +105,7 @@ export function LojaCliente() {
     <div className="loja-cliente">
       <section className="panel-card panel-card--soft-padrao loja-cabecalho">
         <div>
-          <h2>Loja do Cliente</h2>
+          <h2>Área do Cliente</h2>
           <p className="muted-sm">Produtos disponíveis no estoque para compra.</p>
         </div>
         <div className="loja-resumo-carrinho">
