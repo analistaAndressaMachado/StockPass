@@ -3,6 +3,7 @@ import axios from 'axios';
 import { api } from '../../services/api';
 import { mensagemErro } from '../../services/stockApi';
 import type { User } from '../../types';
+import { Brand } from '../../components/Brand/Brand';
 
 type Props = {
   onLogin: (user: User) => void;
@@ -86,7 +87,7 @@ export function Login({ onLogin }: Props) {
   return (
     <main className="page">
       <section className="card auth">
-        <h1>StockPass</h1>
+        <h1><Brand className="brand-login" /></h1>
         <p className="muted">Sistema de Controle de Estoque</p>
         <h2>{mode === 'login' ? 'Entrar'
           : mode === 'supplierRegister' ? 'Cadastro de fornecedor'

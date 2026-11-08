@@ -1,3 +1,5 @@
+import { Brand } from '../Brand/Brand';
+
 type NavItem = {
   key: string;
   label: string;
@@ -29,10 +31,7 @@ export function Sidebar({ active, onNavigate, role }: Props) {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
-        <span className="sidebar-logo-icon" />
-        <span className="sidebar-logo-text">Armazém Pro</span>
-      </div>
+      <Brand />
       <nav className="sidebar-nav">
         {itensVisiveis.map((item) => (
           <button

@@ -12,22 +12,81 @@
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   padding: 0 4px;
 }
 
 .sidebar-logo-icon {
-  width: 28px;
-  height: 28px;
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
   border-radius: 8px;
-  background: #2563eb;
-  display: inline-block;
+  background: #102c43;
+  overflow: hidden;
+}
+
+.sidebar-logo-motion {
+  position: absolute;
+  top: 17px;
+  left: 7px;
+  width: 12px;
+  height: 2px;
+  border-radius: 2px;
+  background: #2ed5c4;
+  box-shadow: -3px 6px 0 #2ed5c4, 0 12px 0 #2ed5c4;
+}
+
+.sidebar-logo-package {
+  position: absolute;
+  top: 10px;
+  right: 7px;
+  width: 23px;
+  height: 26px;
+  background: #38c8d7;
+  clip-path: polygon(50% 0, 100% 24%, 100% 76%, 50% 100%, 0 76%, 0 24%);
+}
+
+.sidebar-logo-package::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: #102c43;
+  clip-path: polygon(50% 0, 100% 24%, 100% 76%, 50% 100%, 0 76%, 0 24%);
+}
+
+.sidebar-logo-package::after {
+  content: '';
+  position: absolute;
+  inset: 7px 5px 5px;
+  background: #38c8d7;
+  clip-path: polygon(50% 25%, 100% 0, 100% 14%, 56% 38%, 56% 100%, 44% 100%, 44% 38%, 0 14%, 0 0);
 }
 
 .sidebar-logo-text {
+  font-family: 'Trebuchet MS', sans-serif;
   font-weight: 700;
-  font-size: 15px;
-  color: #111827;
+  font-size: 19px;
+  color: #102c43;
+  white-space: nowrap;
+}
+
+.sidebar-logo-text span {
+  margin-left: 4px;
+  color: #087f91;
+}
+
+.brand-login {
+  padding: 0;
+}
+
+.brand-login .sidebar-logo-text {
+  font-size: 25px;
+}
+
+.brand-painel {
+  align-self: flex-start;
+  padding: 0;
 }
 
 .sidebar-nav {

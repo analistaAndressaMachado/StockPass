@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listarProdutos, mensagemErro } from '../../services/stockApi';
 import type { Produto } from '../../types';
+import { Brand } from '../../components/Brand/Brand';
 import './Painel.css';
 
 function statusClass(quantidade: number, ponto: number) {
@@ -36,6 +37,7 @@ export function Painel({ onNavigate, onRestock }: Props) {
 
   return (
     <div className="painel">
+      <Brand className="brand-painel" />
       <section className="stats-grid">
         <div className="stat-card">
           <div className="stat-card-top"><span className="stat-label">Produtos cadastrados</span></div>
