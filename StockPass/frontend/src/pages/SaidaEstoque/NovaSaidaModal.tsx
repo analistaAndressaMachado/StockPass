@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import { MOTIVOS_SAIDA } from './saidasMock';
 import type { Produto } from '../../types';
+import { mensagemErro } from '../../services/stockApi';
 
 export type NovaSaidaDados = {
   productId: number;
@@ -21,8 +22,25 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
   const [quantidade, setQuantidade] = useState('');
   const [motivo, setMotivo] = useState('');
   const [observacao, setObservacao] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
 
   const produto = products.find((p) => p.id === Number(productId));
+  const quantidadeValida = Number.isInteger(Number(quantidade)) && Number(quantidade) > 0 &&
+    Boolean(produto && Number(quantidade) <= produto.availableQuantity);
+
+  async function solicitarReserva() {
+    if (!produto || !quantidadeValida) return;
+    setSalvando(true);
+    setErro('');
+    try {
+      await onSave({ productId: produto.id, quantidade: Number(quantidade), motivo, observacao: observacao.trim() });
+    } catch (error) {
+      setErro(mensagemErro(error));
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   return (
     <Modal title="Registrar Saída de Estoque" onClose={onClose}>
@@ -30,8 +48,7 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
         className="modal-form"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!produto) return;
-          void onSave({ productId: produto.id, quantidade: Number(quantidade), motivo, observacao: observacao.trim() });
+          void solicitarReserva();
         }}
       >
         <label>
@@ -39,19 +56,19 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
           <select value={productId} onChange={(e) => setProductId(e.target.value)} required>
             <option value="" disabled>{products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}</option>
             {products.map((p) => (
-              <option key={p.id} value={p.id} disabled={p.quantidade === 0}>
-                {p.nome} ({p.sku}){p.quantidade === 0 ? ' (sem estoque)' : ''}
+              <option key={p.id} value={p.id} disabled={p.availableQuantity === 0}>
+                {p.nome} ({p.sku}){p.availableQuantity === 0 ? ' (sem saldo disponível)' : ''}
               </option>
             ))}
           </select>
         </label>
 
         <label>
-          Quantidade que saiu (Uni)
+          Quantidade para reservar (Uni)
           <input
             type="number"
             min={1}
-            max={produto ? produto.quantidade : undefined}
+            max={produto ? produto.availableQuantity : undefined}
             placeholder="Ex: 5"
             value={quantidade}
             onChange={(e) => setQuantidade(e.target.value)}
@@ -59,7 +76,9 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
           />
         </label>
 
-        {produto && <p className="muted-sm">Disponível em estoque: {produto.quantidade} Uni</p>}
+        {produto && <p className="muted-sm">
+          Saldo disponível: {produto.availableQuantity} Uni · Já reservadas: {produto.reservedQuantity} Uni
+        </p>}
 
         <label>
           Motivo
@@ -83,8 +102,10 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
 
         <p className="muted-sm">A data, a hora e o usuário são registrados automaticamente.</p>
 
-        <button className="btn-primary" type="submit" disabled={!produto}>
-          Registrar Saída
+        {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
+
+        <button className="btn-primary" type="submit" disabled={!produto || !quantidadeValida || salvando}>
+          {salvando ? 'Criando reserva...' : 'Reservar saída'}
         </button>
       </form>
     </Modal>

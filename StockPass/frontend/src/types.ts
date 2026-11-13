@@ -10,5 +10,22 @@ export type Produto = {
   preco: number;
   fornecedor: string;
   pontoReposicao: number;
+  physicalQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+};
+
+export type ReservaSaida = {
+  id: number;
+  productId: number;
+  sku: string;
+  product: string;
+  quantity: number;
+  reason: string;
+  observation: string | null;
+  createdBy: string;
+  createdAt: string;
+  expiresAt: string;
+  status: string;
 };
 
