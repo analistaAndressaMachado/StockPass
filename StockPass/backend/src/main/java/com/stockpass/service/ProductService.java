@@ -8,7 +8,9 @@ import com.stockpass.model.Product;
 import com.stockpass.model.StockMovement;
 import com.stockpass.repository.ProductRepository;
 import com.stockpass.repository.StockMovementRepository;
+import com.stockpass.repository.StockReservationRepository;
 import java.util.List;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,15 +18,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
     private final ProductRepository products;
     private final StockMovementRepository movements;
+    private final StockReservationRepository reservations;
 
-    public ProductService(ProductRepository products, StockMovementRepository movements) {
+    public ProductService(ProductRepository products, StockMovementRepository movements,
+            StockReservationRepository reservations) {
         this.products = products;
         this.movements = movements;
+        this.reservations = reservations;
     }
 
     @Transactional(readOnly = true)
     public List<ProductResponse> list() {
-        return products.findAllByOrderByNameAsc().stream().map(ProductService::response).toList();
+        LocalDateTime now = LocalDateTime.now();
+        return products.findAllByOrderByNameAsc().stream().map(product -> response(product, reserved(product, now))).toList();
     }
 
     @Transactional
@@ -54,7 +60,7 @@ public class ProductService {
             initialEntry.setRegisteredBy(registeredBy);
             movements.save(initialEntry);
         }
-        return response(product);
+        return response(product, 0);
     }
 
     @Transactional
@@ -71,12 +77,18 @@ public class ProductService {
         product.setPrice(request.price());
         product.setSupplier(request.supplier().trim());
         product.setReorderPoint(request.reorderPoint());
-        return response(products.save(product));
+        Product saved = products.save(product);
+        return response(saved, reserved(saved, LocalDateTime.now()));
     }
 
-    public static ProductResponse response(Product product) {
+    private int reserved(Product product, LocalDateTime now) {
+        return Math.toIntExact(reservations.sumActiveQuantity(product.getId(), now));
+    }
+
+    private static ProductResponse response(Product product, int reserved) {
         return new ProductResponse(product.getId(), product.getSku(), product.getName(),
             product.getCategory(), product.getQuantity(), product.getPrice(),
-            product.getSupplier(), product.getReorderPoint());
+            product.getSupplier(), product.getReorderPoint(), product.getQuantity(), reserved,
+            product.getQuantity() - reserved);
     }
 }

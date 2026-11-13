@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +18,7 @@ import com.stockpass.model.User;
 import com.stockpass.repository.ProductRepository;
 import com.stockpass.repository.StockReplenishmentRepository;
 import com.stockpass.repository.StockMovementRepository;
+import com.stockpass.repository.StockReservationRepository;
 import com.stockpass.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +32,7 @@ class StockMovementServiceTest {
     @Mock private ProductRepository products;
     @Mock private StockMovementRepository movements;
     @Mock private StockReplenishmentRepository replenishments;
+    @Mock private StockReservationRepository reservations;
     @Mock private UserRepository users;
 
     private StockMovementService service;
@@ -37,12 +40,13 @@ class StockMovementServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new StockMovementService(products, movements, replenishments, users);
+        service = new StockMovementService(products, movements, replenishments, reservations, users);
         product = new Product();
         product.setSku("SKU-001");
         product.setName("Produto de teste");
         product.setQuantity(10);
         product.setSupplier("Fornecedor teste");
+        lenient().when(reservations.sumActiveQuantity(any(), any())).thenReturn(0L);
 
     }
 
