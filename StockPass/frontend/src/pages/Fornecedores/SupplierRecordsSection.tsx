@@ -4,6 +4,7 @@ import {
   atualizarFornecedorCadastrado,
   criarFornecedorCadastrado,
   listarFornecedoresCadastrados,
+  listarContratosPertoDoVencimento,
 } from '../../services/supplierManagementApi';
 import type { SupplierRecord, SupplierRecordInput, SupplierStatus } from '../../services/supplierManagementTypes';
 import { SupplierContractsSection } from './SupplierContractsSection';
@@ -23,6 +24,7 @@ const STATUS_LABEL: Record<SupplierStatus, string> = {
 export function SupplierRecordsSection({ canManage }: Props) {
   const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
   const [openSupplierId, setOpenSupplierId] = useState<number | null>(null);
+  const [suppliersWithExpiringContracts, setSuppliersWithExpiringContracts] = useState<Set<number>>(() => new Set());
   const [modalSupplier, setModalSupplier] = useState<ModalState>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,6 +33,17 @@ export function SupplierRecordsSection({ canManage }: Props) {
     const items = await listarFornecedoresCadastrados();
     setSuppliers(items);
     if (preferredId !== undefined) setOpenSupplierId(preferredId);
+  }
+
+  async function recarregarIndicadoresVencimento() {
+    try {
+      const contracts = await listarContratosPertoDoVencimento(30);
+      setSuppliersWithExpiringContracts(new Set(
+        contracts.filter((contract) => contract.status === 'CURRENT').map((contract) => contract.supplierId),
+      ));
+    } catch {
+      setSuppliersWithExpiringContracts(new Set());
+    }
   }
 
   useEffect(() => {
@@ -42,6 +55,18 @@ export function SupplierRecordsSection({ canManage }: Props) {
       })
       .catch((loadError: unknown) => { if (active) setError(mensagemErro(loadError)); })
       .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    listarContratosPertoDoVencimento(30)
+      .then((contracts) => {
+        if (active) setSuppliersWithExpiringContracts(new Set(
+          contracts.filter((contract) => contract.status === 'CURRENT').map((contract) => contract.supplierId),
+        ));
+      })
+      .catch(() => { if (active) setSuppliersWithExpiringContracts(new Set()); });
     return () => { active = false; };
   }, []);
 
@@ -88,11 +113,12 @@ export function SupplierRecordsSection({ canManage }: Props) {
           <div className="fornecedores-empty">Nenhum fornecedor cadastrado.</div>
         ) : (
           <div className="fornecedores-management-table-wrap">
-            <table className="table fornecedores-management-table">
+            <table className="table fornecedores-management-table fornecedores-records-table">
               <thead>
                 <tr>
                   <th aria-label="Expandir contratos" />
                   <th>Razão social</th>
+                  <th>Status</th>
                   <th>CNPJ</th>
                   <th>Situação</th>
                   {canManage && <th>Ações</th>}
@@ -124,8 +150,10 @@ export function SupplierRecordsSection({ canManage }: Props) {
                         <span className={`seta ${aberto ? 'seta-aberta' : ''}`} aria-hidden="true">›</span>
                       </button>
                     </td>
-                    <td>
-                      <span>{supplier.legalName}</span>
+                    <td><span>{supplier.legalName}</span></td>
+                    <td>{suppliersWithExpiringContracts.has(supplier.id)
+                      ? <span className="badge badge-yellow fornecedor-contrato-a-vencer">Contrato a vencer</span>
+                      : <span className="fornecedor-sem-alerta">—</span>}
                     </td>
                     <td>{supplier.cnpj}</td>
                     <td><span className={`badge ${supplier.status === 'ACTIVE' ? 'badge-green' : 'badge-blue'}`}>
@@ -139,9 +167,10 @@ export function SupplierRecordsSection({ canManage }: Props) {
                     </td>}
                   </tr>
                   {aberto && <tr className="linha-detalhe fornecedor-contratos-detalhe">
-                    <td colSpan={canManage ? 5 : 4}>
+                    <td colSpan={canManage ? 6 : 5}>
                       <SupplierContractsSection key={supplier.id} supplierId={supplier.id}
-                        supplierName={supplier.legalName} canManage={canManage} />
+                        supplierName={supplier.legalName} canManage={canManage}
+                        onContractsSaved={recarregarIndicadoresVencimento} />
                     </td>
                   </tr>}
                   </Fragment>;

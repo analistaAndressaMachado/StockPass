@@ -22,7 +22,6 @@ public class AuthDtos {
  ){}
  public record ProfileUpdateRequest(
 	 @NotBlank String name,
-	 @Email @NotBlank String email,
 	 String companyName,
 	 String taxId,
 	 String phone
@@ -32,6 +31,6 @@ public class AuthDtos {
  public record ResetPasswordRequest(@NotBlank String token,@Size(min = 6) String newPassword){}
  public record MessageResponse(String message){}
  public record ChangePasswordRequest(String currentPassword,String newPassword){}
- public record UserResponse(Long id,String name,String email,String role,String companyName,String taxId,String phone){}
+ public record UserResponse(Long id,String name,String email,String role,String companyName,String taxId,String phone,String photoUrl){}
  public record AuthResponse(String token,UserResponse user){}
 }

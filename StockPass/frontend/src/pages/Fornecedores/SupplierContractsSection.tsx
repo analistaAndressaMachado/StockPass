@@ -13,6 +13,7 @@ type Props = {
   supplierId: number;
   supplierName: string;
   canManage: boolean;
+  onContractsSaved?: () => Promise<void>;
 };
 
 const STATUS_LABEL: Record<SupplierContractStatus, string> = {
@@ -30,7 +31,44 @@ function formatarValor(value: number | null) {
   return value === null ? '—' : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export function SupplierContractsSection({ supplierId, supplierName, canManage }: Props) {
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+function ordinalDataCivil(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(0);
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCFullYear(year, month - 1, day);
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+  return Math.floor(date.getTime() / MS_POR_DIA);
+}
+
+function diasAteDataCivil(value: string) {
+  const target = ordinalDataCivil(value);
+  if (target === null) return null;
+  const now = new Date();
+  const today = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / MS_POR_DIA);
+  return target - today;
+}
+
+function avisoVencimento(contract: SupplierContract) {
+  if (contract.status !== 'CURRENT') return null;
+  const days = diasAteDataCivil(contract.endDate);
+  if (days === null) return null;
+  if (days < 0) {
+    const overdue = Math.abs(days);
+    return { label: `Vencido há ${overdue} ${overdue === 1 ? 'dia' : 'dias'}`, className: 'badge-red' };
+  }
+  if (days > 30) return null;
+  if (days === 0) return { label: 'Vence hoje', className: 'badge-orange' };
+  if (days === 1) return { label: 'Vence amanhã', className: 'badge-orange' };
+  return { label: `Vence em ${days} dias`, className: 'badge-orange' };
+}
+
+export function SupplierContractsSection({ supplierId, supplierName, canManage, onContractsSaved }: Props) {
   const [contracts, setContracts] = useState<SupplierContract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -61,14 +99,16 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage }
     setModalContract(null);
     setError('');
     setReloadKey((current) => current + 1);
+    await onContractsSaved?.();
   }
+
+  const avisoDoModal = detailContract ? avisoVencimento(detailContract) : null;
 
   return (
     <div className="fornecedor-contracts-inline">
       <div className="fornecedores-section-title">
         <div>
           <h2>Contratos</h2>
-          <p className="muted-sm">Contratos vinculados ao fornecedor selecionado.</p>
         </div>
         {canManage && <button className="btn-primary" type="button" onClick={() => setModalContract('new')}>
           Novo contrato
@@ -81,7 +121,7 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage }
         <div className="fornecedores-empty">Este fornecedor ainda não possui contratos cadastrados.</div>
       ) : (
         <div className="fornecedores-management-table-wrap">
-          <table className="table fornecedores-management-table">
+          <table className={`table fornecedores-management-table fornecedor-contracts-table ${canManage ? 'fornecedor-contracts-table--actions' : 'fornecedor-contracts-table--readonly'}`}>
             <thead>
               <tr>
                 <th>Número</th>
@@ -94,23 +134,29 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage }
               </tr>
             </thead>
             <tbody>
-              {contracts.map((contract) => (
-                <tr key={contract.id} className="fornecedor-contract-row" onClick={() => setDetailContract(contract)}>
-                  <td>{contract.contractNumber}</td>
+              {contracts.map((contract) => {
+                const aviso = avisoVencimento(contract);
+                return <tr key={contract.id} className="fornecedor-contract-row" onClick={() => setDetailContract(contract)}>
+                  <td className="fornecedor-contract-number">{contract.contractNumber}</td>
                   <td>{formatarDataCivil(contract.startDate)}</td>
-                  <td>{formatarDataCivil(contract.endDate)}</td>
+                  <td><div className="fornecedor-contract-end-cell">
+                    <span>{formatarDataCivil(contract.endDate)}</span>
+                    {aviso && <span className={`badge ${aviso.className} fornecedor-vencimento-badge`}>{aviso.label}</span>}
+                  </div></td>
                   <td>{formatarValor(contract.value)}</td>
                   <td><span className={`badge ${contract.status === 'CURRENT' ? 'badge-green' : contract.status === 'EXPIRED' ? 'badge-orange' : 'badge-blue'}`}>
                     {STATUS_LABEL[contract.status]}
                   </span></td>
-                  <td>{contract.observations || '—'}</td>
+                  <td title={contract.observations || ''}>
+                    <span className="fornecedor-contract-observation-cell">{contract.observations || '—'}</span>
+                  </td>
                   {canManage && <td><button className="btn-secondary" type="button"
                     onClick={(event) => {
                       event.stopPropagation();
                       setModalContract(contract);
                     }}>Editar</button></td>}
-                </tr>
-              ))}
+                </tr>;
+              })}
             </tbody>
           </table>
         </div>
@@ -135,7 +181,7 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage }
             <div><dt>Fornecedor</dt><dd>{supplierName}</dd></div>
             <div><dt>Valor</dt><dd>{formatarValor(detailContract.value)}</dd></div>
             <div><dt>In&#237;cio</dt><dd>{formatarDataCivil(detailContract.startDate)}</dd></div>
-            <div><dt>Fim</dt><dd>{formatarDataCivil(detailContract.endDate)}</dd></div>
+            <div><dt>Fim</dt><dd>{formatarDataCivil(detailContract.endDate)}{avisoDoModal && <span className={`badge ${avisoDoModal.className} fornecedor-vencimento-badge`}>{avisoDoModal.label}</span>}</dd></div>
           </dl>
           <section className="fornecedor-contract-observations">
             <h3>Observa&#231;&#245;es</h3>

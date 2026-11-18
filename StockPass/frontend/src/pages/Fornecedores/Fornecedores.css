@@ -75,6 +75,33 @@
   min-width: 560px;
 }
 
+.fornecedores-records-table {
+  min-width: 760px;
+  table-layout: fixed;
+}
+
+.fornecedores-records-table th:nth-child(1),
+.fornecedores-records-table td:nth-child(1) { width: 38px; }
+.fornecedores-records-table th:nth-child(2),
+.fornecedores-records-table td:nth-child(2) { width: 30%; }
+.fornecedores-records-table th:nth-child(3),
+.fornecedores-records-table td:nth-child(3) { width: 170px; }
+.fornecedores-records-table th:nth-child(4),
+.fornecedores-records-table td:nth-child(4) { width: 18%; }
+.fornecedores-records-table th:nth-child(5),
+.fornecedores-records-table td:nth-child(5) { width: 125px; }
+.fornecedores-records-table th:nth-child(6),
+.fornecedores-records-table td:nth-child(6) { width: 100px; }
+
+.fornecedores-records-table thead th:nth-child(3),
+.fornecedores-records-table tbody tr.fornecedor-linha-clicavel td:nth-child(3) {
+  text-align: center;
+}
+
+.fornecedor-sem-alerta {
+  color: #9ca3af;
+}
+
 .fornecedores-management-table tbody tr:nth-child(even) {
   background: #eef0f3;
 }
@@ -132,15 +159,101 @@
 
 .fornecedor-contracts-inline {
   min-width: 0;
+  margin-left: 8px;
+  padding: 12px 14px 14px;
+  border-radius: 8px;
+  background: #f3f4f6;
 }
 
 .fornecedor-contracts-inline .fornecedores-section-title {
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+}
+
+.fornecedor-contracts-inline .fornecedores-section-title h2 {
+  font-size: 16px;
 }
 
 .fornecedor-contracts-inline .fornecedores-management-table-wrap {
   margin-top: 0;
+}
+
+.fornecedor-contracts-table {
+  width: 100%;
+  min-width: 960px;
+  table-layout: fixed;
+}
+
+.fornecedor-contracts-table th,
+.fornecedor-contracts-table td {
+  padding: 10px 8px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.fornecedor-contracts-table--actions th:nth-child(1),
+.fornecedor-contracts-table--actions td:nth-child(1) { width: 16%; }
+.fornecedor-contracts-table--actions th:nth-child(2),
+.fornecedor-contracts-table--actions td:nth-child(2) { width: 11%; }
+.fornecedor-contracts-table--actions th:nth-child(3),
+.fornecedor-contracts-table--actions td:nth-child(3) { width: 20%; }
+.fornecedor-contracts-table--actions th:nth-child(4),
+.fornecedor-contracts-table--actions td:nth-child(4) { width: 12%; }
+.fornecedor-contracts-table--actions th:nth-child(5),
+.fornecedor-contracts-table--actions td:nth-child(5) { width: 11%; }
+.fornecedor-contracts-table--actions th:nth-child(6),
+.fornecedor-contracts-table--actions td:nth-child(6) { width: 20%; }
+.fornecedor-contracts-table--actions th:nth-child(7),
+.fornecedor-contracts-table--actions td:nth-child(7) { width: 10%; }
+
+.fornecedor-contracts-table--readonly th:nth-child(1),
+.fornecedor-contracts-table--readonly td:nth-child(1) { width: 16%; }
+.fornecedor-contracts-table--readonly th:nth-child(2),
+.fornecedor-contracts-table--readonly td:nth-child(2) { width: 12%; }
+.fornecedor-contracts-table--readonly th:nth-child(3),
+.fornecedor-contracts-table--readonly td:nth-child(3) { width: 22%; }
+.fornecedor-contracts-table--readonly th:nth-child(4),
+.fornecedor-contracts-table--readonly td:nth-child(4) { width: 13%; }
+.fornecedor-contracts-table--readonly th:nth-child(5),
+.fornecedor-contracts-table--readonly td:nth-child(5) { width: 12%; }
+.fornecedor-contracts-table--readonly th:nth-child(6),
+.fornecedor-contracts-table--readonly td:nth-child(6) { width: 25%; }
+
+.fornecedor-contracts-table .fornecedor-contract-number {
+  white-space: nowrap;
+}
+
+.fornecedor-contracts-table th:nth-child(4),
+.fornecedor-contracts-table td:nth-child(4) {
+  text-align: right;
+}
+
+.fornecedor-contracts-table th:nth-child(5),
+.fornecedor-contracts-table td:nth-child(5) {
+  text-align: center;
+}
+
+.fornecedor-contracts-table--actions th:nth-child(7),
+.fornecedor-contracts-table--actions td:nth-child(7) {
+  text-align: right;
+}
+
+.fornecedor-contract-end-cell {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.fornecedor-contracts-table .fornecedor-vencimento-badge {
+  margin-left: 0;
+}
+
+.fornecedor-contract-observation-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fornecedor-contract-row {
@@ -153,6 +266,17 @@
 
 .fornecedor-contract-row:hover td {
   background: #f3f6fa;
+}
+
+.fornecedor-vencimento-badge {
+  margin-left: 8px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.fornecedor-contrato-a-vencer {
+  margin-left: 8px;
+  font-size: 11px;
 }
 
 .fornecedor-contract-details dl {

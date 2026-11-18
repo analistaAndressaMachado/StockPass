@@ -25,6 +25,9 @@ public class SecurityConfig {
   return http.csrf(c->c.disable()).cors(c->{}).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
   .authorizeHttpRequests(a->a
   .requestMatchers("/api/hello-world","/api/auth/login","/api/auth/register","/api/auth/register-supplier","/api/auth/register-client","/api/auth/password/forgot","/api/auth/password/reset","/api/auth/password/demo-reset").permitAll()
+  .requestMatchers(HttpMethod.PUT, "/api/auth/profile/photo").authenticated()
+  .requestMatchers(HttpMethod.DELETE, "/api/auth/profile/photo").authenticated()
+  .requestMatchers(HttpMethod.GET, "/api/media/users/**").authenticated()
   .requestMatchers("/api/store/**").hasRole("CLIENTE")
   .requestMatchers("/api/clients", "/api/clients/**").hasAnyRole("USER","GESTOR","ADMIN")
   .requestMatchers(HttpMethod.GET,"/api/users", "/api/users/**").hasAnyRole("GESTOR","ADMIN")

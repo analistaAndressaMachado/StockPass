@@ -331,18 +331,19 @@ class StockPersistenceIntegrationTest {
     }
 
     @Test
-    void clientCanUpdateOwnNameAndEmailWithoutChangingRole() {
+    void clientCanUpdateOwnNameWithoutChangingEmailOrRole() {
         String oldEmail = "profile-client-" + UUID.randomUUID() + "@stockpass.test";
         var client = authService.registerClient(new ClientRegisterRequest("Cliente antigo", oldEmail, "senha-cliente"));
 
         var updated = authService.updateProfile(oldEmail,
-            new ProfileUpdateRequest("Cliente atualizado", "cliente-atualizado-" + UUID.randomUUID() + "@stockpass.test",
-                "Empresa não permitida", "CNPJ não permitido", "Telefone não permitido"));
+            new ProfileUpdateRequest("Cliente atualizado", "Empresa não permitida",
+                "CNPJ não permitido", "Telefone não permitido"));
 
         assertEquals("Cliente atualizado", updated.name());
         assertEquals("CLIENTE", updated.role());
         User persisted = users.findById(client.id()).orElseThrow();
-        assertEquals(updated.email(), persisted.getEmail());
+        assertEquals(oldEmail, updated.email());
+        assertEquals(oldEmail, persisted.getEmail());
         assertNull(persisted.getCompanyName());
     }
 
@@ -353,10 +354,10 @@ class StockPersistenceIntegrationTest {
             "Contato", "profile-supplier-" + suffix + "@stockpass.test", "senha-fornecedor",
             "Empresa antiga", null, null));
         var updatedSupplier = authService.updateProfile(supplier.email(),
-            new ProfileUpdateRequest("Contato atualizado", "profile-supplier-updated-" + suffix + "@stockpass.test",
-                "Empresa nova", "12.345.678/0001-90", "11999990000"));
+            new ProfileUpdateRequest("Contato atualizado", "Empresa nova", "12.345.678/0001-90", "11999990000"));
         assertEquals("Empresa nova", updatedSupplier.companyName());
         assertEquals("FORNECEDOR", updatedSupplier.role());
+        assertEquals(supplier.email(), updatedSupplier.email());
 
         var product = productService.create(
             new ProductRequest("EDIT-" + suffix, "Produto editável", "Geral", 7,
