@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import { atualizarProduto, criarProduto, listarProdutos, mensagemErro } from '../../services/stockApi';
 import type { Produto } from '../../types';
@@ -24,21 +24,28 @@ function formatarPreco(valor: number) {
 
 type Props = {
   openNovoProduto?: boolean;
+  modalOnly?: boolean;
+  onModalClose?: () => void;
+  onModalSuccess?: (produtoId: number) => void;
+  highlightProdutoId?: number | null;
 };
 
-export function Catalogo({ openNovoProduto = false }: Props) {
+export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalClose, onModalSuccess, highlightProdutoId = null }: Props) {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [showNovoProduto, setShowNovoProduto] = useState(openNovoProduto);
   const [novo, setNovo] = useState<FormNovoProduto>(NOVO_PRODUTO_VAZIO);
   const [salvando, setSalvando] = useState(false);
+  const modalCancelada = useRef(false);
   const [busca, setBusca] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
   const [campoOrdenacao, setCampoOrdenacao] = useState<CampoOrdenacao | null>(null);
   const [direcao, setDirecao] = useState<DirecaoOrdenacao>('desc');
   const [editandoSku, setEditandoSku] = useState<string | null>(null);
   const [rascunho, setRascunho] = useState<Produto | null>(null);
+  const [produtoDestaqueId, setProdutoDestaqueId] = useState<number | null>(null);
+  const produtoDestaqueCarregado = highlightProdutoId !== null && produtos.some((produto) => produto.id === highlightProdutoId);
 
   useEffect(() => {
     listarProdutos()
@@ -46,6 +53,13 @@ export function Catalogo({ openNovoProduto = false }: Props) {
       .catch((error: unknown) => setErro(mensagemErro(error)))
       .finally(() => setCarregando(false));
   }, []);
+
+  useEffect(() => {
+    if (highlightProdutoId === null || !produtoDestaqueCarregado) return;
+    setProdutoDestaqueId(highlightProdutoId);
+    const timeout = window.setTimeout(() => setProdutoDestaqueId(null), 500);
+    return () => window.clearTimeout(timeout);
+  }, [highlightProdutoId, produtoDestaqueCarregado]);
 
   // Lista de categorias únicas, calculada a partir dos produtos que existem.
   const categorias = ['Todas', ...new Set(produtos.map((p) => p.categoria))];
@@ -141,12 +155,39 @@ function setaDoCampo(campo: CampoOrdenacao) {
       setProdutos((prev) => [...prev, criado].sort((a, b) => a.nome.localeCompare(b.nome)));
       setShowNovoProduto(false);
       setErro('');
+      if (modalOnly && !modalCancelada.current) onModalSuccess?.(criado.id);
     } catch (error) {
       setErro(mensagemErro(error));
     } finally {
       setSalvando(false);
     }
   }
+
+  function fecharModalNovoProduto() {
+    modalCancelada.current = true;
+    setShowNovoProduto(false);
+    if (modalOnly) onModalClose?.();
+  }
+
+  function renderNovoProdutoModal() {
+    return (
+      <Modal title="Adicionar Novo Produto" onClose={fecharModalNovoProduto}>
+        <form className="modal-form" onSubmit={salvarNovoProduto}>
+          <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} required /></label>
+          <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} required /></label>
+          <label>Categoria<input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} required /></label>
+          <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} required /></label>
+          <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} required /></label>
+          <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} required /></label>
+          <label>Ponto de reposição<input type="number" min={0} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} required /></label>
+          {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
+          <button className="btn-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Adicionar Produto'}</button>
+        </form>
+      </Modal>
+    );
+  }
+
+  if (modalOnly) return showNovoProduto ? renderNovoProdutoModal() : null;
 
   return (
     <div className="catalogo">
@@ -230,7 +271,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
             {ordenados.map((produto) => {
               const emEdicao = editandoSku === produto.sku;
               return (
-                <tr key={produto.sku}>
+                <tr key={produto.id} className={produto.id === produtoDestaqueId ? 'linha-recem-criada' : undefined}>
                   {emEdicao && rascunho ? (
                     <>
                       <td>
@@ -295,21 +336,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
         )}
       </div>
 
-      {showNovoProduto && (
-        <Modal title="Adicionar Novo Produto" onClose={() => setShowNovoProduto(false)}>
-          <form className="modal-form" onSubmit={salvarNovoProduto}>
-            <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} required /></label>
-            <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} required /></label>
-            <label>Categoria<input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} required /></label>
-            <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} required /></label>
-            <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} required /></label>
-            <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} required /></label>
-            <label>Ponto de reposição<input type="number" min={0} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} required /></label>
-            {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
-            <button className="btn-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Adicionar Produto'}</button>
-          </form>
-        </Modal>
-      )}
+      {showNovoProduto && renderNovoProdutoModal()}
     </div>
   );
 }

@@ -31,7 +31,12 @@ export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState('painel');
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [quickEntryOpen, setQuickEntryOpen] = useState(false);
+  const [entradaParaDestacar, setEntradaParaDestacar] = useState<number | null>(null);
+  const [quickExitOpen, setQuickExitOpen] = useState(false);
+  const [reservaParaDestacar, setReservaParaDestacar] = useState<number | null>(null);
+  const [quickProductOpen, setQuickProductOpen] = useState(false);
+  const [produtoParaDestacar, setProdutoParaDestacar] = useState<number | null>(null);
   const [pendingRestock, setPendingRestock] = useState<{
     productId: number;
     quantity: number;
@@ -56,20 +61,22 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (pendingAction && pendingAction === page) setPendingAction(null);
-  }, [pendingAction, page]);
-
-  useEffect(() => {
     if (pendingRestock && page === 'entrada') setPendingRestock(null);
   }, [pendingRestock, page]);
 
-  function navegarPeloPainel(target: string, abrirModal = false) {
-    setPendingAction(abrirModal ? target : null);
-    setPage(target);
+  function abrirEntradaRapida() {
+    setQuickEntryOpen(true);
+  }
+
+  function abrirSaidaRapida() {
+    setQuickExitOpen(true);
+  }
+
+  function abrirProdutoRapido() {
+    setQuickProductOpen(true);
   }
 
   function navegarPelaSidebar(target: string) {
-    setPendingAction(null);
     setPage(target);
   }
 
@@ -104,18 +111,56 @@ export function App() {
         <Header title={PAGE_TITLES[page] ?? 'Perfil'} user={user} onProfileClick={() => setPage('perfil')} />
         <div className="app-body">
          {page === 'painel' ? (
-           <Painel onNavigate={navegarPeloPainel} onRestock={iniciarReposicao} />
+           <>
+             <Painel onRestock={iniciarReposicao} onNovaEntrada={abrirEntradaRapida} onNovaSaida={abrirSaidaRapida} onNovoProduto={abrirProdutoRapido} />
+             {quickEntryOpen && (
+               <EntradaEstoque
+                 openNovaEntrada
+                 modalOnly
+                 onModalClose={() => setQuickEntryOpen(false)}
+                 onModalSuccess={(entradaId) => {
+                   setQuickEntryOpen(false);
+                   setEntradaParaDestacar(entradaId);
+                   setPage('entrada');
+                 }}
+               />
+             )}
+             {quickExitOpen && (
+               <SaidaEstoque
+                 openNovaSaida
+                 modalOnly
+                 onModalClose={() => setQuickExitOpen(false)}
+                 onModalSuccess={(reservaId) => {
+                   setQuickExitOpen(false);
+                   setReservaParaDestacar(reservaId);
+                   setPage('saida');
+                 }}
+               />
+             )}
+             {quickProductOpen && (
+               <Catalogo
+                 openNovoProduto
+                 modalOnly
+                 onModalClose={() => setQuickProductOpen(false)}
+                 onModalSuccess={(produtoId) => {
+                   setQuickProductOpen(false);
+                   setProdutoParaDestacar(produtoId);
+                   setPage('catalogo');
+                 }}
+               />
+             )}
+           </>
          ) : page === 'perfil' ? (
            <Perfil user={user} onUserUpdated={setUser} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
          ) : page === 'catalogo' ? (
-           <Catalogo openNovoProduto={pendingAction === 'catalogo'} />
+            <Catalogo highlightProdutoId={produtoParaDestacar} />
              ) : page === 'entrada' ? (
                        <EntradaEstoque
-                         openNovaEntrada={pendingAction === 'entrada'}
                          reposicao={pendingRestock}
+                         highlightEntradaId={entradaParaDestacar}
                        />
                        ) : page === 'saida' ? (
-                                 <SaidaEstoque openNovaSaida={pendingAction === 'saida'} />
+                                 <SaidaEstoque highlightReservaId={reservaParaDestacar} />
                      ) : page === 'usuarios' ? (
                              <Usuarios user={user} />
                      ) : page === 'fornecedores' ? (

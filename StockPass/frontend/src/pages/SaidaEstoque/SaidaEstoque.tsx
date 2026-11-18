@@ -48,9 +48,13 @@ function noPeriodo(iso: string, periodo: Periodo) {
 
 type Props = {
   openNovaSaida?: boolean;
+  modalOnly?: boolean;
+  onModalClose?: () => void;
+  onModalSuccess?: (reservaId: number) => void;
+  highlightReservaId?: number | null;
 };
 
-export function SaidaEstoque({ openNovaSaida = false }: Props) {
+export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModalClose, onModalSuccess, highlightReservaId = null }: Props) {
   const [saidas, setSaidas] = useState<Saida[]>([]);
   const [reservas, setReservas] = useState<ReservaSaida[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -68,6 +72,10 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
   const [linhasPorPagina, setLinhasPorPagina] = useState(MINIMO_LINHAS);
   const areaTabelaRef = useRef<HTMLDivElement>(null);
   const expiracoesAvisadas = useRef(new Set<number>());
+  const modalCancelada = useRef(false);
+  const [reservaDestaqueId, setReservaDestaqueId] = useState<number | null>(null);
+  const [saidaDestaqueId, setSaidaDestaqueId] = useState<number | null>(null);
+  const reservaParaDestacarCarregada = highlightReservaId !== null && reservas.some((reserva) => reserva.id === highlightReservaId);
 
   const atualizarDados = useCallback(async () => {
     try {
@@ -91,6 +99,19 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
     }, 1000);
     return () => window.clearInterval(intervalo);
   }, [atualizarDados]);
+
+  useEffect(() => {
+    if (highlightReservaId === null || !reservaParaDestacarCarregada) return;
+    setReservaDestaqueId(highlightReservaId);
+    const timeout = window.setTimeout(() => setReservaDestaqueId(null), 3300);
+    return () => window.clearTimeout(timeout);
+  }, [highlightReservaId, reservaParaDestacarCarregada]);
+
+  useEffect(() => {
+    if (saidaDestaqueId === null) return;
+    const timeout = window.setTimeout(() => setSaidaDestaqueId(null), 3300);
+    return () => window.clearTimeout(timeout);
+  }, [saidaDestaqueId]);
 
   useEffect(() => {
     const expiradas = reservas.filter((reserva) =>
@@ -161,7 +182,22 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
     setAviso(`Reserva criada. Você tem até ${new Date(reserva.expiresAt).toLocaleTimeString('pt-BR')} para confirmar.`);
     setErro('');
     setShowNova(false);
+    if (modalOnly && !modalCancelada.current) onModalSuccess?.(reserva.id);
     void atualizarDados();
+  }
+
+  if (modalOnly) {
+    return showNova ? (
+      <NovaSaidaModal
+        products={produtos}
+        onClose={() => {
+          modalCancelada.current = true;
+          setShowNova(false);
+          onModalClose?.();
+        }}
+        onSave={registrarSaida}
+      />
+    ) : null;
   }
 
   async function confirmarReserva(reserva: ReservaSaida) {
@@ -169,6 +205,7 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
     try {
       const nova = await confirmarReservaSaida(reserva.id);
       setSaidas((prev) => [nova, ...prev.filter((item) => item.id !== nova.id)]);
+      setSaidaDestaqueId(nova.id);
       setReservas((prev) => prev.filter((item) => item.id !== reserva.id));
       setPagina(1);
       setErro('');
@@ -262,7 +299,7 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
               const expirou = restante === 0;
               const processando = reservaEmAcao === reserva.id;
               return (
-                <article key={reserva.id} className="panel-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <article key={reserva.id} className={`panel-card${reserva.id === reservaDestaqueId ? ' linha-recem-criada' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div>
                     <strong>{reserva.product}</strong> <span className="muted-sm">({reserva.sku})</span>
                     <p className="muted-sm">{reserva.quantity} Uni · {reserva.reason} · Criada por {reserva.createdBy}</p>
@@ -351,7 +388,7 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
 
               <tbody>
                 {visiveis.map((s) => (
-                  <tr key={s.id}>
+                  <tr key={s.id} className={s.id === saidaDestaqueId ? 'linha-recem-criada' : undefined}>
                     <td>{formatarDataHora(s.dataHora)}</td>
                     <td>{s.produto}</td>
                     <td>{s.sku}</td>

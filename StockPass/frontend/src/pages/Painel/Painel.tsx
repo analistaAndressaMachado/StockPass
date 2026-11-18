@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { listarProdutos, mensagemErro } from '../../services/stockApi';
 import type { Produto } from '../../types';
 import { Brand } from '../../components/Brand/Brand';
+import { TodosItensModal } from './TodosItensModal';
 import './Painel.css';
 
 function statusClass(quantidade: number, ponto: number) {
@@ -17,13 +18,16 @@ function statusLabel(quantidade: number, ponto: number) {
 }
 
 type Props = {
-  onNavigate: (page: string, abrirModal?: boolean) => void;
   onRestock: (produto: Produto) => void;
+  onNovaEntrada: () => void;
+  onNovaSaida: () => void;
+  onNovoProduto: () => void;
 };
 
-export function Painel({ onNavigate, onRestock }: Props) {
+export function Painel({ onRestock, onNovaEntrada, onNovaSaida, onNovoProduto }: Props) {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [erro, setErro] = useState('');
+  const [mostrarTodosItens, setMostrarTodosItens] = useState(false);
 
   useEffect(() => {
     listarProdutos()
@@ -33,6 +37,7 @@ export function Painel({ onNavigate, onRestock }: Props) {
 
   const unidades = produtos.reduce((total, produto) => total + produto.quantidade, 0);
   const estoqueBaixo = produtos.filter((produto) => produto.quantidade < produto.pontoReposicao);
+  const itensNoMinimoOuAbaixo = produtos.filter((produto) => produto.quantidade <= produto.pontoReposicao);
   const semEstoque = produtos.filter((produto) => produto.quantidade === 0).length;
 
   return (
@@ -67,7 +72,9 @@ export function Painel({ onNavigate, onRestock }: Props) {
             <h2>Alertas de estoque mínimo</h2>
             <p className="muted-sm">Produtos abaixo do ponto de reposição</p>
           </div>
-          <button className="btn-secondary" onClick={() => onNavigate('catalogo')}>Abrir catálogo</button>
+          <button className="link-sm" onClick={() => setMostrarTodosItens(true)}>
+            Ver todos os itens com baixo estoque
+          </button>
         </div>
         {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
         <div className="alertas-area">
@@ -113,11 +120,14 @@ export function Painel({ onNavigate, onRestock }: Props) {
         <h2>Ações rápidas</h2>
         <p className="muted-sm">Registre movimentações e gerencie o catálogo</p>
         <div className="quick-actions">
-          <button className="btn-primary" onClick={() => onNavigate('entrada', true)}>Nova Entrada de Estoque</button>
-          <button className="btn-secondary" onClick={() => onNavigate('saida', true)}>Registrar Saída de Estoque</button>
-          <button className="btn-secondary" onClick={() => onNavigate('catalogo', true)}>Adicionar Novo Produto</button>
+          <button className="btn-primary" onClick={onNovaEntrada}>Nova Entrada de Estoque</button>
+          <button className="btn-secondary" onClick={onNovaSaida}>Registrar Saída de Estoque</button>
+          <button className="btn-secondary" onClick={onNovoProduto}>Adicionar Novo Produto</button>
         </div>
       </section>
+      {mostrarTodosItens && (
+        <TodosItensModal produtos={itensNoMinimoOuAbaixo} onClose={() => setMostrarTodosItens(false)} />
+      )}
     </div>
   );
 }

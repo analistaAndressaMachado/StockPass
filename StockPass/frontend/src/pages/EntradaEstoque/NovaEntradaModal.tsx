@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import type { Produto } from '../../types';
+import { mensagemErro } from '../../services/stockApi';
 
 export type NovaEntradaDados = {
   productId: number;
@@ -21,6 +22,8 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
   const [productId, setProductId] = useState(reposicaoInicial ? String(reposicaoInicial.productId) : '');
   const [quantidade, setQuantidade] = useState(reposicaoInicial ? String(reposicaoInicial.quantity) : '');
   const [notaFiscal, setNotaFiscal] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
 
   const produto = products.find((p) => p.id === Number(productId));
 
@@ -30,13 +33,17 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
         className="modal-form"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!produto) return;
-          void onSave({
+          if (!produto || salvando) return;
+          setSalvando(true);
+          setErro('');
+          void Promise.resolve(onSave({
             productId: produto.id,
             quantidade: Number(quantidade),
             notaFiscal: notaFiscal.trim(),
             replenishmentId: reposicaoInicial?.replenishmentId,
-          });
+          }))
+            .catch((error: unknown) => setErro(mensagemErro(error)))
+            .finally(() => setSalvando(false));
         }}
       >
         <label>
@@ -84,8 +91,10 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
 
         <p className="muted-sm">A data, a hora e o usuário são registrados automaticamente.</p>
 
-        <button className="btn-primary" type="submit" disabled={!produto}>
-          Registrar Entrada
+        {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
+
+        <button className="btn-primary" type="submit" disabled={!produto || salvando}>
+          {salvando ? 'Salvando...' : 'Registrar Entrada'}
         </button>
       </form>
     </Modal>
