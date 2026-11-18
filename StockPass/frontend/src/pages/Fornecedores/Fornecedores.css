@@ -11,6 +11,216 @@
   flex: 0 0 auto;
 }
 
+.fornecedores-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #d9dee5;
+}
+
+.fornecedores-tab {
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #53616d;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.fornecedores-tab.active {
+  border-bottom-color: #2563eb;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.fornecedores-management {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.fornecedores-management-card {
+  min-width: 0;
+  padding: 20px;
+}
+
+.fornecedores-management-actions,
+.fornecedores-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fornecedores-modal-form textarea {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+.fornecedores-modal-actions {
+  margin-top: 4px;
+}
+
+.fornecedores-management-table-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.fornecedores-management-table {
+  min-width: 560px;
+}
+
+.fornecedores-management-table tbody tr:nth-child(even) {
+  background: #eef0f3;
+}
+
+.fornecedores-management-table tbody tr.fornecedor-selecionado {
+  background: #dbeafe;
+}
+
+.fornecedores-management-table tbody tr.fornecedor-linha-clicavel {
+  cursor: pointer;
+}
+
+.fornecedores-management-table tbody tr.fornecedor-linha-clicavel:hover td {
+  background: #f3f6fa;
+}
+
+.fornecedores-management-table tbody tr.fornecedor-linha-clicavel:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+.fornecedor-seta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.fornecedor-seta-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+.fornecedor-seta-button .seta {
+  display: inline-block;
+  color: #6b7280;
+  font-size: 16px;
+  transition: transform 0.15s ease;
+}
+
+.fornecedor-seta-button .seta-aberta {
+  transform: rotate(90deg);
+}
+
+.fornecedor-contratos-detalhe td {
+  padding: 16px;
+  background: #f9fafb;
+}
+
+.fornecedor-contracts-inline {
+  min-width: 0;
+}
+
+.fornecedor-contracts-inline .fornecedores-section-title {
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.fornecedor-contracts-inline .fornecedores-management-table-wrap {
+  margin-top: 0;
+}
+
+.fornecedor-contract-row {
+  cursor: pointer;
+}
+
+.fornecedor-contract-row:hover {
+  background: #f3f6fa;
+}
+
+.fornecedor-contract-row:hover td {
+  background: #f3f6fa;
+}
+
+.fornecedor-contract-details dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 0;
+}
+
+.fornecedor-contract-details dl > div {
+  min-width: 0;
+}
+
+.fornecedor-contract-details dt {
+  margin-bottom: 4px;
+  color: #66717c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fornecedor-contract-details dd {
+  margin: 0;
+  color: #17212b;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.fornecedor-contract-details .fornecedor-contract-observations {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.fornecedor-contract-observations h3 {
+  margin: 0 0 8px;
+  color: #66717c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fornecedor-contract-observations p {
+  margin: 0;
+  color: #17212b;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fornecedor-contract-modal-title {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fornecedor-contract-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 520px) {
+  .fornecedor-contract-details dl { grid-template-columns: 1fr; }
+}
+
 .fornecedores-header,
 .fornecedores-section-title {
   display: flex;

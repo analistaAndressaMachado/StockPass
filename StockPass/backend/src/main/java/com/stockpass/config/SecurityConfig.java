@@ -32,6 +32,10 @@ public class SecurityConfig {
   .requestMatchers("/api/suppliers/offers/mine","/api/suppliers/offers/mine/**","/api/suppliers/purchases/mine","/api/suppliers/me").hasRole("FORNECEDOR")
    .requestMatchers(HttpMethod.GET,"/api/suppliers/offers").hasAnyRole("USER","GESTOR","ADMIN")
    .requestMatchers(HttpMethod.POST,"/api/suppliers/offers/*/acquire").hasAnyRole("USER","GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.GET,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("USER","GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.POST,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.PUT,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("GESTOR","ADMIN")
+  .requestMatchers("/api/suppliers/records/**","/api/suppliers/contracts/**").denyAll()
   .requestMatchers("/api/suppliers/**").hasAnyRole("USER","GESTOR","ADMIN")
   .requestMatchers("/api/products/**","/api/entries/**","/api/exits/**","/api/replenishments/**").hasAnyRole("USER","GESTOR","ADMIN")
    .anyRequest().authenticated()).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();
