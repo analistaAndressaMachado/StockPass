@@ -14,6 +14,7 @@ import com.stockpass.repository.SupplierRepository;
 import com.stockpass.repository.UserActivityRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,55 @@ class SupplierManagementServiceTest {
     @Autowired private SupplierRepository suppliers;
     @Autowired private SupplierContractRepository contracts;
     @Autowired private UserActivityRepository activities;
+
+    @Test
+    void listsAndGetsSuppliers() {
+        var created = service.createSupplier(supplierRequest("12.345.678/0001-90", "Fornecedor consultável"),
+            "admin@stockpass.com");
+
+        assertTrue(service.listSuppliers().stream().anyMatch(supplier -> supplier.id().equals(created.id())));
+        assertEquals(created, service.getSupplier(created.id()));
+    }
+
+    @Test
+    void missingSupplierUsesResourceNotFoundException() {
+        assertThrows(ResourceNotFoundException.class, () -> service.getSupplier(-999L));
+        assertThrows(ResourceNotFoundException.class, () -> service.updateSupplier(-999L,
+            supplierRequest("12.345.678/0001-90", "Fornecedor inexistente"), "admin@stockpass.com"));
+        assertThrows(ResourceNotFoundException.class, () -> service.listContracts(-999L));
+        assertThrows(ResourceNotFoundException.class, () -> service.createContract(-999L,
+            contractRequest("CT-MISSING-SUPPLIER", LocalDate.now(), LocalDate.now().plusDays(1),
+                null, SupplierContractStatus.CURRENT), "admin@stockpass.com"));
+    }
+
+    @Test
+    void rejectsInvalidExpiringContractDays() {
+        assertThrows(IllegalArgumentException.class, () -> service.listExpiringContracts(-1));
+        assertThrows(IllegalArgumentException.class, () -> service.listExpiringContracts(366));
+    }
+
+    @Test
+    void listsOnlyCurrentContractsEndingWithinInclusiveWindowInDateOrder() {
+        var supplier = service.createSupplier(supplierRequest("12.345.678/0001-90", "Fornecedor vencimentos"),
+            "admin@stockpass.com");
+        LocalDate today = LocalDate.now();
+        service.createContract(supplier.id(), contractRequest("CT-TODAY", today.minusDays(1), today,
+            null, SupplierContractStatus.CURRENT), "admin@stockpass.com");
+        service.createContract(supplier.id(), contractRequest("CT-IN", today, today.plusDays(5),
+            null, SupplierContractStatus.CURRENT), "admin@stockpass.com");
+        service.createContract(supplier.id(), contractRequest("CT-OUT", today, today.plusDays(31),
+            null, SupplierContractStatus.CURRENT), "admin@stockpass.com");
+        service.createContract(supplier.id(), contractRequest("CT-PAST", today.minusDays(10), today.minusDays(1),
+            null, SupplierContractStatus.CURRENT), "admin@stockpass.com");
+        service.createContract(supplier.id(), contractRequest("CT-CANCELED", today, today.plusDays(3),
+            null, SupplierContractStatus.CANCELED), "admin@stockpass.com");
+
+        List<String> numbers = service.listExpiringContracts(30).stream()
+            .map(contract -> contract.contractNumber()).toList();
+        assertEquals(List.of("CT-TODAY", "CT-IN"), numbers);
+        assertEquals(List.of("CT-TODAY"), service.listExpiringContracts(0).stream()
+            .map(contract -> contract.contractNumber()).toList());
+    }
 
     @Test
     void createsSupplierWithNormalizedUniqueCnpjAndRecordsActor() {
@@ -112,8 +162,11 @@ class SupplierManagementServiceTest {
 
         assertEquals(SupplierContractStatus.CANCELED, updated.status());
         assertTrue(activities.findAllByOrderByCreatedAtDescIdDesc().get(0).getAction().contains("Editou o contrato CT-004"));
-        assertThrows(IllegalArgumentException.class, () -> service.updateContract(second.id(), contract.id(),
+        assertThrows(ResourceNotFoundException.class, () -> service.updateContract(second.id(), contract.id(),
             contractRequest("CT-004", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 1), null,
+                SupplierContractStatus.CURRENT), "admin@stockpass.com"));
+        assertThrows(ResourceNotFoundException.class, () -> service.updateContract(first.id(), -999L,
+            contractRequest("CT-MISSING", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 1), null,
                 SupplierContractStatus.CURRENT), "admin@stockpass.com"));
     }
 

@@ -6,6 +6,7 @@ import com.stockpass.dto.SupplierManagementDtos.SupplierRequest;
 import com.stockpass.dto.SupplierManagementDtos.SupplierResponse;
 import com.stockpass.model.Supplier;
 import com.stockpass.model.SupplierContract;
+import com.stockpass.model.SupplierContractStatus;
 import com.stockpass.model.UserActivity;
 import com.stockpass.repository.SupplierContractRepository;
 import com.stockpass.repository.SupplierRepository;
@@ -45,10 +46,32 @@ public class SupplierManagementService {
         return response(saved);
     }
 
+    @Transactional(readOnly = true)
+    public List<SupplierResponse> listSuppliers() {
+        return suppliers.findAll().stream().map(SupplierManagementService::response).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SupplierResponse getSupplier(Long id) {
+        return suppliers.findById(id).map(SupplierManagementService::response)
+            .orElseThrow(() -> new ResourceNotFoundException("Fornecedor não encontrado."));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContractResponse> listExpiringContracts(int days) {
+        if (days < 0 || days > 365) {
+            throw new IllegalArgumentException("O prazo deve estar entre 0 e 365 dias.");
+        }
+        LocalDate today = LocalDate.now();
+        return contracts.findAllByStatusAndEndDateBetweenOrderByEndDateAsc(
+                SupplierContractStatus.CURRENT, today, today.plusDays(days)).stream()
+            .map(SupplierManagementService::response).toList();
+    }
+
     @Transactional
     public SupplierResponse updateSupplier(Long id, SupplierRequest request, String actorEmail) {
         Supplier supplier = suppliers.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Fornecedor não encontrado."));
+            .orElseThrow(() -> new ResourceNotFoundException("Fornecedor não encontrado."));
         String cnpj = normalizeCnpj(request.cnpj());
         if (!supplier.getCnpj().equals(cnpj) && suppliers.existsByCnpjAndIdNot(cnpj, id)) {
             throw new IllegalArgumentException("Já existe um fornecedor cadastrado com esse CNPJ.");
@@ -83,7 +106,7 @@ public class SupplierManagementService {
     public ContractResponse updateContract(Long supplierId, Long contractId, ContractRequest request, String actorEmail) {
         Supplier supplier = requireSupplier(supplierId);
         SupplierContract contract = contracts.findByIdAndSupplierId(contractId, supplierId)
-            .orElseThrow(() -> new IllegalArgumentException("Contrato não encontrado para este fornecedor."));
+            .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado para este fornecedor."));
         validateContract(request);
         apply(contract, request);
         contract.setUpdatedAt(LocalDateTime.now());
@@ -94,7 +117,7 @@ public class SupplierManagementService {
 
     private Supplier requireSupplier(Long id) {
         return suppliers.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Fornecedor não encontrado."));
+            .orElseThrow(() -> new ResourceNotFoundException("Fornecedor não encontrado."));
     }
 
     private static String normalizeCnpj(String value) {
