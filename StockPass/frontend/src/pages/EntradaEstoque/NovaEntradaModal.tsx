@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import type { Produto } from '../../types';
 import { mensagemErro } from '../../services/stockApi';
 
@@ -48,12 +49,15 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
       >
         <label>
           Produto
-          <select value={productId} onChange={(e) => setProductId(e.target.value)} required disabled={Boolean(reposicaoInicial)}>
-            <option value="" disabled>{products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>{p.nome} ({p.sku})</option>
-            ))}
-          </select>
+          <Select
+            ariaLabel="Produto"
+            value={productId}
+            onChange={setProductId}
+            required
+            disabled={Boolean(reposicaoInicial)}
+            placeholder={products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}
+            options={products.map((p) => ({ value: String(p.id), label: `${p.nome} (${p.sku})` }))}
+          />
         </label>
 
         {reposicaoInicial && produto && (

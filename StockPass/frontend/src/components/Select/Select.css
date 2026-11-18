@@ -1,0 +1,170 @@
+.ui-select {
+  position: relative;
+  width: 100%;
+  min-width: 170px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  color: #1f2937;
+}
+
+.ui-select__validation {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ui-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 170px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06), 0 2px 8px rgba(17, 24, 39, 0.09);
+  transition: box-shadow 150ms ease;
+}
+
+.ui-select__trigger:hover {
+  box-shadow: 0 2px 4px rgba(17, 24, 39, 0.07), 0 4px 12px rgba(17, 24, 39, 0.09);
+}
+
+.ui-select__trigger:focus {
+  outline: none;
+}
+
+.ui-select__trigger:focus-visible,
+.ui-select__trigger--open {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18), 0 2px 8px rgba(17, 24, 39, 0.08);
+}
+
+.ui-select__trigger--invalid,
+.ui-select__trigger--invalid:hover,
+.ui-select__trigger--invalid:focus-visible,
+.ui-select__trigger--invalid.ui-select__trigger--open {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+}
+
+.ui-select__trigger:disabled,
+.ui-select__trigger:disabled:hover {
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+}
+
+.ui-select__trigger--sm {
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.ui-select__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ui-select__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-select__value--placeholder {
+  color: #9ca3af;
+}
+
+.ui-select__arrow {
+  flex: 0 0 auto;
+  color: #6b7280;
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+.ui-select__trigger--open .ui-select__arrow {
+  color: #2563eb;
+  transform: rotate(180deg);
+}
+
+.ui-select__list {
+  box-sizing: border-box;
+  z-index: 60;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12), 0 2px 6px rgba(17, 24, 39, 0.06);
+  animation: ui-select-open 120ms ease-out;
+}
+
+.ui-select__list--up {
+  animation-name: ui-select-open-up;
+}
+
+.ui-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: #374151;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.ui-select__option--active {
+  background: #f3f4f6;
+}
+
+.ui-select__option--selected {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.ui-select__option--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-select__check {
+  flex: 0 0 auto;
+}
+
+@keyframes ui-select-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-select-open-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

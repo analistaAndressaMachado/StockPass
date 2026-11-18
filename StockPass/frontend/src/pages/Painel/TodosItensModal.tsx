@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import type { Produto } from '../../types';
 import './TodosItensModal.css';
 
@@ -50,19 +51,21 @@ export function TodosItensModal({ produtos, onClose }: Props) {
         <div className="todos-itens-toolbar">
           <label className="ordenar-label">
             Ordenar por
-            <select
+            <Select<OrdemOpcao>
+              ariaLabel="Ordenar itens por"
               value={ordem}
-              onChange={(e) => {
-                setOrdem(e.target.value as OrdemOpcao);
+              onChange={(value) => {
+                setOrdem(value);
                 setPagina(1);
               }}
-            >
-              <option value="nome-asc">Nome (A–Z)</option>
-              <option value="nome-desc">Nome (Z–A)</option>
-              <option value="categoria-asc">Categoria (A–Z)</option>
-              <option value="atual-asc">Estoque atual (menor primeiro)</option>
-              <option value="atual-desc">Estoque atual (maior primeiro)</option>
-            </select>
+              options={[
+                { value: 'nome-asc', label: 'Nome (A–Z)' },
+                { value: 'nome-desc', label: 'Nome (Z–A)' },
+                { value: 'categoria-asc', label: 'Categoria (A–Z)' },
+                { value: 'atual-asc', label: 'Estoque atual (menor primeiro)' },
+                { value: 'atual-desc', label: 'Estoque atual (maior primeiro)' },
+              ]}
+            />
           </label>
 
           <span className="muted-sm">{itensOrdenados.length} itens no total</span>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './SaidaEstoque.css';
+import { Select } from '../../components/Select/Select';
 import type { Produto } from '../../types';
 import {
   MOTIVOS_SAIDA,
@@ -51,10 +52,12 @@ type Props = {
   modalOnly?: boolean;
   onModalClose?: () => void;
   onModalSuccess?: (reservaId: number) => void;
-  highlightReservaId?: number | null;
+  onReservaCriada?: (reservaId: number) => void;
+  reservasEmConfirmacaoIds?: number[];
+  highlightSaidaId?: number | null;
 };
 
-export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModalClose, onModalSuccess, highlightReservaId = null }: Props) {
+export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModalClose, onModalSuccess, onReservaCriada, reservasEmConfirmacaoIds = [], highlightSaidaId = null }: Props) {
   const [saidas, setSaidas] = useState<Saida[]>([]);
   const [reservas, setReservas] = useState<ReservaSaida[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -73,10 +76,7 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
   const areaTabelaRef = useRef<HTMLDivElement>(null);
   const expiracoesAvisadas = useRef(new Set<number>());
   const modalCancelada = useRef(false);
-  const [reservaDestaqueId, setReservaDestaqueId] = useState<number | null>(null);
   const [saidaDestaqueId, setSaidaDestaqueId] = useState<number | null>(null);
-  const reservaParaDestacarCarregada = highlightReservaId !== null && reservas.some((reserva) => reserva.id === highlightReservaId);
-
   const atualizarDados = useCallback(async () => {
     try {
       const [historico, catalogo, reservasAtivas] = await Promise.all([
@@ -101,17 +101,16 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
   }, [atualizarDados]);
 
   useEffect(() => {
-    if (highlightReservaId === null || !reservaParaDestacarCarregada) return;
-    setReservaDestaqueId(highlightReservaId);
-    const timeout = window.setTimeout(() => setReservaDestaqueId(null), 3300);
-    return () => window.clearTimeout(timeout);
-  }, [highlightReservaId, reservaParaDestacarCarregada]);
-
-  useEffect(() => {
     if (saidaDestaqueId === null) return;
     const timeout = window.setTimeout(() => setSaidaDestaqueId(null), 3300);
     return () => window.clearTimeout(timeout);
   }, [saidaDestaqueId]);
+
+  useEffect(() => {
+    if (highlightSaidaId === null || !saidas.some((saida) => saida.id === highlightSaidaId)) return;
+    setPagina(1);
+    setSaidaDestaqueId(highlightSaidaId);
+  }, [highlightSaidaId, saidas]);
 
   useEffect(() => {
     const expiradas = reservas.filter((reserva) =>
@@ -179,10 +178,11 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
         }
       : produto));
     expiracoesAvisadas.current.delete(reserva.id);
-    setAviso(`Reserva criada. Você tem até ${new Date(reserva.expiresAt).toLocaleTimeString('pt-BR')} para confirmar.`);
+    setAviso('');
     setErro('');
     setShowNova(false);
     if (modalOnly && !modalCancelada.current) onModalSuccess?.(reserva.id);
+    else onReservaCriada?.(reserva.id);
     void atualizarDados();
   }
 
@@ -285,21 +285,21 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
         <div className="saida-historico-topo">
           <div>
             <h2>Reservas de saída pendentes</h2>
-            <p className="muted-sm">Cada reserva pode ser confirmada em até 120 segundos ou cancelada antes de expirar.</p>
+            <p className="muted-sm">Reservas aguardando confirmação ou cancelamento.</p>
           </div>
-          <span className="muted-sm">{reservas.length} {reservas.length === 1 ? 'reserva ativa' : 'reservas ativas'}</span>
+          <span className="muted-sm">{reservas.filter((r) => !reservasEmConfirmacaoIds.includes(r.id)).length} reservas ativas</span>
         </div>
 
-        {reservas.length === 0 ? (
+        {reservas.filter((r) => !reservasEmConfirmacaoIds.includes(r.id)).length === 0 ? (
           <p className="muted-sm">Não há reservas de saída pendentes.</p>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
-            {reservas.map((reserva) => {
+            {reservas.filter((r) => !reservasEmConfirmacaoIds.includes(r.id)).map((reserva) => {
               const restante = segundosRestantes(reserva.expiresAt, agora);
               const expirou = restante === 0;
               const processando = reservaEmAcao === reserva.id;
               return (
-                <article key={reserva.id} className={`panel-card${reserva.id === reservaDestaqueId ? ' linha-recem-criada' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <article key={reserva.id} className="panel-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <div>
                     <strong>{reserva.product}</strong> <span className="muted-sm">({reserva.sku})</span>
                     <p className="muted-sm">{reserva.quantity} Uni · {reserva.reason} · Criada por {reserva.createdBy}</p>
@@ -342,30 +342,36 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
                 setPagina(1);
               }}
             />
-            <select
+            <Select
+              className="saida-filtro-motivo"
               value={motivoFiltro}
-              onChange={(e) => {
-                setMotivoFiltro(e.target.value);
+              onChange={(value) => {
+                setMotivoFiltro(value);
                 setPagina(1);
               }}
-            >
-              <option value="Todos">Todos os motivos</option>
-              {MOTIVOS_SAIDA.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <select
+              ariaLabel="Filtrar saídas por motivo"
+              size="sm"
+              options={[
+                { value: 'Todos', label: 'Todos os motivos' },
+                ...MOTIVOS_SAIDA.map((motivo) => ({ value: motivo, label: motivo })),
+              ]}
+            />
+            <Select<Periodo>
+              className="saida-filtro-periodo"
               value={periodo}
-              onChange={(e) => {
-                setPeriodo(e.target.value as Periodo);
+              onChange={(value) => {
+                setPeriodo(value);
                 setPagina(1);
               }}
-            >
-              <option value="todos">Todo o histórico</option>
-              <option value="hoje">Hoje</option>
-              <option value="7dias">Últimos 7 dias</option>
-              <option value="mes">Este mês</option>
-            </select>
+              ariaLabel="Filtrar saídas por período"
+              size="sm"
+              options={[
+                { value: 'todos', label: 'Todo o histórico' },
+                { value: 'hoje', label: 'Hoje' },
+                { value: '7dias', label: 'Últimos 7 dias' },
+                { value: 'mes', label: 'Este mês' },
+              ]}
+            />
           </div>
         </div>
 
@@ -431,6 +437,7 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
       </section>
 
       {showNova && <NovaSaidaModal products={produtos} onClose={() => setShowNova(false)} onSave={registrarSaida} />}
+
     </div>
   );
 }

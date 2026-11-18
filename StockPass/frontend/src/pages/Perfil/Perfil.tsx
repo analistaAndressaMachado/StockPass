@@ -6,6 +6,7 @@ import { mensagemErro } from '../../services/stockApi';
 import { nomePerfil } from '../../utils/perfil';
 import { Modal } from '../../components/Modal/Modal';
 import { Avatar } from '../../components/Avatar/Avatar';
+import { Input } from '../../components/Input/Input';
 import './Perfil.css';
 
 type Props = {
@@ -67,7 +68,7 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
     try {
       const payload = isSupplier
         ? { name, companyName, taxId, phone }
-        : { name };
+        : { name, companyName };
       const { data } = await api.put<User>('/auth/profile', payload);
       setName(data.name);
       setCompanyName(data.companyName ?? '');
@@ -161,7 +162,7 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
 
   return (
     <div className="painel perfil-page">
-      <section className="perfil-hero panel-card">
+      <section className="perfil-hero panel-card panel-card--soft-padrao">
         <Avatar key={photoRevision} className="perfil-avatar" name={user.name} photoUrl={user.photoUrl} />
         <div className="perfil-hero-copy">
           <span className="perfil-eyebrow">Sua conta</span>
@@ -176,7 +177,8 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
         </div>
       </section>
 
-      <section className="panel-card perfil-section">
+      <div className="perfil-account-grid">
+      <section className="panel-card panel-card--soft-padrao perfil-section">
         <div className="perfil-section-heading">
           <div>
             <h2>Meu perfil</h2>
@@ -187,23 +189,23 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
 
         <form onSubmit={saveProfile} className="perfil-form">
           <label>Nome
-            <input value={name} onChange={(event) => setName(event.target.value)} required disabled={!editing} />
+            <span className="perfil-input-container"><Input value={name} onChange={(event) => setName(event.target.value)} required disabled={!editing} /><span className="perfil-input-highlight" /></span>
           </label>
           <label>E-mail
-            <input type="email" value={user.email} readOnly disabled />
+            <span className="perfil-input-container"><Input type="email" value={user.email} readOnly disabled /><span className="perfil-input-highlight" /></span>
           </label>
           <label>Perfil
-            <input value={nomePerfil(user.role)} readOnly disabled />
+            <span className="perfil-input-container"><Input value={nomePerfil(user.role)} readOnly disabled /><span className="perfil-input-highlight" /></span>
+          </label>
+          <label>Nome da empresa
+            <span className="perfil-input-container"><input value={companyName} onChange={(event) => setCompanyName(event.target.value)} required={isSupplier} disabled={!editing} placeholder="Nome da empresa" /><span className="perfil-input-highlight" /></span>
           </label>
           {isSupplier && <div className="perfil-supplier-fields">
-            <label>Empresa
-              <input value={companyName} onChange={(event) => setCompanyName(event.target.value)} required disabled={!editing} />
-            </label>
             <label>CNPJ
-              <input value={taxId} onChange={(event) => setTaxId(event.target.value)} disabled={!editing} />
+              <span className="perfil-input-container"><input value={taxId} onChange={(event) => setTaxId(event.target.value)} disabled={!editing} /><span className="perfil-input-highlight" /></span>
             </label>
             <label>Telefone
-              <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} disabled={!editing} />
+              <span className="perfil-input-container"><input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} disabled={!editing} /><span className="perfil-input-highlight" /></span>
             </label>
           </div>}
           {editing && <div className="perfil-actions">
@@ -216,29 +218,40 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
         {profileMessage && <p className={`perfil-message ${profileMessage.error ? 'is-error' : 'is-success'}`} role={profileMessage.error ? 'alert' : 'status'}>{profileMessage.text}</p>}
       </section>
 
-      <section className="panel-card perfil-security">
-        <div>
-          <h2>Segurança</h2>
-          <p className="muted-sm">Atualize sua senha para manter sua conta protegida.</p>
-        </div>
-        <button className="btn-secondary" type="button" onClick={() => { setPasswordMessage(null); setPasswordOpen(true); }}>Trocar senha</button>
-      </section>
-
-      <footer className="perfil-logout">
-        <span>Precisa encerrar sua sessão?</span>
-        <button className="btn-secondary" type="button" onClick={onLogout}>Sair da conta</button>
-      </footer>
+        <section className="panel-card panel-card--soft-padrao perfil-security">
+          <div className="perfil-section-heading">
+            <div>
+              <h2>Segurança</h2>
+              <p className="muted-sm">Mantenha sua conta protegida.</p>
+            </div>
+          </div>
+          <div className="perfil-security-actions">
+            <div>
+              <strong>Senha</strong>
+              <span>Altere sua senha de acesso periodicamente.</span>
+            </div>
+            <button className="btn-secondary" type="button" onClick={() => { setPasswordMessage(null); setPasswordOpen(true); }}>Trocar senha</button>
+          </div>
+          <footer className="perfil-logout">
+            <div>
+              <strong>Sair da conta</strong>
+              <span>Encerre sua sessão neste dispositivo.</span>
+            </div>
+            <button className="btn-secondary" type="button" onClick={onLogout}>Sair</button>
+          </footer>
+        </section>
+      </div>
 
       {passwordOpen && <Modal title="Trocar senha" onClose={closePasswordModal}>
         <form onSubmit={changePassword} className="modal-form perfil-password-form">
           <label>Senha atual
-            <input type={showPasswords ? 'text' : 'password'} value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required />
+            <span className="perfil-input-container"><input type={showPasswords ? 'text' : 'password'} value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required /><span className="perfil-input-highlight" /></span>
           </label>
           <label>Nova senha
-            <input type={showPasswords ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={6} autoComplete="new-password" required />
+            <span className="perfil-input-container"><input type={showPasswords ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={6} autoComplete="new-password" required /><span className="perfil-input-highlight" /></span>
           </label>
           <label>Confirmar nova senha
-            <input type={showPasswords ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={6} autoComplete="new-password" required />
+            <span className="perfil-input-container"><input type={showPasswords ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={6} autoComplete="new-password" required /><span className="perfil-input-highlight" /></span>
           </label>
           <button className="link-sm perfil-toggle-password" type="button" onClick={() => setShowPasswords((visible) => !visible)}>
             {showPasswords ? 'Ocultar senhas' : 'Mostrar senhas'}

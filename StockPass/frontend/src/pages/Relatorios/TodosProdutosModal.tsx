@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import { ProdutosPeriodoTabela } from './ProdutosPeriodoTabela';
 import type { ProdutoRelatorio } from './produtosPeriodo';
 
@@ -41,18 +42,20 @@ export function TodosProdutosModal({ produtos, onClose, onSchedule, onReceive, o
         <div className="todos-itens-toolbar">
           <label className="ordenar-label">
             Ordenar por
-            <select
+            <Select<OrdemOpcao>
+              ariaLabel="Ordenar produtos por"
               value={ordem}
-              onChange={(e) => {
-                setOrdem(e.target.value as OrdemOpcao);
+              onChange={(value) => {
+                setOrdem(value);
                 setPagina(1);
               }}
-            >
-              <option value="nome-asc">Nome (A–Z)</option>
-              <option value="nome-desc">Nome (Z–A)</option>
-              <option value="saidas-desc">Mais saídas no período</option>
-              <option value="estoque-asc">Estoque atual (menor primeiro)</option>
-            </select>
+              options={[
+                { value: 'nome-asc', label: 'Nome (A–Z)' },
+                { value: 'nome-desc', label: 'Nome (Z–A)' },
+                { value: 'saidas-desc', label: 'Mais saídas no período' },
+                { value: 'estoque-asc', label: 'Estoque atual (menor primeiro)' },
+              ]}
+            />
           </label>
 
           <span className="muted-sm">{ordenados.length} produtos no total · clique num produto para ver o gráfico</span>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import { mensagemErro } from '../../services/stockApi';
 import type { SupplierContract, SupplierContractInput, SupplierContractStatus } from '../../services/supplierManagementTypes';
 
@@ -88,12 +89,12 @@ export function SupplierContractModal({ contract, onClose, onSave }: Props) {
             onChange={(event) => setForm({ ...form, value: event.target.value })} />
         </label>
         <label>Situação
-          <select value={form.status}
-            onChange={(event) => setForm({ ...form, status: event.target.value as SupplierContractStatus })}>
-            <option value="CURRENT">Vigente</option>
-            <option value="EXPIRED">Vencido</option>
-            <option value="CANCELED">Cancelado</option>
-          </select>
+          <Select<SupplierContractStatus> ariaLabel="Situação do contrato" value={form.status}
+            onChange={(status) => setForm({ ...form, status })} options={[
+              { value: 'CURRENT', label: 'Vigente' },
+              { value: 'EXPIRED', label: 'Vencido' },
+              { value: 'CANCELED', label: 'Cancelado' },
+            ]} />
         </label>
         <label>Observações
           <textarea rows={3} value={form.observations}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import { DESCRICAO_PERFIL, NOME_PERFIL, PERFIS } from './usuariosMock';
 import type { Perfil, UsuarioSistema } from './usuariosMock';
 import { mensagemErro } from '../../services/stockApi';
@@ -71,11 +72,12 @@ export function UsuarioModal({ usuario, emailsExistentes, onClose, onSave }: Pro
 
         <label>
           Perfil de acesso
-          <select value={perfil} onChange={(e) => setPerfil(e.target.value as Perfil)}>
-            {PERFIS.map((p) => (
-              <option key={p} value={p}>{NOME_PERFIL[p]}</option>
-            ))}
-          </select>
+          <Select<Perfil>
+            ariaLabel="Perfil de acesso"
+            value={perfil}
+            onChange={setPerfil}
+            options={PERFIS.map((p) => ({ value: p, label: NOME_PERFIL[p] }))}
+          />
         </label>
 
         <p className="muted-sm">{NOME_PERFIL[perfil]}: {DESCRICAO_PERFIL[perfil].toLowerCase()}.</p>

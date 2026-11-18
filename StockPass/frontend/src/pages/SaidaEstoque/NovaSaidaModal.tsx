@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import { MOTIVOS_SAIDA } from './saidasMock';
 import type { Produto } from '../../types';
 import { mensagemErro } from '../../services/stockApi';
@@ -53,14 +54,18 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
       >
         <label>
           Produto
-          <select value={productId} onChange={(e) => setProductId(e.target.value)} required>
-            <option value="" disabled>{products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id} disabled={p.availableQuantity === 0}>
-                {p.nome} ({p.sku}){p.availableQuantity === 0 ? ' (sem saldo disponível)' : ''}
-              </option>
-            ))}
-          </select>
+          <Select
+            ariaLabel="Produto"
+            value={productId}
+            onChange={setProductId}
+            required
+            placeholder={products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}
+            options={products.map((p) => ({
+              value: String(p.id),
+              label: `${p.nome} (${p.sku})${p.availableQuantity === 0 ? ' (sem saldo disponível)' : ''}`,
+              disabled: p.availableQuantity === 0,
+            }))}
+          />
         </label>
 
         <label>
@@ -82,12 +87,14 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
 
         <label>
           Motivo
-          <select value={motivo} onChange={(e) => setMotivo(e.target.value)} required>
-            <option value="" disabled>Selecione um motivo</option>
-            {MOTIVOS_SAIDA.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+          <Select
+            ariaLabel="Motivo da saída"
+            value={motivo}
+            onChange={setMotivo}
+            required
+            placeholder="Selecione um motivo"
+            options={MOTIVOS_SAIDA.map((m) => ({ value: m, label: m }))}
+          />
         </label>
 
         <label>

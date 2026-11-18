@@ -16,6 +16,7 @@ import type { ProdutoRelatorio } from './produtosPeriodo';
 import { ProdutosPeriodoTabela } from './ProdutosPeriodoTabela';
 import { TodosProdutosModal } from './TodosProdutosModal';
 import { HistoricoProdutoModal } from './HistoricoProdutoModal';
+import { Select } from '../../components/Select/Select';
 
 type Periodo = 'semana' | 'mes';
 type Props = {
@@ -251,13 +252,18 @@ export function Relatorios({ onReceiveReplenishment }: RelatorioProps) {
           <p className="muted-sm">Movimentações, saldo e reposições do período atualizados automaticamente</p>
         </div>
 
-        <label className="filtro-periodo">
-          Período
-          <select value={periodo} onChange={(e) => setPeriodo(e.target.value as Periodo)}>
-            <option value="semana">Últimos 7 dias</option>
-            <option value="mes">Este mês</option>
-          </select>
-        </label>
+        <div className="filtro-periodo">
+          <span>Período</span>
+          <Select<Periodo>
+            ariaLabel="Período"
+            options={[
+              { value: 'semana', label: 'Últimos 7 dias' },
+              { value: 'mes', label: 'Este mês' },
+            ]}
+            value={periodo}
+            onChange={setPeriodo}
+          />
+        </div>
       </section>
 
       <section className="stats-grid">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './Usuarios.css';
+import { Select } from '../../components/Select/Select';
 import type { User } from '../../types';
 import { mensagemErro } from '../../services/stockApi';
 import { alterarStatusUsuario, criarUsuario, editarUsuario, listarAtividadesUsuarios, listarUsuarios } from '../../services/userManagementApi';
@@ -156,12 +157,17 @@ export function Usuarios({ user }: Props) {
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                 />
-                <select value={perfilFiltro} onChange={(e) => setPerfilFiltro(e.target.value as 'todos' | Perfil)}>
-                  <option value="todos">Todos os perfis</option>
-                  {PERFIS.map((p) => (
-                    <option key={p} value={p}>{NOME_PERFIL[p]}</option>
-                  ))}
-                </select>
+                <Select<'todos' | Perfil>
+                  className="usuarios-filtro-perfil"
+                  value={perfilFiltro}
+                  onChange={setPerfilFiltro}
+                  ariaLabel="Filtrar usuários por perfil"
+                  size="sm"
+                  options={[
+                    { value: 'todos', label: 'Todos os perfis' },
+                    ...PERFIS.map((perfil) => ({ value: perfil, label: NOME_PERFIL[perfil] })),
+                  ]}
+                />
               </div>
             </div>
 

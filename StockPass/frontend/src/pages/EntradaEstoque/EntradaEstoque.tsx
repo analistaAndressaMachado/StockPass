@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import './EntradaEstoque.css';
+import { Select } from '../../components/Select/Select';
 import type { Produto } from '../../types';
 import { ehHoje, formatarDataHora, formatarHora, nomeDoDia } from './entradasMock';
 import type { Entrada } from './entradasMock';
@@ -191,18 +192,22 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
                 setPagina(1);
               }}
             />
-            <select
+            <Select<Periodo>
+              className="entrada-filtro-periodo"
               value={periodo}
-              onChange={(e) => {
-                setPeriodo(e.target.value as Periodo);
+              onChange={(value) => {
+                setPeriodo(value);
                 setPagina(1);
               }}
-            >
-              <option value="todos">Todo o histórico</option>
-              <option value="hoje">Hoje</option>
-              <option value="7dias">Últimos 7 dias</option>
-              <option value="mes">Este mês</option>
-            </select>
+              ariaLabel="Filtrar entradas por período"
+              size="sm"
+              options={[
+                { value: 'todos', label: 'Todo o histórico' },
+                { value: 'hoje', label: 'Hoje' },
+                { value: '7dias', label: 'Últimos 7 dias' },
+                { value: 'mes', label: 'Este mês' },
+              ]}
+            />
           </div>
         </div>
 

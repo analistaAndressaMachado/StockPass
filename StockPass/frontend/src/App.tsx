@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from './services/api';
 import { Login } from './pages/Login/Login';
 import { Painel } from './pages/Painel/Painel';
@@ -13,6 +13,7 @@ import { LojaCliente } from './pages/Clientes/LojaCliente';
 import { ClientesAdmin } from './pages/Clientes/ClientesAdmin';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { Header } from './components/Header/Header';
+import { SaidaConfirmacaoGlobal } from './components/SaidaConfirmacaoGlobal';
 import type { Produto, User } from './types';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -34,7 +35,21 @@ export function App() {
   const [quickEntryOpen, setQuickEntryOpen] = useState(false);
   const [entradaParaDestacar, setEntradaParaDestacar] = useState<number | null>(null);
   const [quickExitOpen, setQuickExitOpen] = useState(false);
-  const [reservaParaDestacar, setReservaParaDestacar] = useState<number | null>(null);
+  const [reservasParaConfirmar, setReservasParaConfirmar] = useState<number[]>([]);
+  const [saidaParaDestacar, setSaidaParaDestacar] = useState<number | null>(null);
+  const [avisoSaidaConfirmada, setAvisoSaidaConfirmada] = useState('');
+  const adicionarReservaParaConfirmar = useCallback((id: number) => {
+    setReservasParaConfirmar((ids) => ids.includes(id) ? ids : [...ids, id]);
+  }, []);
+  const fecharConfirmacaoSaida = useCallback((id: number, resultado?: { acao: 'confirmada' | 'cancelada'; produto: string; quantidade: number; saidaId?: number }) => {
+    setReservasParaConfirmar((ids) => ids.filter((reservaId) => reservaId !== id));
+    if (resultado?.acao === 'confirmada') {
+      setAvisoSaidaConfirmada(`Saída de ${resultado.quantidade} unidade(s) de ${resultado.produto} confirmada.`);
+      setSaidaParaDestacar(resultado.saidaId ?? null);
+      window.setTimeout(() => setSaidaParaDestacar(null), 3500);
+      setPage('saida');
+    }
+  }, []);
   const [quickProductOpen, setQuickProductOpen] = useState(false);
   const [produtoParaDestacar, setProdutoParaDestacar] = useState<number | null>(null);
   const [pendingRestock, setPendingRestock] = useState<{
@@ -63,6 +78,12 @@ export function App() {
   useEffect(() => {
     if (pendingRestock && page === 'entrada') setPendingRestock(null);
   }, [pendingRestock, page]);
+
+  useEffect(() => {
+    if (!avisoSaidaConfirmada) return;
+    const timeout = window.setTimeout(() => setAvisoSaidaConfirmada(''), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [avisoSaidaConfirmada]);
 
   function abrirEntradaRapida() {
     setQuickEntryOpen(true);
@@ -110,6 +131,7 @@ export function App() {
       <div className="app-content">
         <Header title={PAGE_TITLES[page] ?? 'Perfil'} user={user} onProfileClick={() => setPage('perfil')} />
         <div className="app-body">
+         {page === 'saida' && avisoSaidaConfirmada && <p className="muted-sm" role="status">{avisoSaidaConfirmada}</p>}
          {page === 'painel' ? (
            <>
              <Painel onRestock={iniciarReposicao} onNovaEntrada={abrirEntradaRapida} onNovaSaida={abrirSaidaRapida} onNovoProduto={abrirProdutoRapido} />
@@ -132,8 +154,7 @@ export function App() {
                  onModalClose={() => setQuickExitOpen(false)}
                  onModalSuccess={(reservaId) => {
                    setQuickExitOpen(false);
-                   setReservaParaDestacar(reservaId);
-                   setPage('saida');
+                   adicionarReservaParaConfirmar(reservaId);
                  }}
                />
              )}
@@ -160,7 +181,7 @@ export function App() {
                          highlightEntradaId={entradaParaDestacar}
                        />
                        ) : page === 'saida' ? (
-                                 <SaidaEstoque highlightReservaId={reservaParaDestacar} />
+                                 <SaidaEstoque onReservaCriada={adicionarReservaParaConfirmar} reservasEmConfirmacaoIds={reservasParaConfirmar} highlightSaidaId={saidaParaDestacar} />
                      ) : page === 'usuarios' ? (
                              <Usuarios user={user} />
                      ) : page === 'fornecedores' ? (
@@ -176,6 +197,7 @@ export function App() {
          )}
         </div>
       </div>
+      <SaidaConfirmacaoGlobal reservaIds={reservasParaConfirmar} onClose={fecharConfirmacaoSaida} />
     </div>
   );
 }

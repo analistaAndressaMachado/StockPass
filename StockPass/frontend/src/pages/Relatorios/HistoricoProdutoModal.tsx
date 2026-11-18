@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import type { Entrada } from '../EntradaEstoque/entradasMock';
 import type { Saida } from '../SaidaEstoque/saidasMock';
 import type { ProdutoRelatorio } from './produtosPeriodo';
@@ -198,28 +199,28 @@ export function HistoricoProdutoModal({ produto, entradas, saidas, onClose }: Pr
           <div className="saida-filtros" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <label className="filtro-periodo">
             Ordenar
-            <select value={ordem} onChange={(event) => setOrdem(event.target.value as Ordem)}>
-              <option value="recentes">Mais recentes primeiro</option>
-              <option value="antigas">Mais antigas primeiro</option>
-            </select>
+            <Select<Ordem> ariaLabel="Ordenar movimentos" value={ordem} onChange={setOrdem} size="sm" options={[
+              { value: 'recentes', label: 'Mais recentes primeiro' },
+              { value: 'antigas', label: 'Mais antigas primeiro' },
+            ]} />
           </label>
           <label className="filtro-periodo">
             Tipo
-            <select value={tipoFiltro} onChange={(event) => setTipoFiltro(event.target.value as TipoFiltro)}>
-              <option value="todos">Todos</option>
-              <option value="entrada">Só entradas</option>
-              <option value="saida">Só saídas</option>
-            </select>
+            <Select<TipoFiltro> ariaLabel="Filtrar por tipo" value={tipoFiltro} onChange={setTipoFiltro} size="sm" options={[
+              { value: 'todos', label: 'Todos' },
+              { value: 'entrada', label: 'Só entradas' },
+              { value: 'saida', label: 'Só saídas' },
+            ]} />
           </label>
           <label className="filtro-periodo">
             Período
-            <select value={periodoFiltro} onChange={(event) => setPeriodoFiltro(event.target.value as PeriodoFiltro)}>
-              <option value="tudo">Tudo</option>
-              <option value="dia">Último dia</option>
-              <option value="semana">Última semana</option>
-              <option value="mes">Último mês</option>
-              <option value="ano">Último ano</option>
-            </select>
+            <Select<PeriodoFiltro> ariaLabel="Filtrar por período" value={periodoFiltro} onChange={setPeriodoFiltro} size="sm" options={[
+              { value: 'tudo', label: 'Tudo' },
+              { value: 'dia', label: 'Último dia' },
+              { value: 'semana', label: 'Última semana' },
+              { value: 'mes', label: 'Último mês' },
+              { value: 'ano', label: 'Último ano' },
+            ]} />
           </label>
           </div>
           <span className="muted-sm">{movimentos.length} {movimentos.length === 1 ? 'movimento exibido' : 'movimentos exibidos'}</span>

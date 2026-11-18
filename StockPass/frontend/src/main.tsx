@@ -6,6 +6,7 @@ import './components/Sidebar/Sidebar.css';
 import './pages/Painel/Painel.css';
 import './components/Header/Header.css';
 import './components/Modal/Modal.css';
+import './app-inputs.css';
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

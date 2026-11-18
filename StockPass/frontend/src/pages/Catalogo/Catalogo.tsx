@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import { atualizarProduto, criarProduto, listarProdutos, mensagemErro } from '../../services/stockApi';
 import type { Produto } from '../../types';
 import type { NovoProduto } from '../../services/stockApi';
@@ -230,15 +231,14 @@ function setaDoCampo(campo: CampoOrdenacao) {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
-            <select
+            <Select
               className="catalogo-select-categoria"
               value={categoriaFiltro}
-              onChange={(e) => setCategoriaFiltro(e.target.value)}
-            >
-              {categorias.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              onChange={setCategoriaFiltro}
+              ariaLabel="Filtrar por categoria"
+              size="sm"
+              options={categorias.map((cat) => ({ value: cat, label: cat }))}
+            />
             <button className="btn-primary" onClick={novoProduto}>Novo produto</button>
           </div>
         </div>

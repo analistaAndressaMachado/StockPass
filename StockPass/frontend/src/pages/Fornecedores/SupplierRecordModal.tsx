@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
+import { Select } from '../../components/Select/Select';
 import { mensagemErro } from '../../services/stockApi';
 import type { SupplierRecord, SupplierRecordInput, SupplierStatus } from '../../services/supplierManagementTypes';
 
@@ -79,10 +80,11 @@ export function SupplierRecordModal({ supplier, onClose, onSave }: Props) {
           <input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
         </label>
         <label>Situação
-          <select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as SupplierStatus })}>
-            <option value="ACTIVE">Ativo</option>
-            <option value="INACTIVE">Inativo</option>
-          </select>
+          <Select<SupplierStatus> ariaLabel="Situação do fornecedor" value={form.status}
+            onChange={(status) => setForm({ ...form, status })} options={[
+              { value: 'ACTIVE', label: 'Ativo' },
+              { value: 'INACTIVE', label: 'Inativo' },
+            ]} />
         </label>
         {error && <p className="fornecedores-feedback fornecedores-feedback-error" role="alert">{error}</p>}
         <div className="fornecedores-modal-actions">

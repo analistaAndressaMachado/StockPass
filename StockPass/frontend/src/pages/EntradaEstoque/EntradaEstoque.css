@@ -49,8 +49,7 @@
   gap: 10px;
 }
 
-.entrada-filtros input,
-.entrada-filtros select {
+.entrada-filtros input {
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -60,6 +59,16 @@
 
 .entrada-filtros input {
   width: 260px;
+}
+
+.entrada-filtro-periodo {
+  width: 170px;
+  min-width: 170px;
+}
+
+.entrada-filtro-periodo .ui-select__trigger {
+  box-sizing: border-box;
+  min-width: 170px;
 }
 
 .entrada-tabela-area {

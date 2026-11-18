@@ -1,0 +1,48 @@
+/*
+ * Visual dos campos da área interna do StockPass.
+ * O Login fica fora de .app-shell e mantém seu estilo próprio.
+ */
+.app-shell .app-content input:not(.perfil-page input):not(.perfil-password-form input):not(.perfil-photo-input):not(.ui-select__validation):not([type='file']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']) {
+  box-sizing: border-box;
+  min-height: 44px;
+  border: 0;
+  border-radius: 7px;
+  background-color: #f6f7f9;
+  color: #1f2937;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: background-color 250ms ease, box-shadow 250ms ease, background-size 250ms ease;
+}
+
+.app-shell .app-content input:not(.perfil-page input):not(.perfil-password-form input):not(.perfil-photo-input):not(.ui-select__validation):not([type='file']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):hover:not(:disabled):not([readonly]) {
+  background-color: #f2f4f7;
+}
+
+.app-shell .app-content input:not(.perfil-page input):not(.perfil-password-form input):not(.perfil-photo-input):not(.ui-select__validation):not([type='file']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):focus:not(:disabled):not([readonly]) {
+  outline: none;
+  background-color: #fff;
+  background-image: linear-gradient(#2563eb, #2563eb);
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 100% 2px;
+  box-shadow: 0 4px 8px rgba(31, 41, 55, 0.1);
+}
+
+.app-shell .app-content input:not(.perfil-page input):not(.perfil-password-form input):not(.perfil-photo-input):not(.ui-select__validation):not([type='file']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden']):disabled,
+.app-shell .app-content input:not(.perfil-page input):not(.perfil-password-form input):not(.perfil-photo-input):not(.ui-select__validation):not([type='file']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='hidden'])[readonly] {
+  background-color: #f6f7f9;
+  color: #4b5563;
+  opacity: 1;
+}
+
+/* Quantidades do carrinho e do seletor de itens continuam compactas. */
+.app-shell .app-content .loja-adicionar input,
+.app-shell .app-content .loja-carrinho-item input {
+  min-height: 34px;
+  padding: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .app-content input {
+    transition: none;
+  }
+}
