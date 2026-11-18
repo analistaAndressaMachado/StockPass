@@ -10,6 +10,7 @@ export type ProdutoRelatorio = {
   entradasPeriodo: number;
   saidasPeriodo: number;
   estoqueAtual: number;
+  precoUnitario: number;
   pontoReposicao: number;
   quantidadeSugerida: number;
   tendencia: number[];
