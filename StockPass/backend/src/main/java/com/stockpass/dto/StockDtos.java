@@ -93,7 +93,24 @@ public final class StockDtos {
         int quantity,
         BigDecimal price,
         String supplier,
-        int reorderPoint
+        int reorderPoint,
+        int physicalQuantity,
+        int reservedQuantity,
+        int availableQuantity
+    ) {}
+
+    public record StockReservationResponse(
+        Long id,
+        Long productId,
+        String sku,
+        String product,
+        int quantity,
+        String reason,
+        String observation,
+        String createdBy,
+        LocalDateTime createdAt,
+        LocalDateTime expiresAt,
+        String status
     ) {}
 
     public record EntryRequest(

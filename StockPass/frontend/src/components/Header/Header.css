@@ -38,6 +38,8 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  overflow: hidden;
+  object-fit: cover;
 }
 
 .app-header-user-name {

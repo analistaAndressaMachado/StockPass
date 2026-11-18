@@ -5,6 +5,7 @@ import com.stockpass.dto.StockDtos.ExitRequest;
 import com.stockpass.dto.StockDtos.MovementResponse;
 import com.stockpass.dto.StockDtos.ReplenishmentRequest;
 import com.stockpass.dto.StockDtos.ReplenishmentResponse;
+import com.stockpass.dto.StockDtos.StockReservationResponse;
 import com.stockpass.model.MovementType;
 import com.stockpass.service.StockMovementService;
 import com.stockpass.service.StockReplenishmentService;
@@ -48,5 +49,23 @@ public class StockMovementController {
     @PostMapping("/api/exits")
     public MovementResponse createExit(@Valid @RequestBody ExitRequest request, Principal principal) {
         return service.exit(request, principal.getName());
+    }
+
+    @GetMapping("/api/exits/reservations")
+    public List<StockReservationResponse> activeReservations() { return service.activeReservations(); }
+
+    @PostMapping("/api/exits/reservations")
+    public StockReservationResponse reserveExit(@Valid @RequestBody ExitRequest request, Principal principal) {
+        return service.reserveExit(request, principal.getName());
+    }
+
+    @PostMapping("/api/exits/reservations/{id}/confirm")
+    public MovementResponse confirmReservation(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        return service.confirmReservation(id);
+    }
+
+    @PostMapping("/api/exits/reservations/{id}/cancel")
+    public StockReservationResponse cancelReservation(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        return service.cancelReservation(id);
     }
 }

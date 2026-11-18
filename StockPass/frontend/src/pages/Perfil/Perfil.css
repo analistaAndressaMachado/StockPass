@@ -1,0 +1,182 @@
+.perfil-page {
+  align-items: stretch;
+}
+
+.perfil-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+  border: 0;
+  border-radius: 20px;
+  background: linear-gradient(120deg, #fff 0%, #eff6ff 100%);
+  box-shadow: 8px 8px 18px rgba(163, 177, 198, 0.35), -8px -8px 18px rgba(255, 255, 255, 0.9);
+}
+
+.perfil-avatar {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+}
+
+.perfil-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.perfil-photo-input {
+  display: none;
+}
+
+.perfil-hero-copy .perfil-message {
+  margin-top: 8px;
+}
+
+.perfil-hero-copy h2 {
+  margin: 3px 0 9px;
+  color: #111827;
+  font-size: 24px;
+}
+
+.perfil-eyebrow {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.perfil-role {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.perfil-section,
+.perfil-security {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 8px 8px 18px rgba(163, 177, 198, 0.3), -8px -8px 18px rgba(255, 255, 255, 0.8);
+}
+
+.perfil-section-heading,
+.perfil-security {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.perfil-section-heading h2,
+.perfil-security h2 {
+  margin: 0;
+}
+
+.perfil-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 760px;
+  margin-top: 22px;
+}
+
+.perfil-form label,
+.perfil-password-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.perfil-form input,
+.perfil-password-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-weight: 400;
+}
+
+.perfil-form input:disabled,
+.perfil-form input[readonly] {
+  background: #f9fafb;
+  color: #4b5563;
+  opacity: 1;
+}
+
+.perfil-supplier-fields {
+  display: contents;
+}
+
+.perfil-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.perfil-message {
+  margin: 16px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.perfil-message.is-success { color: #15803d; }
+.perfil-message.is-error { color: #b91c1c; }
+
+.perfil-security .muted-sm {
+  margin-bottom: 0;
+}
+
+.perfil-logout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 4px 2px 12px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.perfil-logout button {
+  color: #991b1b;
+  background: #fef2f2;
+}
+
+.perfil-password-form {
+  gap: 14px;
+}
+
+.perfil-toggle-password {
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .perfil-hero { padding: 20px; }
+  .perfil-avatar { width: 60px; height: 60px; flex-basis: 60px; font-size: 24px; }
+  .perfil-hero-copy h2 { font-size: 20px; }
+  .perfil-form { grid-template-columns: 1fr; }
+  .perfil-section-heading,
+  .perfil-security,
+  .perfil-logout { align-items: flex-start; }
+}

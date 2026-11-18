@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react';
 
 type Props = {
-  title: string;
+  title: ReactNode;
   onClose: () => void;
   children: ReactNode;
-  size?: 'default' | 'large';
+  size?: 'default' | 'medium' | 'large';
 };
 
 export function Modal({ title, onClose, children, size = 'default' }: Props) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className={`modal-box ${size === 'large' ? 'modal-box-large' : ''}`}
+        className={`modal-box ${size === 'large' ? 'modal-box-large' : size === 'medium' ? 'modal-box-medium' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">

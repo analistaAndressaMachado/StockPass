@@ -15,6 +15,7 @@ import { statusEstoque } from './produtosPeriodo';
 import type { ProdutoRelatorio } from './produtosPeriodo';
 import { ProdutosPeriodoTabela } from './ProdutosPeriodoTabela';
 import { TodosProdutosModal } from './TodosProdutosModal';
+import { HistoricoProdutoModal } from './HistoricoProdutoModal';
 
 type Periodo = 'semana' | 'mes';
 type Props = {
@@ -110,6 +111,7 @@ type RelatorioProps = Props;
 export function Relatorios({ onReceiveReplenishment }: RelatorioProps) {
   const [periodo, setPeriodo] = useState<Periodo>('mes');
   const [showTodos, setShowTodos] = useState(false);
+  const [produtoHistorico, setProdutoHistorico] = useState<ProdutoRelatorio | null>(null);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [entradas, setEntradas] = useState<Entrada[]>([]);
   const [saidas, setSaidas] = useState<Saida[]>([]);
@@ -191,6 +193,7 @@ export function Relatorios({ onReceiveReplenishment }: RelatorioProps) {
         entradasPeriodo: entradasProduto.reduce((total, item) => total + item.quantidade, 0),
         saidasPeriodo: saidasProduto.reduce((total, item) => total + item.quantidade, 0),
         estoqueAtual: produto.quantidade,
+        precoUnitario: produto.preco,
         pontoReposicao: produto.pontoReposicao,
         quantidadeSugerida: Math.max(1, produto.pontoReposicao - produto.quantidade),
         tendencia: datas.map((dia) => {
@@ -346,6 +349,7 @@ export function Relatorios({ onReceiveReplenishment }: RelatorioProps) {
           produtos={produtosRelatorio.slice(0, 5)}
           onSchedule={agendar}
           onReceive={receber}
+          onViewHistory={setProdutoHistorico}
           schedulingSku={agendandoSku}
         />
         {produtosRelatorio.length === 0 && <p className="muted-sm">Nenhum produto movimentado no período.</p>}
@@ -357,6 +361,13 @@ export function Relatorios({ onReceiveReplenishment }: RelatorioProps) {
         onSchedule={agendar}
         onReceive={receber}
         schedulingSku={agendandoSku}
+        onViewHistory={setProdutoHistorico}
+      />}
+      {produtoHistorico && <HistoricoProdutoModal
+        produto={produtoHistorico}
+        entradas={entradas.filter((item) => item.sku === produtoHistorico.sku)}
+        saidas={saidas.filter((item) => item.sku === produtoHistorico.sku)}
+        onClose={() => setProdutoHistorico(null)}
       />}
     </div>
   );

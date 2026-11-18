@@ -23,9 +23,13 @@ function noPeriodo(iso: string, periodo: Periodo) {
 type Props = {
   openNovaEntrada?: boolean;
   reposicao?: { productId: number; quantity: number; replenishmentId?: number } | null;
+  modalOnly?: boolean;
+  onModalClose?: () => void;
+  onModalSuccess?: (entradaId: number) => void;
+  highlightEntradaId?: number | null;
 };
 
-export function EntradaEstoque({ openNovaEntrada = false, reposicao = null }: Props) {
+export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, modalOnly = false, onModalClose, onModalSuccess, highlightEntradaId = null }: Props) {
   const [entradas, setEntradas] = useState<Entrada[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [erro, setErro] = useState('');
@@ -33,6 +37,8 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null }: Pr
   const [busca, setBusca] = useState('');
   const [pagina, setPagina] = useState(1);
   const [showNova, setShowNova] = useState(openNovaEntrada || Boolean(reposicao));
+  const modalCancelada = useRef(false);
+  const [linhaDestaqueId, setLinhaDestaqueId] = useState<number | null>(null);
 
   // Quantas linhas cabem na tela agora (mesma ideia do Painel).
   const [linhasPorPagina, setLinhasPorPagina] = useState(MINIMO_LINHAS);
@@ -46,6 +52,13 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null }: Pr
       })
       .catch((error: unknown) => setErro(mensagemErro(error)));
   }, []);
+
+  useEffect(() => {
+    if (highlightEntradaId === null || !entradas.some((entrada) => entrada.id === highlightEntradaId)) return;
+    setLinhaDestaqueId(highlightEntradaId);
+    const timeout = window.setTimeout(() => setLinhaDestaqueId(null), 2800);
+    return () => window.clearTimeout(timeout);
+  }, [highlightEntradaId, entradas]);
 
   useEffect(() => {
     const area = areaTabelaRef.current;
@@ -96,9 +109,26 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null }: Pr
       setPagina(1);
       setErro('');
       setShowNova(false);
+      if (modalOnly && !modalCancelada.current) onModalSuccess?.(nova.id);
     } catch (error) {
       setErro(mensagemErro(error));
+      throw error;
     }
+  }
+
+  if (modalOnly) {
+    return showNova ? (
+      <NovaEntradaModal
+        products={produtos}
+        reposicao={reposicao}
+        onClose={() => {
+          modalCancelada.current = true;
+          setShowNova(false);
+          onModalClose?.();
+        }}
+        onSave={registrarEntrada}
+      />
+    ) : null;
   }
 
   return (
@@ -195,7 +225,7 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null }: Pr
 
               <tbody>
                 {visiveis.map((e) => (
-                  <tr key={e.id}>
+                  <tr key={e.id} className={e.id === linhaDestaqueId ? 'linha-recem-criada' : undefined}>
                     <td>{formatarDataHora(e.dataHora)}</td>
                     <td>{e.produto}</td>
                     <td>{e.sku}</td>

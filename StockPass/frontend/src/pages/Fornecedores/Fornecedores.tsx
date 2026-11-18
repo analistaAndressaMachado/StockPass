@@ -13,6 +13,7 @@ import {
 } from '../../services/supplierApi';
 import type { SupplierOffer, SupplierOfferInput, SupplierProfile, SupplierSale } from '../../services/supplierApi';
 import { mensagemErro } from '../../services/stockApi';
+import { SupplierRecordsSection } from './SupplierRecordsSection';
 import './Fornecedores.css';
 
 type Props = {
@@ -35,6 +36,8 @@ function formatPrice(value: number) {
 
 export function Fornecedores({ user }: Props) {
   const isSupplier = user.role === 'FORNECEDOR';
+  const isInternal = ['USER', 'GESTOR', 'ADMIN'].includes(user.role);
+  const [abaInterna, setAbaInterna] = useState<'adquirir' | 'gestao'>('adquirir');
   const [profile, setProfile] = useState<SupplierProfile | null>(null);
   const [offers, setOffers] = useState<SupplierOffer[]>([]);
   const [sales, setSales] = useState<SupplierSale[]>([]);
@@ -166,6 +169,20 @@ export function Fornecedores({ user }: Props) {
 
   return (
     <div className="fornecedores-page">
+      {isInternal && (
+        <nav className="fornecedores-tabs" aria-label="Seções de fornecedores">
+          <button type="button" className={abaInterna === 'adquirir' ? 'fornecedores-tab active' : 'fornecedores-tab'}
+            aria-pressed={abaInterna === 'adquirir'} onClick={() => setAbaInterna('adquirir')}>
+            Adquirir
+          </button>
+          <button type="button" className={abaInterna === 'gestao' ? 'fornecedores-tab active' : 'fornecedores-tab'}
+            aria-pressed={abaInterna === 'gestao'} onClick={() => setAbaInterna('gestao')}>
+            Fornecedores e contratos
+          </button>
+        </nav>
+      )}
+
+      {(!isInternal || abaInterna === 'adquirir') && <>
       <section className="panel-card panel-card--soft-padrao fornecedores-header">
         <div>
           <h2>{isSupplier ? profile?.companyName || user.name : 'Fornecedores'}</h2>
@@ -310,6 +327,9 @@ export function Fornecedores({ user }: Props) {
           )}
         </section>
       )}
+      </>}
+
+      {isInternal && abaInterna === 'gestao' && <SupplierRecordsSection canManage={user.role === 'GESTOR' || user.role === 'ADMIN'} />}
     </div>
   );
 }

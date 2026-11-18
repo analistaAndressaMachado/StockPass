@@ -12,10 +12,11 @@ type Props = {
   onClose: () => void;
   onSchedule?: (produto: ProdutoRelatorio) => void;
   onReceive?: (produto: ProdutoRelatorio) => void;
+  onViewHistory?: (produto: ProdutoRelatorio) => void;
   schedulingSku?: string | null;
 };
 
-export function TodosProdutosModal({ produtos, onClose, onSchedule, onReceive, schedulingSku }: Props) {
+export function TodosProdutosModal({ produtos, onClose, onSchedule, onReceive, onViewHistory, schedulingSku }: Props) {
   const [ordem, setOrdem] = useState<OrdemOpcao>('nome-asc');
   const [pagina, setPagina] = useState(1);
 
@@ -58,7 +59,7 @@ export function TodosProdutosModal({ produtos, onClose, onSchedule, onReceive, s
         </div>
 
         <div className="todos-itens-table-wrap">
-          <ProdutosPeriodoTabela produtos={daPagina} onSchedule={onSchedule} onReceive={onReceive} schedulingSku={schedulingSku} />
+          <ProdutosPeriodoTabela produtos={daPagina} onSchedule={onSchedule} onReceive={onReceive} onViewHistory={onViewHistory} schedulingSku={schedulingSku} />
         </div>
 
         <div className="todos-itens-footer">

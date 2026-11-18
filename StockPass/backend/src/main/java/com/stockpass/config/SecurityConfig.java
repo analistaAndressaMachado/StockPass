@@ -25,6 +25,9 @@ public class SecurityConfig {
   return http.csrf(c->c.disable()).cors(c->{}).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
   .authorizeHttpRequests(a->a
   .requestMatchers("/api/hello-world","/api/auth/login","/api/auth/register","/api/auth/register-supplier","/api/auth/register-client","/api/auth/password/forgot","/api/auth/password/reset","/api/auth/password/demo-reset").permitAll()
+  .requestMatchers(HttpMethod.PUT, "/api/auth/profile/photo").authenticated()
+  .requestMatchers(HttpMethod.DELETE, "/api/auth/profile/photo").authenticated()
+  .requestMatchers(HttpMethod.GET, "/api/media/users/**").authenticated()
   .requestMatchers("/api/store/**").hasRole("CLIENTE")
   .requestMatchers("/api/clients", "/api/clients/**").hasAnyRole("USER","GESTOR","ADMIN")
   .requestMatchers(HttpMethod.GET,"/api/users", "/api/users/**").hasAnyRole("GESTOR","ADMIN")
@@ -32,6 +35,10 @@ public class SecurityConfig {
   .requestMatchers("/api/suppliers/offers/mine","/api/suppliers/offers/mine/**","/api/suppliers/purchases/mine","/api/suppliers/me").hasRole("FORNECEDOR")
    .requestMatchers(HttpMethod.GET,"/api/suppliers/offers").hasAnyRole("USER","GESTOR","ADMIN")
    .requestMatchers(HttpMethod.POST,"/api/suppliers/offers/*/acquire").hasAnyRole("USER","GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.GET,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("USER","GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.POST,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.PUT,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("GESTOR","ADMIN")
+  .requestMatchers("/api/suppliers/records/**","/api/suppliers/contracts/**").denyAll()
   .requestMatchers("/api/suppliers/**").hasAnyRole("USER","GESTOR","ADMIN")
   .requestMatchers("/api/products/**","/api/entries/**","/api/exits/**","/api/replenishments/**").hasAnyRole("USER","GESTOR","ADMIN")
    .anyRequest().authenticated()).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();

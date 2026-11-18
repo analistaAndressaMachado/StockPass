@@ -6,21 +6,18 @@ type Props = {
   produtos: ProdutoRelatorio[];
   onSchedule?: (produto: ProdutoRelatorio) => void;
   onReceive?: (produto: ProdutoRelatorio) => void;
+  onViewHistory?: (produto: ProdutoRelatorio) => void;
   schedulingSku?: string | null;
 };
 
 // Tabela de produtos com linhas clicáveis: ao clicar, a linha "abre" e mostra
 // o resumo de movimentação + gráfico daquele produto. Usada no card da página
 // de Relatórios e também dentro do modal "Ver todos".
-export function ProdutosPeriodoTabela({ produtos, onSchedule, onReceive, schedulingSku = null }: Props) {
+export function ProdutosPeriodoTabela({ produtos, onSchedule, onReceive, onViewHistory, schedulingSku = null }: Props) {
   const [linhaAberta, setLinhaAberta] = useState<string | null>(null);
 
   function toggleLinha(sku: string) {
     setLinhaAberta((atual) => (atual === sku ? null : sku));
-  }
-
-  function verHistoricoCompleto(produto: string) {
-    alert(`Em breve: histórico completo de "${produto}" (depende da tela de Catálogo).`);
   }
 
   return (
@@ -116,7 +113,8 @@ export function ProdutosPeriodoTabela({ produtos, onSchedule, onReceive, schedul
                       href="#"
                       onClick={(e) => {
                         e.preventDefault();
-                        verHistoricoCompleto(p.produto);
+                        e.stopPropagation();
+                        onViewHistory?.(p);
                       }}
                     >
                       Ver histórico completo do produto →

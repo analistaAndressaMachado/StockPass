@@ -77,6 +77,10 @@
   flex-direction: column;
 }
 
+.modal-box-medium {
+  max-width: 600px;
+}
+
 .modal-box-large .modal-body {
   flex: 1;
   overflow-y: auto;

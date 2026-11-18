@@ -1,0 +1,97 @@
+import { useState } from 'react';
+import { Modal } from '../../components/Modal/Modal';
+import { mensagemErro } from '../../services/stockApi';
+import type { SupplierRecord, SupplierRecordInput, SupplierStatus } from '../../services/supplierManagementTypes';
+
+type Props = {
+  supplier?: SupplierRecord;
+  onClose: () => void;
+  onSave: (input: SupplierRecordInput) => Promise<void>;
+};
+
+type FormState = {
+  legalName: string;
+  cnpj: string;
+  email: string;
+  phone: string;
+  address: string;
+  status: SupplierStatus;
+};
+
+function formFromSupplier(supplier?: SupplierRecord): FormState {
+  return {
+    legalName: supplier?.legalName ?? '',
+    cnpj: supplier?.cnpj ?? '',
+    email: supplier?.email ?? '',
+    phone: supplier?.phone ?? '',
+    address: supplier?.address ?? '',
+    status: supplier?.status ?? 'ACTIVE',
+  };
+}
+
+export function SupplierRecordModal({ supplier, onClose, onSave }: Props) {
+  const [form, setForm] = useState<FormState>(() => formFromSupplier(supplier));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!form.legalName.trim() || !form.cnpj.trim() || !form.email.trim()) {
+      setError('Preencha nome/razão social, CNPJ e e-mail.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await onSave({
+        legalName: form.legalName.trim(),
+        cnpj: form.cnpj.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim() || null,
+        address: form.address.trim() || null,
+        status: form.status,
+      });
+    } catch (saveError: unknown) {
+      setError(mensagemErro(saveError));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title={supplier ? 'Editar fornecedor' : 'Novo fornecedor'} onClose={saving ? () => {} : onClose}>
+      <form className="modal-form fornecedores-modal-form" onSubmit={submit}>
+        <label>Nome / razão social
+          <input value={form.legalName} onChange={(event) => setForm({ ...form, legalName: event.target.value })}
+            maxLength={255} required />
+        </label>
+        <label>CNPJ
+          <input value={form.cnpj} onChange={(event) => setForm({ ...form, cnpj: event.target.value })} required />
+        </label>
+        <label>E-mail
+          <input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })}
+            required />
+        </label>
+        <label>Telefone
+          <input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+        </label>
+        <label>Endereço
+          <input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
+        </label>
+        <label>Situação
+          <select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as SupplierStatus })}>
+            <option value="ACTIVE">Ativo</option>
+            <option value="INACTIVE">Inativo</option>
+          </select>
+        </label>
+        {error && <p className="fornecedores-feedback fornecedores-feedback-error" role="alert">{error}</p>}
+        <div className="fornecedores-modal-actions">
+          <button className="btn-secondary" type="button" onClick={onClose} disabled={saving}>Cancelar</button>
+          <button className="btn-primary" type="submit" disabled={saving}>
+            {saving ? 'Salvando...' : supplier ? 'Salvar alterações' : 'Cadastrar fornecedor'}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}

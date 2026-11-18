@@ -1,4 +1,4 @@
-export type User={id:number;name:string;email:string;role:string;companyName?:string|null;taxId?:string|null;phone?:string|null};
+export type User={id:number;name:string;email:string;role:string;companyName?:string|null;taxId?:string|null;phone?:string|null;photoUrl?:string|null};
 export type AuthResponse={token:string;user:User};
 
 export type Produto = {
@@ -10,5 +10,22 @@ export type Produto = {
   preco: number;
   fornecedor: string;
   pontoReposicao: number;
+  physicalQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+};
+
+export type ReservaSaida = {
+  id: number;
+  productId: number;
+  sku: string;
+  product: string;
+  quantity: number;
+  reason: string;
+  observation: string | null;
+  createdBy: string;
+  createdAt: string;
+  expiresAt: string;
+  status: string;
 };
 

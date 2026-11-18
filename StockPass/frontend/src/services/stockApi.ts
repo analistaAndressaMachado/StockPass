@@ -1,6 +1,6 @@
 import { api } from './api';
 import axios from 'axios';
-import type { Produto } from '../types';
+import type { Produto, ReservaSaida } from '../types';
 import type { Entrada } from '../pages/EntradaEstoque/entradasMock';
 import type { Saida } from '../pages/SaidaEstoque/saidasMock';
 
@@ -13,6 +13,9 @@ type ProductDto = {
   price: number;
   supplier: string;
   reorderPoint: number;
+  physicalQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
 };
 
 type MovementDto = {
@@ -28,6 +31,8 @@ type MovementDto = {
   registeredBy: string;
   observation: string | null;
 };
+
+type StockReservationDto = ReservaSaida;
 
 export type Reposicao = {
   id: number;
@@ -55,14 +60,14 @@ type ReplenishmentDto = {
   registeredBy: string;
 };
 
-export type NovoProduto = Omit<Produto, 'id' | 'quantidade'> & {
+export type NovoProduto = Omit<Produto, 'id' | 'quantidade' | 'physicalQuantity' | 'reservedQuantity' | 'availableQuantity'> & {
   quantidadeInicial: number;
 };
 
 export function mensagemErro(error: unknown) {
   if (axios.isAxiosError<{ message?: string }>(error)) {
     if (!error.response) return 'Não foi possível conectar à API. Inicie o backend StockPass e tente novamente.';
-    if (error.response.status === 403) return 'A API recusou o acesso. Faça login novamente ou reinicie o backend atualizado para habilitar as rotas de reposição.';
+    if (error.response.status === 403) return 'A API recusou o acesso. Confira seu perfil e faça login novamente.';
     return error.response?.data?.message ?? 'Não foi possível concluir a operação.';
   }
   return error instanceof Error ? error.message : 'Não foi possível concluir a operação.';
@@ -70,7 +75,11 @@ export function mensagemErro(error: unknown) {
 
 export async function listarProdutos() {
   const { data } = await api.get<ProductDto[]>('/products');
-  return data.map((item): Produto => ({
+  return data.map(produtoFromDto);
+}
+
+function produtoFromDto(item: ProductDto): Produto {
+  return {
     id: item.id,
     sku: item.sku,
     nome: item.name,
@@ -79,7 +88,10 @@ export async function listarProdutos() {
     preco: item.price,
     fornecedor: item.supplier,
     pontoReposicao: item.reorderPoint,
-  }));
+    physicalQuantity: item.physicalQuantity,
+    reservedQuantity: item.reservedQuantity,
+    availableQuantity: item.availableQuantity,
+  };
 }
 
 export async function criarProduto(produto: NovoProduto) {
@@ -92,16 +104,7 @@ export async function criarProduto(produto: NovoProduto) {
     supplier: produto.fornecedor,
     reorderPoint: produto.pontoReposicao,
   });
-  return {
-    id: data.id,
-    sku: data.sku,
-    nome: data.name,
-    categoria: data.category,
-    quantidade: data.quantity,
-    preco: data.price,
-    fornecedor: data.supplier,
-    pontoReposicao: data.reorderPoint,
-  } satisfies Produto;
+  return produtoFromDto(data);
 }
 
 export async function atualizarProduto(produto: Produto) {
@@ -113,16 +116,7 @@ export async function atualizarProduto(produto: Produto) {
     supplier: produto.fornecedor,
     reorderPoint: produto.pontoReposicao,
   });
-  return {
-    id: data.id,
-    sku: data.sku,
-    nome: data.name,
-    categoria: data.category,
-    quantidade: data.quantity,
-    preco: data.price,
-    fornecedor: data.supplier,
-    pontoReposicao: data.reorderPoint,
-  } satisfies Produto;
+  return produtoFromDto(data);
 }
 
 function entradaFromDto(item: MovementDto): Entrada {
@@ -169,6 +163,31 @@ export async function listarSaidas() {
 export async function registrarSaida(productId: number, quantity: number, reason: string, observation: string) {
   const { data } = await api.post<MovementDto>('/exits', { productId, quantity, reason, observation });
   return saidaFromDto(data);
+}
+
+export async function criarReservaSaida(productId: number, quantity: number, reason: string, observation: string) {
+  const { data } = await api.post<StockReservationDto>('/exits/reservations', {
+    productId,
+    quantity,
+    reason,
+    observation,
+  });
+  return data;
+}
+
+export async function listarReservasSaida() {
+  const { data } = await api.get<StockReservationDto[]>('/exits/reservations');
+  return data;
+}
+
+export async function confirmarReservaSaida(id: number) {
+  const { data } = await api.post<MovementDto>(`/exits/reservations/${id}/confirm`);
+  return saidaFromDto(data);
+}
+
+export async function cancelarReservaSaida(id: number) {
+  const { data } = await api.post<StockReservationDto>(`/exits/reservations/${id}/cancel`);
+  return data;
 }
 
 function reposicaoFromDto(item: ReplenishmentDto): Reposicao {

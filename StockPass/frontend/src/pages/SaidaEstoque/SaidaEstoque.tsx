@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import './SaidaEstoque.css';
 import type { Produto } from '../../types';
 import {
@@ -10,13 +10,32 @@ import {
   nomeDoDia,
 } from './saidasMock';
 import type { Saida } from './saidasMock';
+import type { ReservaSaida } from '../../types';
 import { NovaSaidaModal } from './NovaSaidaModal';
 import type { NovaSaidaDados } from './NovaSaidaModal';
-import { listarProdutos, listarSaidas, mensagemErro, registrarSaida as registrarSaidaApi } from '../../services/stockApi';
+import {
+  cancelarReservaSaida,
+  confirmarReservaSaida,
+  criarReservaSaida,
+  listarProdutos,
+  listarReservasSaida,
+  listarSaidas,
+  mensagemErro,
+} from '../../services/stockApi';
 
 type Periodo = 'todos' | 'hoje' | '7dias' | 'mes';
 
 const MINIMO_LINHAS = 5;
+
+function segundosRestantes(expiresAt: string, agora: number) {
+  return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - agora) / 1000));
+}
+
+function formatarContagem(segundos: number) {
+  const minutos = Math.floor(segundos / 60);
+  const restantes = segundos % 60;
+  return `${String(minutos).padStart(2, '0')}:${String(restantes).padStart(2, '0')}`;
+}
 
 function noPeriodo(iso: string, periodo: Periodo) {
   if (periodo === 'todos') return true;
@@ -29,12 +48,20 @@ function noPeriodo(iso: string, periodo: Periodo) {
 
 type Props = {
   openNovaSaida?: boolean;
+  modalOnly?: boolean;
+  onModalClose?: () => void;
+  onModalSuccess?: (reservaId: number) => void;
+  highlightReservaId?: number | null;
 };
 
-export function SaidaEstoque({ openNovaSaida = false }: Props) {
+export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModalClose, onModalSuccess, highlightReservaId = null }: Props) {
   const [saidas, setSaidas] = useState<Saida[]>([]);
+  const [reservas, setReservas] = useState<ReservaSaida[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [erro, setErro] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [agora, setAgora] = useState(Date.now());
+  const [reservaEmAcao, setReservaEmAcao] = useState<number | null>(null);
   const [periodo, setPeriodo] = useState<Periodo>('todos');
   const [motivoFiltro, setMotivoFiltro] = useState('Todos');
   const [busca, setBusca] = useState('');
@@ -44,15 +71,57 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
   // Quantas linhas cabem na tela agora (mesma ideia do Painel e da Entrada).
   const [linhasPorPagina, setLinhasPorPagina] = useState(MINIMO_LINHAS);
   const areaTabelaRef = useRef<HTMLDivElement>(null);
+  const expiracoesAvisadas = useRef(new Set<number>());
+  const modalCancelada = useRef(false);
+  const [reservaDestaqueId, setReservaDestaqueId] = useState<number | null>(null);
+  const [saidaDestaqueId, setSaidaDestaqueId] = useState<number | null>(null);
+  const reservaParaDestacarCarregada = highlightReservaId !== null && reservas.some((reserva) => reserva.id === highlightReservaId);
+
+  const atualizarDados = useCallback(async () => {
+    try {
+      const [historico, catalogo, reservasAtivas] = await Promise.all([
+        listarSaidas(), listarProdutos(), listarReservasSaida(),
+      ]);
+      setSaidas(historico);
+      setProdutos(catalogo);
+      setReservas(reservasAtivas);
+      setErro('');
+    } catch (error) {
+      setErro(mensagemErro(error));
+    }
+  }, []);
 
   useEffect(() => {
-    Promise.all([listarSaidas(), listarProdutos()])
-      .then(([historico, catalogo]) => {
-        setSaidas(historico);
-        setProdutos(catalogo);
-      })
-      .catch((error: unknown) => setErro(mensagemErro(error)));
-  }, []);
+    void atualizarDados();
+    const intervalo = window.setInterval(() => {
+      setAgora(Date.now());
+      void atualizarDados();
+    }, 1000);
+    return () => window.clearInterval(intervalo);
+  }, [atualizarDados]);
+
+  useEffect(() => {
+    if (highlightReservaId === null || !reservaParaDestacarCarregada) return;
+    setReservaDestaqueId(highlightReservaId);
+    const timeout = window.setTimeout(() => setReservaDestaqueId(null), 3300);
+    return () => window.clearTimeout(timeout);
+  }, [highlightReservaId, reservaParaDestacarCarregada]);
+
+  useEffect(() => {
+    if (saidaDestaqueId === null) return;
+    const timeout = window.setTimeout(() => setSaidaDestaqueId(null), 3300);
+    return () => window.clearTimeout(timeout);
+  }, [saidaDestaqueId]);
+
+  useEffect(() => {
+    const expiradas = reservas.filter((reserva) =>
+      segundosRestantes(reserva.expiresAt, agora) === 0 && !expiracoesAvisadas.current.has(reserva.id));
+    if (expiradas.length === 0) return;
+    expiradas.forEach((reserva) => expiracoesAvisadas.current.add(reserva.id));
+    setAviso(expiradas.length === 1
+      ? `A reserva de ${expiradas[0].product} expirou. O saldo disponível foi liberado pelo backend.`
+      : `${expiradas.length} reservas expiraram. Os saldos disponíveis foram liberados pelo backend.`);
+  }, [agora, reservas]);
 
   useEffect(() => {
     const area = areaTabelaRef.current;
@@ -100,17 +169,71 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
   const principal = Object.entries(contagemMotivos).sort((a, b) => b[1] - a[1])[0];
 
   async function registrarSaida(dados: NovaSaidaDados) {
+    const reserva = await criarReservaSaida(dados.productId, dados.quantidade, dados.motivo, dados.observacao);
+    setReservas((anteriores) => [reserva, ...anteriores.filter((item) => item.id !== reserva.id)]);
+    setProdutos((anteriores) => anteriores.map((produto) => produto.id === dados.productId
+      ? {
+          ...produto,
+          reservedQuantity: reserva.status === 'ACTIVE' ? produto.reservedQuantity + reserva.quantity : produto.reservedQuantity,
+          availableQuantity: reserva.status === 'ACTIVE' ? produto.availableQuantity - reserva.quantity : produto.availableQuantity,
+        }
+      : produto));
+    expiracoesAvisadas.current.delete(reserva.id);
+    setAviso(`Reserva criada. Você tem até ${new Date(reserva.expiresAt).toLocaleTimeString('pt-BR')} para confirmar.`);
+    setErro('');
+    setShowNova(false);
+    if (modalOnly && !modalCancelada.current) onModalSuccess?.(reserva.id);
+    void atualizarDados();
+  }
+
+  if (modalOnly) {
+    return showNova ? (
+      <NovaSaidaModal
+        products={produtos}
+        onClose={() => {
+          modalCancelada.current = true;
+          setShowNova(false);
+          onModalClose?.();
+        }}
+        onSave={registrarSaida}
+      />
+    ) : null;
+  }
+
+  async function confirmarReserva(reserva: ReservaSaida) {
+    setReservaEmAcao(reserva.id);
     try {
-      const nova = await registrarSaidaApi(dados.productId, dados.quantidade, dados.motivo, dados.observacao);
-      setSaidas((prev) => [nova, ...prev]);
-      setProdutos((prev) => prev.map((produto) => produto.id === dados.productId
-        ? { ...produto, quantidade: produto.quantidade - dados.quantidade }
-        : produto));
+      const nova = await confirmarReservaSaida(reserva.id);
+      setSaidas((prev) => [nova, ...prev.filter((item) => item.id !== nova.id)]);
+      setSaidaDestaqueId(nova.id);
+      setReservas((prev) => prev.filter((item) => item.id !== reserva.id));
       setPagina(1);
       setErro('');
-      setShowNova(false);
+      setAviso(`Saída de ${reserva.quantity} unidade(s) de ${reserva.product} confirmada.`);
+      await atualizarDados();
     } catch (error) {
-      setErro(mensagemErro(error));
+      const detalhe = mensagemErro(error);
+      await atualizarDados();
+      setErro(`Não foi possível confirmar a reserva. Ela pode ter expirado ou o backend recusou a operação. ${detalhe}`);
+    } finally {
+      setReservaEmAcao(null);
+    }
+  }
+
+  async function cancelarReserva(reserva: ReservaSaida) {
+    setReservaEmAcao(reserva.id);
+    try {
+      await cancelarReservaSaida(reserva.id);
+      setReservas((prev) => prev.filter((item) => item.id !== reserva.id));
+      setAviso(`Reserva de ${reserva.product} cancelada. O saldo disponível foi liberado.`);
+      setErro('');
+      await atualizarDados();
+    } catch (error) {
+      const detalhe = mensagemErro(error);
+      await atualizarDados();
+      setErro(`Não foi possível cancelar a reserva. ${detalhe}`);
+    } finally {
+      setReservaEmAcao(null);
     }
   }
 
@@ -128,6 +251,7 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
       </section>
 
       {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
+      {aviso && <p className="muted-sm" role="status">{aviso}</p>}
 
       <section className="stats-grid">
         <div className="stat-card">
@@ -155,6 +279,50 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
             {ultima ? `${nomeDoDia(ultima.dataHora)} · ${ultima.produto}` : 'Nenhuma saída ainda'}
           </p>
         </div>
+      </section>
+
+      <section className="panel-card panel-card--soft-padrao">
+        <div className="saida-historico-topo">
+          <div>
+            <h2>Reservas de saída pendentes</h2>
+            <p className="muted-sm">Cada reserva pode ser confirmada em até 120 segundos ou cancelada antes de expirar.</p>
+          </div>
+          <span className="muted-sm">{reservas.length} {reservas.length === 1 ? 'reserva ativa' : 'reservas ativas'}</span>
+        </div>
+
+        {reservas.length === 0 ? (
+          <p className="muted-sm">Não há reservas de saída pendentes.</p>
+        ) : (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {reservas.map((reserva) => {
+              const restante = segundosRestantes(reserva.expiresAt, agora);
+              const expirou = restante === 0;
+              const processando = reservaEmAcao === reserva.id;
+              return (
+                <article key={reserva.id} className={`panel-card${reserva.id === reservaDestaqueId ? ' linha-recem-criada' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div>
+                    <strong>{reserva.product}</strong> <span className="muted-sm">({reserva.sku})</span>
+                    <p className="muted-sm">{reserva.quantity} Uni · {reserva.reason} · Criada por {reserva.createdBy}</p>
+                    <p className="muted-sm">Criada em {formatarDataHora(reserva.createdAt)}{reserva.observation ? ` · ${reserva.observation}` : ''}</p>
+                    <strong role={expirou ? 'status' : undefined} style={{ color: expirou ? '#b91c1c' : undefined }}>
+                      {expirou ? 'Reserva expirada' : `Tempo para confirmar: ${formatarContagem(restante)}`}
+                    </strong>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn-primary" type="button" disabled={processando || expirou}
+                      onClick={() => void confirmarReserva(reserva)}>
+                      {processando ? 'Aguarde...' : 'Confirmar'}
+                    </button>
+                    <button className="btn-secondary" type="button" disabled={processando || expirou}
+                      onClick={() => void cancelarReserva(reserva)}>
+                      Cancelar
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="panel-card panel-card--soft-padrao saida-historico">
@@ -220,7 +388,7 @@ export function SaidaEstoque({ openNovaSaida = false }: Props) {
 
               <tbody>
                 {visiveis.map((s) => (
-                  <tr key={s.id}>
+                  <tr key={s.id} className={s.id === saidaDestaqueId ? 'linha-recem-criada' : undefined}>
                     <td>{formatarDataHora(s.dataHora)}</td>
                     <td>{s.produto}</td>
                     <td>{s.sku}</td>
