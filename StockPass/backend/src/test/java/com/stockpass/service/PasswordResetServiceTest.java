@@ -92,7 +92,8 @@ class PasswordResetServiceTest {
         token.setTokenHash(hash(rawToken));
         token.setExpiresAt(LocalDateTime.now().plusMinutes(10));
         when(tokens.findByTokenHashAndUsedAtIsNull(hash(rawToken)))
-            .thenReturn(Optional.of(token), Optional.empty());
+            .thenReturn(Optional.of(token))
+            .thenReturn(Optional.empty());
         when(passwordEncoder.encode("new-password")).thenReturn("new-hash");
         when(users.save(user)).thenReturn(user);
         when(tokens.save(token)).thenReturn(token);

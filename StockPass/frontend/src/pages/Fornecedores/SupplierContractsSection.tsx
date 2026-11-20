@@ -3,10 +3,14 @@ import { Modal } from '../../components/Modal/Modal';
 import { mensagemErro } from '../../services/stockApi';
 import {
   atualizarContratoFornecedor,
+  anexarArquivoContrato,
+  baixarAnexoContrato,
   criarContratoFornecedor,
+  listarAnexosContrato,
   listarContratosFornecedor,
+  removerAnexoContrato,
 } from '../../services/supplierManagementApi';
-import type { SupplierContract, SupplierContractInput, SupplierContractStatus } from '../../services/supplierManagementTypes';
+import type { SupplierContract, SupplierContractAttachment, SupplierContractInput, SupplierContractStatus } from '../../services/supplierManagementTypes';
 import { SupplierContractModal } from './SupplierContractModal';
 
 type Props = {
@@ -75,6 +79,9 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage, 
   const [modalContract, setModalContract] = useState<SupplierContract | 'new' | null>(null);
   const [detailContract, setDetailContract] = useState<SupplierContract | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [attachments, setAttachments] = useState<SupplierContractAttachment[]>([]);
+  const [attachmentError, setAttachmentError] = useState('');
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -90,12 +97,14 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage, 
     return () => { active = false; };
   }, [supplierId, reloadKey]);
 
-  async function salvarContrato(input: SupplierContractInput) {
+  async function salvarContrato(input: SupplierContractInput, files: File[]) {
+    let saved: SupplierContract | undefined;
     if (modalContract === 'new') {
-      await criarContratoFornecedor(supplierId, input);
+      saved = await criarContratoFornecedor(supplierId, input);
     } else if (modalContract) {
-      await atualizarContratoFornecedor(supplierId, modalContract.id, input);
+      saved = await atualizarContratoFornecedor(supplierId, modalContract.id, input);
     }
+    if (saved) for (const file of files) await anexarArquivoContrato(supplierId, saved.id, file);
     setModalContract(null);
     setError('');
     setReloadKey((current) => current + 1);
@@ -103,6 +112,36 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage, 
   }
 
   const avisoDoModal = detailContract ? avisoVencimento(detailContract) : null;
+
+  useEffect(() => {
+    let active = true;
+    if (!detailContract) { setAttachments([]); return () => { active = false; }; }
+    listarAnexosContrato(supplierId, detailContract.id).then((items) => { if (active) setAttachments(items); })
+      .catch((loadError: unknown) => { if (active) setAttachmentError(mensagemErro(loadError)); });
+    return () => { active = false; };
+  }, [supplierId, detailContract?.id]);
+
+  async function baixarAnexo(attachment: SupplierContractAttachment) {
+    if (!detailContract) return;
+    setAttachmentBusy(true); setAttachmentError('');
+    try {
+      const blob = await baixarAnexoContrato(supplierId, detailContract.id, attachment.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a'); link.href = url; link.download = attachment.originalName; link.click();
+      URL.revokeObjectURL(url);
+    } catch (downloadError: unknown) { setAttachmentError(mensagemErro(downloadError)); }
+    finally { setAttachmentBusy(false); }
+  }
+
+  async function excluirAnexo(attachment: SupplierContractAttachment) {
+    if (!detailContract) return;
+    setAttachmentBusy(true); setAttachmentError('');
+    try {
+      await removerAnexoContrato(supplierId, detailContract.id, attachment.id);
+      setAttachments((current) => current.filter((item) => item.id !== attachment.id));
+    } catch (removeError: unknown) { setAttachmentError(mensagemErro(removeError)); }
+    finally { setAttachmentBusy(false); }
+  }
 
   return (
     <div className="fornecedor-contracts-inline">
@@ -186,6 +225,15 @@ export function SupplierContractsSection({ supplierId, supplierName, canManage, 
           <section className="fornecedor-contract-observations">
             <h3>Observa&#231;&#245;es</h3>
             <p>{detailContract.observations || 'Sem observa&#231;&#245;es'}</p>
+          </section>
+          <section className="fornecedor-contract-files">
+            <h3>Documentos anexados</h3>
+            {attachmentError && <p className="fornecedores-feedback fornecedores-feedback-error" role="alert">{attachmentError}</p>}
+            {attachments.length === 0 ? <p>Nenhum documento anexado.</p> : <ul>{attachments.map((attachment) => <li key={attachment.id}>
+              <span>{attachment.originalName} <small>({(attachment.size / 1024 / 1024).toFixed(2)} MB)</small></span>
+              <div><button className="btn-secondary" type="button" disabled={attachmentBusy} onClick={() => void baixarAnexo(attachment)}>Baixar</button>
+                {canManage && <button className="btn-secondary" type="button" disabled={attachmentBusy} onClick={() => void excluirAnexo(attachment)}>Remover</button>}</div>
+            </li>)}</ul>}
           </section>
           {canManage && <div className="fornecedor-contract-modal-footer">
             <button className="btn-primary" type="button" onClick={() => {

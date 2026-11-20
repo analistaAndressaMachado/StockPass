@@ -58,6 +58,7 @@ public class ProfilePhotoService {
     private UserResponse toResponse(User user) {
         String photoUrl = user.getPhotoPath() == null ? null : "/api/media/users/" + user.getId();
         return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getRole(),
-            user.getCompanyName(), user.getTaxId(), user.getPhone(), photoUrl);
+            user.getCompanyName(), user.getTaxId(), user.getPhone(), photoUrl,
+            com.stockpass.security.PermissionPolicy.effective(user));
     }
 }

@@ -7,7 +7,7 @@ import type { SupplierContract, SupplierContractInput, SupplierContractStatus } 
 type Props = {
   contract?: SupplierContract;
   onClose: () => void;
-  onSave: (input: SupplierContractInput) => Promise<void>;
+  onSave: (input: SupplierContractInput, files: File[]) => Promise<void>;
 };
 
 type FormState = {
@@ -34,6 +34,7 @@ export function SupplierContractModal({ contract, onClose, onSave }: Props) {
   const [form, setForm] = useState<FormState>(() => formFromContract(contract));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,6 +55,10 @@ export function SupplierContractModal({ contract, onClose, onSave }: Props) {
     setSaving(true);
     setError('');
     try {
+      if (files.some((file) => file.size > 10 * 1024 * 1024)) {
+        setError('Cada documento pode ter até 10 MB.');
+        return;
+      }
       await onSave({
         contractNumber: form.contractNumber.trim(),
         startDate: form.startDate,
@@ -61,7 +66,7 @@ export function SupplierContractModal({ contract, onClose, onSave }: Props) {
         value: numericValue,
         status: form.status,
         observations: form.observations.trim() || null,
-      });
+      }, files);
     } catch (saveError: unknown) {
       setError(mensagemErro(saveError));
     } finally {
@@ -74,7 +79,7 @@ export function SupplierContractModal({ contract, onClose, onSave }: Props) {
       <form className="modal-form fornecedores-modal-form" onSubmit={submit}>
         <label>Número do contrato
           <input value={form.contractNumber}
-            onChange={(event) => setForm({ ...form, contractNumber: event.target.value })} required />
+            onChange={(event) => setForm({ ...form, contractNumber: event.target.value })} placeholder="Ex: CT-2026-001" required />
         </label>
         <label>Data de início
           <input type="date" value={form.startDate}
@@ -86,7 +91,7 @@ export function SupplierContractModal({ contract, onClose, onSave }: Props) {
         </label>
         <label>Valor (opcional)
           <input type="number" min="0" step="0.01" value={form.value}
-            onChange={(event) => setForm({ ...form, value: event.target.value })} />
+            onChange={(event) => setForm({ ...form, value: event.target.value })} placeholder="Ex: 1500,00" />
         </label>
         <label>Situação
           <Select<SupplierContractStatus> ariaLabel="Situação do contrato" value={form.status}
@@ -98,8 +103,14 @@ export function SupplierContractModal({ contract, onClose, onSave }: Props) {
         </label>
         <label>Observações
           <textarea rows={3} value={form.observations}
-            onChange={(event) => setForm({ ...form, observations: event.target.value })} />
+            onChange={(event) => setForm({ ...form, observations: event.target.value })} placeholder="Ex: Entregas semanais às segundas-feiras" />
         </label>
+        <label>Documentos do contrato
+          <input type="file" multiple accept=".pdf,.doc,.docx,.odt,.rtf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text,application/rtf"
+            onChange={(event) => setFiles(Array.from(event.target.files ?? []))} />
+          <small>Formatos aceitos: PDF, Word (DOC/DOCX), ODT e RTF. Limite de 10 MB por arquivo.</small>
+        </label>
+        {files.length > 0 && <ul className="fornecedor-anexos-selecionados">{files.map((file) => <li key={`${file.name}-${file.lastModified}`}>{file.name}</li>)}</ul>}
         {error && <p className="fornecedores-feedback fornecedores-feedback-error" role="alert">{error}</p>}
         <div className="fornecedores-modal-actions">
           <button className="btn-secondary" type="button" onClick={onClose} disabled={saving}>Cancelar</button>

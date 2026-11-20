@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +28,7 @@ public class UserController {
 
 	public record CreateRequest(@NotBlank String name, @NotBlank @Email String email,
 		@NotBlank String role, @NotBlank @Size(min = 6) String password) {}
-	public record UpdateRequest(@NotBlank String name, @NotBlank String role) {}
+	public record UpdateRequest(@NotBlank String name, @NotBlank String role, Map<String, String> permissions) {}
 	public record StatusRequest(@NotNull Boolean active) {}
 
 	public UserController(UserManagementService service) { this.service = service; }
@@ -40,7 +41,7 @@ public class UserController {
 	}
 	@PutMapping("/{id}")
 	public ManagedUser update(@PathVariable Long id, @Valid @RequestBody UpdateRequest request, Principal principal) {
-		return service.update(id, request.name(), request.role(), principal.getName());
+		return service.update(id, request.name(), request.role(), request.permissions(), principal.getName());
 	}
 	@PutMapping("/{id}/status")
 	public ManagedUser status(@PathVariable Long id, @Valid @RequestBody StatusRequest request, Principal principal) {

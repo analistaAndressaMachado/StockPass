@@ -10,7 +10,6 @@ import com.stockpass.dto.SupplierManagementDtos.SupplierRequest;
 import com.stockpass.model.SupplierContractStatus;
 import com.stockpass.model.SupplierStatus;
 import com.stockpass.repository.SupplierContractRepository;
-import com.stockpass.repository.SupplierRepository;
 import com.stockpass.repository.UserActivityRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class SupplierManagementServiceTest {
     @Autowired private SupplierManagementService service;
-    @Autowired private SupplierRepository suppliers;
     @Autowired private SupplierContractRepository contracts;
     @Autowired private UserActivityRepository activities;
 

@@ -33,6 +33,16 @@ export type ClienteCadastrado = {
   name: string;
   email: string;
   createdAt: string;
+  phone: string | null;
+  active: boolean;
+};
+
+export type NovoClienteInput = {
+  name: string;
+  email: string;
+  phone: string | null;
+  password: string;
+  active: boolean;
 };
 
 type ProductDto = {
@@ -112,6 +122,22 @@ export async function listarComprasCliente() {
 export async function listarClientesCadastrados() {
   const { data } = await api.get<ClienteCadastrado[]>('/clients');
   return data;
+}
+
+export async function criarClienteCadastrado(input: NovoClienteInput) {
+  const { data } = await api.post<ClienteCadastrado>('/clients', input);
+  return data;
+}
+
+export type EditarClienteInput = Omit<NovoClienteInput, 'password'> & { password?: string };
+
+export async function atualizarClienteCadastrado(clientId: number, input: EditarClienteInput) {
+  const { data } = await api.put<ClienteCadastrado>(`/clients/${clientId}`, input);
+  return data;
+}
+
+export async function excluirClienteCadastrado(clientId: number) {
+  await api.delete(`/clients/${clientId}`);
 }
 
 export async function listarComprasDoCliente(clientId: number) {

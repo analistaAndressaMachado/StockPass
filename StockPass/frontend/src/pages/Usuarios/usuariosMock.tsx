@@ -17,7 +17,7 @@ export const NOME_PERFIL: Record<Perfil, string> = {
 export const DESCRICAO_PERFIL: Record<Perfil, string> = {
   USER: 'Operação do dia a dia',
   GESTOR: 'Supervisão e relatórios',
-  ADMIN: 'Controle total do sistema',
+  ADMIN: 'Administração do sistema',
 };
 
 export function perfilClass(perfil: Perfil) {
@@ -81,6 +81,18 @@ export const MODULOS: Modulo[] = [
     niveis: { USER: 'ver', GESTOR: 'ver', ADMIN: 'ver' },
   },
   {
+    chave: 'clientes',
+    nome: 'Clientes',
+    descricao: 'Consulta e gestão de cadastros',
+    niveis: { USER: 'ver', GESTOR: 'editar', ADMIN: 'editar' },
+  },
+  {
+    chave: 'fornecedores',
+    nome: 'Fornecedores',
+    descricao: 'Consulta, fornecedores e contratos',
+    niveis: { USER: 'editar', GESTOR: 'editar', ADMIN: 'editar' },
+  },
+  {
     chave: 'usuarios',
     nome: 'Usuários e Permissões',
     descricao: 'Contas, perfis e atividades',
@@ -99,6 +111,7 @@ export type UsuarioSistema = {
   perfil: Perfil;
   ativo: boolean;
   ultimoAcesso: string | null; // ISO, ou null se nunca acessou
+  permissoes: Record<string, Nivel>;
 };
 
 export type Atividade = {

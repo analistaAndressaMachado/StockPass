@@ -39,9 +39,9 @@ export function Usuarios({ user }: Props) {
 
   // Perfil de quem está logado e o que ele pode fazer nesta área
   const meuPerfil = (PERFIS.includes(user.role as Perfil) ? user.role : 'USER') as Perfil;
-  const meuNivel = nivelDoPerfil(meuPerfil, 'usuarios');
+  const meuNivel = user.permissions?.usuarios ?? nivelDoPerfil(meuPerfil, 'usuarios');
   const podeEditar = meuNivel === 'editar';
-  const dicaSemPermissao = 'Somente Administradores podem alterar ou acrescentar';
+  const dicaSemPermissao = 'Seu acesso não permite alterar contas.';
 
   const termo = busca.trim().toLowerCase();
   const filtrados = usuarios.filter(
@@ -65,7 +65,7 @@ export function Usuarios({ user }: Props) {
 
   async function salvarUsuario(dados: UsuarioDados) {
     if (modal?.tipo === 'editar') {
-      await editarUsuario(modal.usuario.id, dados);
+      await editarUsuario(modal.usuario.id, { ...dados, permissoes: dados.permissoes });
     } else {
       await criarUsuario(dados);
     }
@@ -90,10 +90,12 @@ export function Usuarios({ user }: Props) {
           <h2>Usuários e Permissões</h2>
           <p className="muted-sm">Controle quem acessa o sistema e o que cada perfil pode fazer</p>
           <p className="usuarios-acesso">
-            <span className={nivelClass(meuNivel)}>{NIVEL_TEXTO[meuNivel]}</span>
-            {podeEditar
-              ? 'Seu acesso nesta área: você pode criar usuários, mudar perfis e ativar ou desativar contas.'
-              : 'Seu acesso nesta área: você pode consultar, mas só Administradores podem alterar ou acrescentar.'}
+            <span className="muted-sm">Seu acesso</span>
+            <span className={nivelClass(meuNivel)} title={podeEditar
+              ? 'Você pode consultar e alterar usuários e perfis.'
+              : 'Você pode consultar. Somente administradores podem alterar contas.'}>
+              {NIVEL_TEXTO[meuNivel]}
+            </span>
           </p>
         </div>
 
@@ -183,7 +185,7 @@ export function Usuarios({ user }: Props) {
                       <th>Perfil</th>
                      <th>Status</th>
                      <th>Último acesso</th>
-                                           <th>Ações</th>
+                                           <th className="usuarios-acoes-coluna"><span className="usuarios-acoes-rotulo">Ações</span></th>
                                          </tr>
                                        </thead>
 
@@ -208,13 +210,13 @@ export function Usuarios({ user }: Props) {
                                                  </span>
                                                </td>
                                                <td>{u.ultimoAcesso ? formatarDataHora(u.ultimoAcesso) : 'Não registrado'}</td>
-                                               <td>
+                                               <td className="usuarios-acoes-coluna">
                                                  {sou ? (
-                                                   <span className="muted-sm">Você</span>
+                                                   <span className="muted-sm usuarios-acoes-voce">Você</span>
                                                  ) : (
                                                    <div className="usuarios-acoes">
                                                      <button
-                                                       className="btn-secondary"
+                                                       className="btn-primary"
                                                        disabled={!podeEditar}
                                                        title={podeEditar ? undefined : dicaSemPermissao}
                                                        onClick={() => setModal({ tipo: 'editar', usuario: u })}
@@ -222,7 +224,7 @@ export function Usuarios({ user }: Props) {
                                                        Editar
                                                      </button>
                                                      <button
-                                                       className="btn-secondary"
+                                                       className={u.ativo ? 'btn-danger' : 'btn-secondary'}
                                                        disabled={!podeEditar}
                                                        title={podeEditar ? undefined : dicaSemPermissao}
                                                        onClick={() => void alternarStatus(u)}
@@ -246,16 +248,23 @@ export function Usuarios({ user }: Props) {
                                <>
                                  <div className="usuarios-toolbar">
                                    <div className="usuarios-legenda">
-                                     <span className={nivelClass('editar')}>{NIVEL_TEXTO.editar}</span>
-                                     <span className="muted-sm">pode consultar e alterar</span>
-                                     <span className={nivelClass('ver')}>{NIVEL_TEXTO.ver}</span>
-                                     <span className="muted-sm">só consulta, sem alterar</span>
-                                     <span className={nivelClass('nenhum')}>{NIVEL_TEXTO.nenhum}</span>
-                                     <span className="muted-sm">a área nem aparece no menu</span>
+                                     <span className={nivelClass('editar')} title="Pode consultar e alterar">{NIVEL_TEXTO.editar}</span>
+                                     <span className={nivelClass('ver')} title="Pode consultar, sem alterar">{NIVEL_TEXTO.ver}</span>
+                                     <span className={nivelClass('nenhum')} title="A área não aparece no menu">{NIVEL_TEXTO.nenhum}</span>
                                    </div>
                                  </div>
 
                                  <div className="usuarios-area">
+                                   <div className="usuarios-perfis-cards">
+                                     {PERFIS.map((p) => (
+                                       <article className="usuarios-perfil-card" key={p}>
+                                         <header><div><h3>{NOME_PERFIL[p]}</h3><small>{DESCRICAO_PERFIL[p]}</small></div><span className={perfilClass(p)}>Base padrão</span></header>
+                                         <div className="usuarios-perfil-acessos">
+                                           {MODULOS.map((m) => <div key={m.chave}><span>{m.nome}</span><span className={nivelClass(m.niveis[p])}>{NIVEL_TEXTO[m.niveis[p]]}</span></div>)}
+                                         </div>
+                                       </article>
+                                     ))}
+                                   </div>
                                    <table className="table usuarios-matriz">
                                      <thead>
                                        <tr>
@@ -263,7 +272,7 @@ export function Usuarios({ user }: Props) {
                                          {PERFIS.map((p) => (
                                            <th key={p} className={p === meuPerfil ? 'coluna-voce' : ''}>
                                              {NOME_PERFIL[p]}{p === meuPerfil ? ' (você)' : ''}
-                                             <small>{DESCRICAO_PERFIL[p]}</small>
+                                             {p === meuPerfil && <small>Seu perfil</small>}
                                            </th>
                                          ))}
                                        </tr>
@@ -287,7 +296,7 @@ export function Usuarios({ user }: Props) {
                                    </table>
 
                                    <p className="muted-sm usuarios-nota">
-                                     Os perfis são definidos pelo sistema; somente administradores podem alterar contas internas.
+                                     Esses são os acessos iniciais de cada perfil. Abra Editar em um usuário para personalizar as permissões dele.
                                    </p>
                                  </div>
                                </>
@@ -296,7 +305,7 @@ export function Usuarios({ user }: Props) {
                              {aba === 'atividades' && (
                                <>
                                  <div className="usuarios-toolbar">
-                                   <span className="muted-sm">{atividades.length} alterações de usuários · do mais recente para o mais antigo</span>
+                                   <span className="muted-sm">{atividades.length} atividades administrativas · mais recentes primeiro</span>
                                  </div>
 
                                  <div className="usuarios-area">

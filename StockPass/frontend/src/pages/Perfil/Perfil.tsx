@@ -68,7 +68,7 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
     try {
       const payload = isSupplier
         ? { name, companyName, taxId, phone }
-        : { name, companyName };
+        : user.role === 'CLIENTE' ? { name } : { name, companyName };
       const { data } = await api.put<User>('/auth/profile', payload);
       setName(data.name);
       setCompanyName(data.companyName ?? '');
@@ -197,9 +197,9 @@ export function Perfil({ user, onUserUpdated, onLogout }: Props) {
           <label>Perfil
             <span className="perfil-input-container"><Input value={nomePerfil(user.role)} readOnly disabled /><span className="perfil-input-highlight" /></span>
           </label>
-          <label>Nome da empresa
+          {user.role !== 'CLIENTE' && <label>Nome da empresa
             <span className="perfil-input-container"><input value={companyName} onChange={(event) => setCompanyName(event.target.value)} required={isSupplier} disabled={!editing} placeholder="Nome da empresa" /><span className="perfil-input-highlight" /></span>
-          </label>
+          </label>}
           {isSupplier && <div className="perfil-supplier-fields">
             <label>CNPJ
               <span className="perfil-input-container"><input value={taxId} onChange={(event) => setTaxId(event.target.value)} disabled={!editing} /><span className="perfil-input-highlight" /></span>

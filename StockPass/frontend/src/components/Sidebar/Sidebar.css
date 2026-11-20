@@ -120,9 +120,25 @@
 }
 
 .sidebar-nav-dot {
+  position: relative;
   width: 8px;
   height: 8px;
   border-radius: 2px;
   border: 1.5px solid currentColor;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-nav-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1px;
+  background: #2563eb;
+  transform: scale(0);
+  transition: transform 180ms ease-out;
+}
+
+.sidebar-nav-item.active .sidebar-nav-dot::after {
+  transform: scale(1);
 }

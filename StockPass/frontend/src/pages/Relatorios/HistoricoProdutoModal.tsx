@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import { Select } from '../../components/Select/Select';
 import type { Entrada } from '../EntradaEstoque/entradasMock';
@@ -101,26 +101,16 @@ function escalaBonita(maximo: number) {
   return { teto: Math.ceil(maximo / passo) * passo, passo };
 }
 
-function curvaSuave(pontos: Array<{ x: number; y: number }>, base: number) {
-  if (pontos.length === 1) {
-    const ponto = pontos[0];
-    return `M ${ponto.x - 24} ${base} Q ${ponto.x - 12} ${ponto.y} ${ponto.x} ${ponto.y} Q ${ponto.x + 12} ${ponto.y} ${ponto.x + 24} ${base}`;
-  }
-  if (pontos.length < 3) return pontos.map((ponto, indice) => `${indice === 0 ? 'M' : 'L'} ${ponto.x} ${ponto.y}`).join(' ');
-  let caminho = `M ${pontos[0].x} ${pontos[0].y}`;
-  for (let indice = 1; indice < pontos.length - 1; indice += 1) {
-    const meioX = (pontos[indice].x + pontos[indice + 1].x) / 2;
-    const meioY = (pontos[indice].y + pontos[indice + 1].y) / 2;
-    caminho += ` Q ${pontos[indice].x} ${pontos[indice].y} ${meioX} ${meioY}`;
-  }
-  const ultimo = pontos[pontos.length - 1];
-  caminho += ` Q ${ultimo.x} ${ultimo.y} ${ultimo.x} ${ultimo.y}`;
-  return caminho;
+function linhaPontuada(pontos: Array<{ x: number; y: number }>) {
+  return pontos.map((ponto, indice) => `${indice === 0 ? 'M' : 'L'} ${ponto.x} ${ponto.y}`).join(' ');
 }
 
 function caminhoArea(pontos: Array<{ x: number; y: number }>, base: number) {
-  if (pontos.length === 1) return `${curvaSuave(pontos, base)} Z`;
-  return `${curvaSuave(pontos, base)} L ${pontos[pontos.length - 1].x} ${base} L ${pontos[0].x} ${base} Z`;
+  if (pontos.length === 1) {
+    const ponto = pontos[0];
+    return `M ${ponto.x - 20} ${base} L ${ponto.x} ${ponto.y} L ${ponto.x + 20} ${base} Z`;
+  }
+  return `${linhaPontuada(pontos)} L ${pontos[pontos.length - 1].x} ${base} L ${pontos[0].x} ${base} Z`;
 }
 
 type Props = {
@@ -134,6 +124,24 @@ export function HistoricoProdutoModal({ produto, entradas, saidas, onClose }: Pr
   const [ordem, setOrdem] = useState<Ordem>('recentes');
   const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>('todos');
   const [periodoFiltro, setPeriodoFiltro] = useState<PeriodoFiltro>('tudo');
+  const [tooltipGrafico, setTooltipGrafico] = useState<{
+    ponto: PontoGrafico;
+    rotulo: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  function posicionarTooltip(event: ReactMouseEvent<SVGCircleElement>, ponto: PontoGrafico, rotulo: string) {
+    const grafico = event.currentTarget.closest('.grafico-tendencia');
+    if (!grafico) return;
+    const limites = grafico.getBoundingClientRect();
+    setTooltipGrafico({
+      ponto,
+      rotulo,
+      x: Math.max(8, Math.min(Math.max(8, limites.width - 180), event.clientX - limites.left + 10)),
+      y: Math.max(120, event.clientY - limites.top),
+    });
+  }
 
   const movimentos = useMemo<Movimento[]>(() => {
     const todos: Movimento[] = [
@@ -263,8 +271,8 @@ export function HistoricoProdutoModal({ produto, entradas, saidas, onClose }: Pr
               })}
               <path d={caminhoArea(coordenadasSaidas, baseGrafico)} fill="#ea580c" fillOpacity="0.2" />
               <path d={caminhoArea(coordenadasEntradas, baseGrafico)} fill="#2563eb" fillOpacity="0.22" />
-              <path d={curvaSuave(coordenadasSaidas, baseGrafico)} fill="none" stroke="#ea580c" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round" />
-              <path d={curvaSuave(coordenadasEntradas, baseGrafico)} fill="none" stroke="#2563eb" strokeWidth="3.5" strokeLinejoin="round" strokeLinecap="round" />
+              <path d={linhaPontuada(coordenadasSaidas)} fill="none" stroke="#ea580c" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+              <path d={linhaPontuada(coordenadasEntradas)} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
               {pontosGrafico.map((ponto, indice) => {
                 const x = coordenadasEntradas[indice].x;
                 const yEntrada = coordenadasEntradas[indice].y;
@@ -278,8 +286,18 @@ export function HistoricoProdutoModal({ produto, entradas, saidas, onClose }: Pr
                       : ponto.data.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
                 const dica = `${dataTooltip} · Entradas: ${ponto.entradas} · Saídas: ${ponto.saidas}`;
                 return <g key={ponto.chave}>
-                  <circle cx={x} cy={ySaida} r="4" fill="#ea580c"><title>{dica}</title></circle>
-                  <circle cx={x} cy={yEntrada} r="4" fill="#2563eb"><title>{dica}</title></circle>
+                  <circle cx={x} cy={ySaida} r="5" fill="#ea580c" className="historico-ponto-interativo"
+                    onMouseEnter={(event) => posicionarTooltip(event, ponto, dataTooltip)}
+                    onMouseMove={(event) => posicionarTooltip(event, ponto, dataTooltip)}
+                    onMouseLeave={() => setTooltipGrafico(null)}>
+                    <title>{dica}</title>
+                  </circle>
+                  <circle cx={x} cy={yEntrada} r="5" fill="#2563eb" className="historico-ponto-interativo"
+                    onMouseEnter={(event) => posicionarTooltip(event, ponto, dataTooltip)}
+                    onMouseMove={(event) => posicionarTooltip(event, ponto, dataTooltip)}
+                    onMouseLeave={() => setTooltipGrafico(null)}>
+                    <title>{dica}</title>
+                  </circle>
                   {(pontosGrafico.length <= 8 || indice === 0 || indice === pontosGrafico.length - 1 || indice % Math.ceil(pontosGrafico.length / 7) === 0) &&
                     <text x={x} y="244" textAnchor="middle" className="eixo-grafico-label">{ponto.rotulo}</text>}
                 </g>;
@@ -289,6 +307,21 @@ export function HistoricoProdutoModal({ produto, entradas, saidas, onClose }: Pr
               <span className="legenda-item"><i className="linha-legenda" style={{ backgroundColor: '#2563eb' }} />Entradas</span>
               <span className="legenda-item"><i className="linha-legenda" style={{ backgroundColor: '#ea580c' }} />Saídas</span>
             </div>
+            {tooltipGrafico && <div
+              className="grafico-tooltip"
+              role="status"
+              style={{ left: tooltipGrafico.x, top: tooltipGrafico.y }}
+            >
+              <strong className="grafico-tooltip-data">{tooltipGrafico.rotulo}</strong>
+              <span className="grafico-tooltip-linha">
+                <i className="marcador-legenda" style={{ backgroundColor: '#2563eb' }} />
+                Entradas <strong>{tooltipGrafico.ponto.entradas.toLocaleString('pt-BR')}</strong>
+              </span>
+              <span className="grafico-tooltip-linha">
+                <i className="marcador-legenda" style={{ backgroundColor: '#ea580c' }} />
+                Saídas <strong>{tooltipGrafico.ponto.saidas.toLocaleString('pt-BR')}</strong>
+              </span>
+            </div>}
           </div>
         )}
         {movimentos.length === 0 ? (

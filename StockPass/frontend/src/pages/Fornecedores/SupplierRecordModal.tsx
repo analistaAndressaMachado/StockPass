@@ -64,20 +64,20 @@ export function SupplierRecordModal({ supplier, onClose, onSave }: Props) {
       <form className="modal-form fornecedores-modal-form" onSubmit={submit}>
         <label>Nome / razão social
           <input value={form.legalName} onChange={(event) => setForm({ ...form, legalName: event.target.value })}
-            maxLength={255} required />
+            placeholder="Ex: Distribuidora Central Ltda." maxLength={255} required />
         </label>
         <label>CNPJ
-          <input value={form.cnpj} onChange={(event) => setForm({ ...form, cnpj: event.target.value })} required />
+          <input value={form.cnpj} onChange={(event) => setForm({ ...form, cnpj: event.target.value })} placeholder="Ex: 12.345.678/0001-90" required />
         </label>
         <label>E-mail
           <input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })}
-            required />
+            placeholder="Ex: contato@empresa.com.br" required />
         </label>
         <label>Telefone
-          <input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+          <input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} placeholder="Ex: (11) 3333-4444" />
         </label>
         <label>Endereço
-          <input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
+          <input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} placeholder="Ex: Rua Central, 123 - São Paulo/SP" />
         </label>
         <label>Situação
           <Select<SupplierStatus> ariaLabel="Situação do fornecedor" value={form.status}

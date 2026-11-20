@@ -7,8 +7,10 @@ import com.stockpass.dto.SupplierManagementDtos.SupplierResponse;
 import com.stockpass.model.Supplier;
 import com.stockpass.model.SupplierContract;
 import com.stockpass.model.SupplierContractStatus;
+import com.stockpass.model.SupplierContractAttachment;
 import com.stockpass.model.UserActivity;
 import com.stockpass.repository.SupplierContractRepository;
+import com.stockpass.repository.SupplierContractAttachmentRepository;
 import com.stockpass.repository.SupplierRepository;
 import com.stockpass.repository.UserActivityRepository;
 import com.stockpass.repository.UserRepository;
@@ -17,18 +19,24 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class SupplierManagementService {
     private final SupplierRepository suppliers;
     private final SupplierContractRepository contracts;
+    private final SupplierContractAttachmentRepository attachments;
+    private final FileStorageService fileStorage;
     private final UserRepository users;
     private final UserActivityRepository activities;
 
     public SupplierManagementService(SupplierRepository suppliers, SupplierContractRepository contracts,
+            SupplierContractAttachmentRepository attachments, FileStorageService fileStorage,
             UserRepository users, UserActivityRepository activities) {
         this.suppliers = suppliers;
         this.contracts = contracts;
+        this.attachments = attachments;
+        this.fileStorage = fileStorage;
         this.users = users;
         this.activities = activities;
     }
@@ -115,6 +123,55 @@ public class SupplierManagementService {
         return response(saved);
     }
 
+    @Transactional
+    public ContractAttachmentResponse addContractAttachment(Long supplierId, Long contractId, MultipartFile file) {
+        SupplierContract contract = requireContract(supplierId, contractId);
+        FileStorageService.StoredDocument stored = fileStorage.storeContractDocument(file);
+        SupplierContractAttachment attachment = new SupplierContractAttachment();
+        attachment.setContract(contract);
+        attachment.setStorageName(stored.fileName());
+        attachment.setOriginalName(stored.originalName());
+        attachment.setContentType(stored.contentType());
+        attachment.setSize(stored.size());
+        try {
+            return attachmentResponse(attachments.saveAndFlush(attachment));
+        } catch (RuntimeException error) {
+            fileStorage.deleteDocument(stored.fileName());
+            throw error;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContractAttachmentResponse> listContractAttachments(Long supplierId, Long contractId) {
+        SupplierContract contract = requireContract(supplierId, contractId);
+        return contract.getAttachments().stream().map(SupplierManagementService::attachmentResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public FileStorageService.DocumentFile readContractAttachment(Long supplierId, Long contractId, Long attachmentId) {
+        SupplierContract contract = requireContract(supplierId, contractId);
+        SupplierContractAttachment attachment = attachments.findByIdAndContractId(attachmentId, contract.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("Documento não encontrado para este contrato."));
+        return fileStorage.readDocument(attachment.getStorageName(), attachment.getContentType(), attachment.getOriginalName());
+    }
+
+    @Transactional
+    public void removeContractAttachment(Long supplierId, Long contractId, Long attachmentId) {
+        SupplierContract contract = requireContract(supplierId, contractId);
+        SupplierContractAttachment attachment = attachments.findByIdAndContractId(attachmentId, contract.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("Documento não encontrado para este contrato."));
+        String storageName = attachment.getStorageName();
+        attachments.delete(attachment);
+        attachments.flush();
+        fileStorage.deleteDocument(storageName);
+    }
+
+    private SupplierContract requireContract(Long supplierId, Long contractId) {
+        requireSupplier(supplierId);
+        return contracts.findByIdAndSupplierId(contractId, supplierId)
+            .orElseThrow(() -> new ResourceNotFoundException("Contrato não encontrado para este fornecedor."));
+    }
+
     private Supplier requireSupplier(Long id) {
         return suppliers.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Fornecedor não encontrado."));
@@ -176,4 +233,11 @@ public class SupplierManagementService {
             contract.getStartDate(), contract.getEndDate(), contract.getValue(), contract.getStatus(),
             contract.getObservations(), contract.getCreatedAt(), contract.getUpdatedAt());
     }
+
+    private static ContractAttachmentResponse attachmentResponse(SupplierContractAttachment attachment) {
+        return new ContractAttachmentResponse(attachment.getId(), attachment.getOriginalName(), attachment.getContentType(),
+            attachment.getSize(), attachment.getCreatedAt());
+    }
+
+    public record ContractAttachmentResponse(Long id, String originalName, String contentType, long size, LocalDateTime createdAt) {}
 }

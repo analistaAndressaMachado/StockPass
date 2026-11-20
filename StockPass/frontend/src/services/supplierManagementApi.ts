@@ -2,6 +2,7 @@ import { api } from './api';
 import type {
   SupplierContract,
   SupplierContractInput,
+  SupplierContractAttachment,
   SupplierRecord,
   SupplierRecordInput,
 } from './supplierManagementTypes';
@@ -41,6 +42,27 @@ export async function atualizarContratoFornecedor(supplierId: number, contractId
     `/suppliers/records/${supplierId}/contracts/${contractId}`,
     input,
   );
+  return data;
+}
+
+export async function listarAnexosContrato(supplierId: number, contractId: number) {
+  const { data } = await api.get<SupplierContractAttachment[]>(`/suppliers/records/${supplierId}/contracts/${contractId}/attachments`);
+  return data;
+}
+
+export async function anexarArquivoContrato(supplierId: number, contractId: number, file: File) {
+  const body = new FormData();
+  body.append('file', file);
+  const { data } = await api.post<SupplierContractAttachment>(`/suppliers/records/${supplierId}/contracts/${contractId}/attachments`, body);
+  return data;
+}
+
+export async function removerAnexoContrato(supplierId: number, contractId: number, attachmentId: number) {
+  await api.delete(`/suppliers/records/${supplierId}/contracts/${contractId}/attachments/${attachmentId}`);
+}
+
+export async function baixarAnexoContrato(supplierId: number, contractId: number, attachmentId: number) {
+  const { data } = await api.get<Blob>(`/suppliers/records/${supplierId}/contracts/${contractId}/attachments/${attachmentId}/file`, { responseType: 'blob' });
   return data;
 }
 

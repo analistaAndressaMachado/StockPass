@@ -3,7 +3,6 @@ package com.stockpass.controller;
 import com.stockpass.service.FileStorageService.ImageFile;
 import com.stockpass.service.ProfilePhotoService;
 import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -36,8 +36,19 @@
 }
 
 .grafico-tendencia {
+  position: relative;
   margin-top: 12px;
 }
+
+.grafico-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.grafico-cabecalho h2 { margin-top: 0; }
+.grafico-cabecalho .relatorios-atualizado { flex: 0 0 auto; margin: 2px 0 0; white-space: nowrap; }
 
 .tendencia-svg {
   width: 100%;
@@ -45,11 +56,71 @@
   display: block;
 }
 
+.tendencia-svg rect { cursor: crosshair; }
+
+.historico-ponto-interativo {
+  cursor: pointer;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
 .grafico-legenda {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 18px;
   margin-top: 10px;
+}
+
+.marcador-legenda {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.grafico-sem-movimentacao {
+  margin: 8px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+}
+
+.grafico-tooltip {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  min-width: 156px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 11px 13px;
+  transform: translate(0, calc(-100% - 10px));
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
+  color: #374151;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.grafico-tooltip-data {
+  padding-bottom: 2px;
+  border-bottom: 1px solid #edf0f3;
+  color: #111827;
+  font-size: 13px;
+}
+
+.grafico-tooltip-linha {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.grafico-tooltip-linha strong {
+  margin-left: auto;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
 }
 
 .legenda-item {

@@ -47,3 +47,11 @@ export type SupplierContractInput = {
   status: SupplierContractStatus;
   observations: string | null;
 };
+
+export type SupplierContractAttachment = {
+  id: number;
+  originalName: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+};

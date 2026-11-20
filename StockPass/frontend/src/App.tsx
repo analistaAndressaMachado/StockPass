@@ -127,7 +127,7 @@ export function App() {
 
   return (
     <div className="app-shell">
-    <Sidebar active={page} onNavigate={navegarPelaSidebar} role={user.role} />
+    <Sidebar active={page} onNavigate={navegarPelaSidebar} role={user.role} permissions={user.permissions} />
       <div className="app-content">
         <Header title={PAGE_TITLES[page] ?? 'Perfil'} user={user} onProfileClick={() => setPage('perfil')} />
         <div className="app-body">

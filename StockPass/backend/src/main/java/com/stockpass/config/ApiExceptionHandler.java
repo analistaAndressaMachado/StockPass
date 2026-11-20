@@ -2,6 +2,7 @@ package com.stockpass.config;
 
 import java.util.Map;
 import com.stockpass.service.ResourceNotFoundException;
+import com.stockpass.service.ClientConflictException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +15,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<Map<String, String>> notFound(ResourceNotFoundException error) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", error.getMessage()));
+    }
+
+    @ExceptionHandler(ClientConflictException.class)
+    ResponseEntity<Map<String, String>> conflict(ClientConflictException error) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", error.getMessage()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -18,6 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/suppliers")
@@ -66,6 +74,33 @@ public class SupplierManagementController {
     public ContractResponse updateContract(@PathVariable Long id, @PathVariable Long contractId,
             @Valid @RequestBody ContractRequest request, Principal principal) {
         return service.updateContract(id, contractId, request, principal.getName());
+    }
+
+    @GetMapping("/records/{id}/contracts/{contractId}/attachments")
+    public List<SupplierManagementService.ContractAttachmentResponse> listAttachments(@PathVariable Long id, @PathVariable Long contractId) {
+        return service.listContractAttachments(id, contractId);
+    }
+
+    @PostMapping(value = "/records/{id}/contracts/{contractId}/attachments", consumes = "multipart/form-data")
+    @ResponseStatus(HttpStatus.CREATED)
+    public SupplierManagementService.ContractAttachmentResponse addAttachment(@PathVariable Long id, @PathVariable Long contractId,
+            @RequestParam("file") MultipartFile file) {
+        return service.addContractAttachment(id, contractId, file);
+    }
+
+    @GetMapping("/records/{id}/contracts/{contractId}/attachments/{attachmentId}/file")
+    public ResponseEntity<byte[]> downloadAttachment(@PathVariable Long id, @PathVariable Long contractId, @PathVariable Long attachmentId) {
+        var document = service.readContractAttachment(id, contractId, attachmentId);
+        String safeName = URLEncoder.encode(document.originalName(), StandardCharsets.UTF_8).replace("+", "%20");
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(document.contentType()))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + safeName)
+            .header("X-Content-Type-Options", "nosniff").cacheControl(CacheControl.noStore()).body(document.bytes());
+    }
+
+    @DeleteMapping("/records/{id}/contracts/{contractId}/attachments/{attachmentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeAttachment(@PathVariable Long id, @PathVariable Long contractId, @PathVariable Long attachmentId) {
+        service.removeContractAttachment(id, contractId, attachmentId);
     }
 
     @GetMapping("/contracts/expiring")

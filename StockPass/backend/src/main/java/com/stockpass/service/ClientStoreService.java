@@ -64,7 +64,8 @@ public class ClientStoreService {
     @Transactional(readOnly = true)
     public List<ClientSummaryResponse> clients() {
         return users.findAllByRoleOrderByNameAsc("CLIENTE").stream()
-            .map(client -> new ClientSummaryResponse(client.getId(), client.getName(), client.getEmail(), client.getCreatedAt()))
+            .map(client -> new ClientSummaryResponse(client.getId(), client.getName(), client.getEmail(),
+                client.getCreatedAt(), client.getPhone(), client.isActive()))
             .toList();
     }
 
