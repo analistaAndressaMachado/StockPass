@@ -57,7 +57,7 @@ type Props = {
   highlightSaidaId?: number | null;
 };
 
-export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModalClose, onModalSuccess, onReservaCriada, reservasEmConfirmacaoIds = [], highlightSaidaId = null }: Props) {
+export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModalClose, onModalSuccess, onReservaCriada, highlightSaidaId = null }: Props) {
   const [saidas, setSaidas] = useState<Saida[]>([]);
   const [reservas, setReservas] = useState<ReservaSaida[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -153,7 +153,7 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / linhasPorPagina));
   const paginaAtual = Math.min(pagina, totalPaginas);
   const inicio = (paginaAtual - 1) * linhasPorPagina;
-  const visiveis = filtradas.slice(inicio, inicio + linhasPorPagina);
+  const visiveis = filtradas;
 
   // Números dos cards do topo
   const saidasHoje = saidas.filter((s) => ehHoje(s.dataHora)).length;
@@ -281,50 +281,6 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
         </div>
       </section>
 
-      <section className="panel-card panel-card--soft-padrao">
-        <div className="saida-historico-topo">
-          <div>
-            <h2>Reservas de saída pendentes</h2>
-            <p className="muted-sm">Reservas aguardando confirmação ou cancelamento.</p>
-          </div>
-          <span className="muted-sm">{reservas.filter((r) => !reservasEmConfirmacaoIds.includes(r.id)).length} reservas ativas</span>
-        </div>
-
-        {reservas.filter((r) => !reservasEmConfirmacaoIds.includes(r.id)).length === 0 ? (
-          <p className="muted-sm">Não há reservas de saída pendentes.</p>
-        ) : (
-          <div style={{ display: 'grid', gap: 12 }}>
-            {reservas.filter((r) => !reservasEmConfirmacaoIds.includes(r.id)).map((reserva) => {
-              const restante = segundosRestantes(reserva.expiresAt, agora);
-              const expirou = restante === 0;
-              const processando = reservaEmAcao === reserva.id;
-              return (
-                <article key={reserva.id} className="panel-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <div>
-                    <strong>{reserva.product}</strong> <span className="muted-sm">({reserva.sku})</span>
-                    <p className="muted-sm">{reserva.quantity} Uni · {reserva.reason} · Criada por {reserva.createdBy}</p>
-                    <p className="muted-sm">Criada em {formatarDataHora(reserva.createdAt)}{reserva.observation ? ` · ${reserva.observation}` : ''}</p>
-                    <strong role={expirou ? 'status' : undefined} style={{ color: expirou ? '#b91c1c' : undefined }}>
-                      {expirou ? 'Reserva expirada' : `Tempo para confirmar: ${formatarContagem(restante)}`}
-                    </strong>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn-primary" type="button" disabled={processando || expirou}
-                      onClick={() => void confirmarReserva(reserva)}>
-                      {processando ? 'Aguarde...' : 'Confirmar'}
-                    </button>
-                    <button className="btn-secondary" type="button" disabled={processando || expirou}
-                      onClick={() => void cancelarReserva(reserva)}>
-                      Cancelar
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
       <section className="panel-card panel-card--soft-padrao saida-historico">
         <div className="saida-historico-topo">
           <div>
@@ -375,7 +331,7 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
           </div>
         </div>
 
-        <div className="saida-tabela-area" ref={areaTabelaRef}>
+        <div className="saida-tabela-area">
           {filtradas.length === 0 ? (
             <p className="muted-sm saida-vazio">Nenhuma saída encontrada para esse filtro.</p>
           ) : (
@@ -411,29 +367,6 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
           )}
         </div>
 
-        <div className="saida-rodape">
-          <span className="muted-sm">{filtradas.length} saídas</span>
-
-          <div className="saida-paginacao">
-            <button
-              className="btn-secondary"
-              disabled={paginaAtual === 1}
-              onClick={() => setPagina((p) => Math.max(1, p - 1))}
-            >
-              ← Anterior
-            </button>
-
-            <span className="muted-sm">Página {paginaAtual} de {totalPaginas}</span>
-
-            <button
-              className="btn-secondary"
-              disabled={paginaAtual === totalPaginas}
-              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-            >
-              Próxima →
-            </button>
-          </div>
-        </div>
       </section>
 
       {showNova && <NovaSaidaModal products={produtos} onClose={() => setShowNova(false)} onSave={registrarSaida} />}

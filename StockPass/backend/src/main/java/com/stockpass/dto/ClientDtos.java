@@ -3,6 +3,8 @@ package com.stockpass.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
@@ -28,7 +30,25 @@ public final class ClientDtos {
         int availableQuantity
     ) {}
 
-    public record ClientSummaryResponse(Long id, String name, String email, LocalDateTime createdAt) {}
+    public record CreateClientRequest(
+        @NotBlank String name,
+        @NotBlank @Email String email,
+        String phone,
+        @NotBlank @Size(min = 6) String password,
+        @NotNull Boolean active
+    ) {}
+
+    public record UpdateClientRequest(
+        @NotBlank String name,
+        @NotBlank @Email String email,
+        String phone,
+        String password,
+        @NotNull Boolean active
+    ) {}
+
+    public record ClientSummaryResponse(
+        Long id, String name, String email, LocalDateTime createdAt, String phone, boolean active
+    ) {}
 
     public record PurchaseLineResponse(
         Long productId,

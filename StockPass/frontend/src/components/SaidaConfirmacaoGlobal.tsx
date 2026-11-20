@@ -33,6 +33,7 @@ function ToastReservaSaida({ reservaId, onClose }: Props) {
   }, [reserva, agora, onClose]);
 
   if (!reserva) return null;
+  const reservaAtual = reserva;
 
   async function executar(acao: 'confirmar' | 'cancelar') {
     setProcessando(true);
@@ -40,7 +41,7 @@ function ToastReservaSaida({ reservaId, onClose }: Props) {
     try {
       const saida = acao === 'confirmar' ? await confirmarReservaSaida(reservaId) : null;
       if (acao === 'cancelar') await cancelarReservaSaida(reservaId);
-      onClose({ acao: acao === 'confirmar' ? 'confirmada' : 'cancelada', produto: reserva.product, quantidade: reserva.quantity, saidaId: saida?.id });
+      onClose({ acao: acao === 'confirmar' ? 'confirmada' : 'cancelada', produto: reservaAtual.product, quantidade: reservaAtual.quantity, saidaId: saida?.id });
     } catch {
       setErro('Não foi possível concluir. A reserva pode ter expirado.');
     } finally { setProcessando(false); }

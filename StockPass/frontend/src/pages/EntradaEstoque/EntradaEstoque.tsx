@@ -10,8 +10,6 @@ import { listarEntradas, listarProdutos, mensagemErro, registrarEntrada as regis
 
 type Periodo = 'todos' | 'hoje' | '7dias' | 'mes';
 
-const MINIMO_LINHAS = 5;
-
 function noPeriodo(iso: string, periodo: Periodo) {
   if (periodo === 'todos') return true;
   const data = new Date(iso);
@@ -36,14 +34,10 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
   const [erro, setErro] = useState('');
   const [periodo, setPeriodo] = useState<Periodo>('todos');
   const [busca, setBusca] = useState('');
-  const [pagina, setPagina] = useState(1);
   const [showNova, setShowNova] = useState(openNovaEntrada || Boolean(reposicao));
   const modalCancelada = useRef(false);
   const [linhaDestaqueId, setLinhaDestaqueId] = useState<number | null>(null);
 
-  // Quantas linhas cabem na tela agora (mesma ideia do Painel).
-  const [linhasPorPagina, setLinhasPorPagina] = useState(MINIMO_LINHAS);
-  const areaTabelaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     Promise.all([listarEntradas(), listarProdutos()])
@@ -61,26 +55,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
     return () => window.clearTimeout(timeout);
   }, [highlightEntradaId, entradas]);
 
-  useEffect(() => {
-    const area = areaTabelaRef.current;
-    if (!area) return;
-
-    const calcular = () => {
-      const cabecalho = area.querySelector('thead');
-      const linha = area.querySelector('tbody tr');
-      if (!cabecalho || !linha) return;
-      const alturaCabecalho = cabecalho.getBoundingClientRect().height;
-      const alturaLinha = linha.getBoundingClientRect().height;
-      const cabem = Math.floor((area.clientHeight - alturaCabecalho) / alturaLinha);
-      setLinhasPorPagina(Math.max(MINIMO_LINHAS, cabem));
-    };
-
-    calcular();
-    const observer = new ResizeObserver(calcular);
-    observer.observe(area);
-    return () => observer.disconnect();
-  }, []);
-
   const termo = busca.trim().toLowerCase();
   const filtradas = entradas.filter(
     (e) =>
@@ -89,10 +63,7 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
         [e.produto, e.sku, e.fornecedor, e.registradoPor].some((campo) => campo.toLowerCase().includes(termo))),
   );
 
-  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / linhasPorPagina));
-  const paginaAtual = Math.min(pagina, totalPaginas);
-  const inicio = (paginaAtual - 1) * linhasPorPagina;
-  const visiveis = filtradas.slice(inicio, inicio + linhasPorPagina);
+  const visiveis = filtradas;
 
   // Números dos cards do topo
   const entradasHoje = entradas.filter((e) => ehHoje(e.dataHora)).length;
@@ -107,7 +78,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
       setProdutos((prev) => prev.map((produto) => produto.id === dados.productId
         ? { ...produto, quantidade: produto.quantidade + dados.quantidade }
         : produto));
-      setPagina(1);
       setErro('');
       setShowNova(false);
       if (modalOnly && !modalCancelada.current) onModalSuccess?.(nova.id);
@@ -189,7 +159,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
               value={busca}
               onChange={(e) => {
                 setBusca(e.target.value);
-                setPagina(1);
               }}
             />
             <Select<Periodo>
@@ -197,7 +166,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
               value={periodo}
               onChange={(value) => {
                 setPeriodo(value);
-                setPagina(1);
               }}
               ariaLabel="Filtrar entradas por período"
               size="sm"
@@ -211,7 +179,7 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
           </div>
         </div>
 
-        <div className="entrada-tabela-area" ref={areaTabelaRef}>
+        <div className="entrada-tabela-area">
           {filtradas.length === 0 ? (
             <p className="muted-sm entrada-vazio">Nenhuma entrada encontrada para esse filtro.</p>
           ) : (
@@ -245,29 +213,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
           )}
         </div>
 
-        <div className="entrada-rodape">
-          <span className="muted-sm">{filtradas.length} entradas</span>
-
-          <div className="entrada-paginacao">
-            <button
-              className="btn-secondary"
-              disabled={paginaAtual === 1}
-              onClick={() => setPagina((p) => Math.max(1, p - 1))}
-            >
-              ← Anterior
-            </button>
-
-            <span className="muted-sm">Página {paginaAtual} de {totalPaginas}</span>
-
-            <button
-              className="btn-secondary"
-              disabled={paginaAtual === totalPaginas}
-              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-            >
-              Próxima →
-            </button>
-          </div>
-        </div>
       </section>
 
       {showNova && (

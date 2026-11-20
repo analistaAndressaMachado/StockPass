@@ -4,8 +4,10 @@ import com.stockpass.model.User;
 import com.stockpass.model.UserActivity;
 import com.stockpass.repository.UserActivityRepository;
 import com.stockpass.repository.UserRepository;
+import com.stockpass.security.PermissionPolicy;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,7 +20,7 @@ public class UserManagementService {
     private final UserActivityRepository activities;
     private final PasswordEncoder encoder;
 
-    public record ManagedUser(Long id, String name, String email, String role, boolean active, LocalDateTime lastLoginAt) {}
+    public record ManagedUser(Long id, String name, String email, String role, boolean active, LocalDateTime lastLoginAt, Map<String, String> permissions) {}
     public record Activity(Long id, LocalDateTime createdAt, String actor, String action) {}
 
     public UserManagementService(UserRepository users, UserActivityRepository activities, PasswordEncoder encoder) {
@@ -55,13 +57,14 @@ public class UserManagementService {
     }
 
     @Transactional
-    public ManagedUser update(Long id, String name, String role, String actorEmail) {
+    public ManagedUser update(Long id, String name, String role, Map<String, String> permissions, String actorEmail) {
         validateRole(role);
         User user = internalUser(id);
         if (user.getEmail().equalsIgnoreCase(actorEmail)) throw new IllegalArgumentException("Altere seus dados no próprio perfil.");
         protectLastAdmin(user, role, user.isActive());
         user.setName(name.trim());
         user.setRole(role);
+        PermissionPolicy.apply(user, permissions);
         users.save(user);
         record(actorEmail, "Atualizou o usuário " + user.getName() + " (" + role + ").");
         return response(user);
@@ -102,6 +105,6 @@ public class UserManagementService {
     }
 
     private ManagedUser response(User user) {
-        return new ManagedUser(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.isActive(), user.getLastLoginAt());
+        return new ManagedUser(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.isActive(), user.getLastLoginAt(), PermissionPolicy.effective(user));
     }
 }

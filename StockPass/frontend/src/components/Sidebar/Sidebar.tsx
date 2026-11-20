@@ -3,7 +3,7 @@ import { Brand } from '../Brand/Brand';
 type NavItem = {
   key: string;
   label: string;
-  roles?: string[]; // se existir, só esses perfis enxergam o item no menu
+  roles?: string[];
 };
 
 const ROLES_INTERNOS = ['USER', 'GESTOR', 'ADMIN'];
@@ -24,10 +24,23 @@ type Props = {
   active: string;
   onNavigate: (key: string) => void;
   role: string;
+  permissions?: Record<string, string>;
 };
 
-export function Sidebar({ active, onNavigate, role }: Props) {
-  const itensVisiveis = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
+const MODULE_BY_ITEM: Record<string, string> = {
+  painel: 'painel', catalogo: 'catalogo', entrada: 'entrada', saida: 'saida',
+  relatorios: 'relatorios', 'clientes-admin': 'clientes', fornecedores: 'fornecedores', usuarios: 'usuarios',
+};
+
+export function Sidebar({ active, onNavigate, role, permissions }: Props) {
+  const itensVisiveis = NAV_ITEMS.filter((item) => {
+    if (item.roles && !item.roles.includes(role) && !(item.key === 'usuarios' && permissions?.usuarios && permissions.usuarios !== 'nenhum')) return false;
+    const module = MODULE_BY_ITEM[item.key];
+    if (!module || role === 'FORNECEDOR' || role === 'CLIENTE') return true;
+    return permissions?.[module] !== undefined
+      ? permissions[module] !== 'nenhum'
+      : module !== 'usuarios' || role === 'ADMIN' || role === 'GESTOR';
+  });
 
   return (
     <aside className="sidebar">

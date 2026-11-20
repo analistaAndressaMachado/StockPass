@@ -208,19 +208,19 @@ export function Fornecedores({ user }: Props) {
           </div>
           <form className="fornecedor-offer-form" onSubmit={saveOffer}>
             <label>Código do fornecedor
-              <input value={form.sku} onChange={(event) => setForm({ ...form, sku: event.target.value })} required />
+              <input value={form.sku} onChange={(event) => setForm({ ...form, sku: event.target.value })} placeholder="Ex: FORN-001" required />
             </label>
             <label>Nome do produto
-              <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+              <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Ex: Café em pó 500 g" required />
             </label>
             <label>Categoria
-              <input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} required />
+              <input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Ex: Alimentos" required />
             </label>
             <label>Preço unitário
-              <input type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} required />
+              <input type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} placeholder="Ex: 12,90" required />
             </label>
             <label>Quantidade disponível
-              <input type="number" min="0" step="1" value={form.availableQuantity} onChange={(event) => setForm({ ...form, availableQuantity: event.target.value })} required />
+              <input type="number" min="0" step="1" value={form.availableQuantity} onChange={(event) => setForm({ ...form, availableQuantity: event.target.value })} placeholder="Ex: 50" required />
             </label>
             <div className="fornecedor-form-actions">
               <button className="btn-primary" type="submit" disabled={saving}>

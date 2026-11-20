@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ClientPurchaseRepository extends JpaRepository<ClientPurchase, Long> {
     List<ClientPurchase> findAllByClientIdOrderByCreatedAtDesc(Long clientId);
+    boolean existsByClientId(Long clientId);
 }

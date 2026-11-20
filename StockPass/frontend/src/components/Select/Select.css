@@ -71,6 +71,13 @@
   font-size: 13px;
 }
 
+.ui-select__trigger--tone-green { background: #dcfce7; color: #15803d; }
+.ui-select__trigger--tone-blue { background: #dbeafe; color: #1d4ed8; }
+.ui-select__trigger--tone-gray { background: #f3f4f6; color: #4b5563; }
+.ui-select__option--tone-green { color: #15803d; }
+.ui-select__option--tone-blue { color: #1d4ed8; }
+.ui-select__option--tone-gray { color: #4b5563; }
+
 .ui-select__trigger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -137,6 +144,10 @@
   color: #1d4ed8;
   font-weight: 600;
 }
+
+.ui-select__option.ui-select__option--tone-green { color: #15803d; }
+.ui-select__option.ui-select__option--tone-blue { color: #1d4ed8; }
+.ui-select__option.ui-select__option--tone-gray { color: #4b5563; }
 
 .ui-select__option--disabled {
   opacity: 0.5;

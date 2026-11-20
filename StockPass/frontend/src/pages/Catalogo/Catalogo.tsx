@@ -174,13 +174,13 @@ function setaDoCampo(campo: CampoOrdenacao) {
     return (
       <Modal title="Adicionar Novo Produto" onClose={fecharModalNovoProduto}>
         <form className="modal-form" onSubmit={salvarNovoProduto}>
-          <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} required /></label>
-          <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} required /></label>
-          <label>Categoria<input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} required /></label>
-          <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} required /></label>
-          <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} required /></label>
-          <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} required /></label>
-          <label>Ponto de reposição<input type="number" min={0} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} required /></label>
+          <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Ex: Café em pó 500 g" required /></label>
+          <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} placeholder="Ex: CAF-500" required /></label>
+          <label>Categoria<input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} placeholder="Ex: Alimentos" required /></label>
+          <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} placeholder="Ex: Distribuidora Central" required /></label>
+          <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} placeholder="Ex: 50" required /></label>
+          <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} placeholder="Ex: 12,90" required /></label>
+          <label>Ponto de reposição<input type="number" min={0} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} placeholder="Ex: 10" required /></label>
           {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
           <button className="btn-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Adicionar Produto'}</button>
         </form>

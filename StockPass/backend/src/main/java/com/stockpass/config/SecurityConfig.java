@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.stockpass.security.JwtAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -29,18 +30,27 @@ public class SecurityConfig {
   .requestMatchers(HttpMethod.DELETE, "/api/auth/profile/photo").authenticated()
   .requestMatchers(HttpMethod.GET, "/api/media/users/**").authenticated()
   .requestMatchers("/api/store/**").hasRole("CLIENTE")
-  .requestMatchers("/api/clients", "/api/clients/**").hasAnyRole("USER","GESTOR","ADMIN")
-  .requestMatchers(HttpMethod.GET,"/api/users", "/api/users/**").hasAnyRole("GESTOR","ADMIN")
-  .requestMatchers("/api/users", "/api/users/**").hasRole("ADMIN")
+  .requestMatchers(HttpMethod.GET, "/api/clients", "/api/clients/**").hasAuthority("ACCESS_clientes_view")
+  .requestMatchers("/api/clients", "/api/clients/**").hasAuthority("ACCESS_clientes_edit")
+  .requestMatchers(HttpMethod.GET,"/api/users", "/api/users/**").hasAuthority("ACCESS_usuarios_view")
+  .requestMatchers("/api/users", "/api/users/**").hasAuthority("ACCESS_usuarios_edit")
   .requestMatchers("/api/suppliers/offers/mine","/api/suppliers/offers/mine/**","/api/suppliers/purchases/mine","/api/suppliers/me").hasRole("FORNECEDOR")
-   .requestMatchers(HttpMethod.GET,"/api/suppliers/offers").hasAnyRole("USER","GESTOR","ADMIN")
-   .requestMatchers(HttpMethod.POST,"/api/suppliers/offers/*/acquire").hasAnyRole("USER","GESTOR","ADMIN")
-  .requestMatchers(HttpMethod.GET,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("USER","GESTOR","ADMIN")
-  .requestMatchers(HttpMethod.POST,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("GESTOR","ADMIN")
-  .requestMatchers(HttpMethod.PUT,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAnyRole("GESTOR","ADMIN")
+   .requestMatchers(HttpMethod.GET,"/api/suppliers/offers").hasAuthority("ACCESS_fornecedores_view")
+   .requestMatchers(HttpMethod.POST,"/api/suppliers/offers/*/acquire").hasAuthority("ACCESS_fornecedores_edit")
+  .requestMatchers(HttpMethod.GET,"/api/suppliers/records/**","/api/suppliers/contracts/**").hasAuthority("ACCESS_fornecedores_view")
+  .requestMatchers(HttpMethod.POST,"/api/suppliers/records/**","/api/suppliers/contracts/**")
+    .access(new WebExpressionAuthorizationManager("hasAnyRole('GESTOR', 'ADMIN') and hasAuthority('ACCESS_fornecedores_edit')"))
+  .requestMatchers(HttpMethod.PUT,"/api/suppliers/records/**","/api/suppliers/contracts/**")
+    .access(new WebExpressionAuthorizationManager("hasAnyRole('GESTOR', 'ADMIN') and hasAuthority('ACCESS_fornecedores_edit')"))
+  .requestMatchers(HttpMethod.DELETE,"/api/suppliers/records/**/attachments/**").hasAuthority("ACCESS_fornecedores_edit")
   .requestMatchers("/api/suppliers/records/**","/api/suppliers/contracts/**").denyAll()
   .requestMatchers("/api/suppliers/**").hasAnyRole("USER","GESTOR","ADMIN")
-  .requestMatchers("/api/products/**","/api/entries/**","/api/exits/**","/api/replenishments/**").hasAnyRole("USER","GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.GET,"/api/products/**").hasAuthority("ACCESS_catalogo_view")
+  .requestMatchers("/api/products/**").hasAuthority("ACCESS_catalogo_edit")
+  .requestMatchers(HttpMethod.GET,"/api/entries/**","/api/replenishments/**").hasAuthority("ACCESS_entrada_view")
+  .requestMatchers("/api/entries/**","/api/replenishments/**").hasAuthority("ACCESS_entrada_edit")
+  .requestMatchers(HttpMethod.GET,"/api/exits/**").hasAuthority("ACCESS_saida_view")
+  .requestMatchers("/api/exits/**").hasAuthority("ACCESS_saida_edit")
    .anyRequest().authenticated()).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();
  }
  @Bean CorsConfigurationSource corsConfigurationSource(){

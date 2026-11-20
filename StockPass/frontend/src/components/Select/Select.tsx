@@ -6,6 +6,7 @@ type SelectOption<T extends string> = {
   value: T;
   label: string;
   disabled?: boolean;
+  tone?: 'green' | 'blue' | 'gray';
 };
 
 type SelectProps<T extends string> = {
@@ -151,7 +152,7 @@ export function Select<T extends string>({
         ref={buttonRef}
         id={id}
         type="button"
-        className={`ui-select__trigger${open ? ' ui-select__trigger--open' : ''}${invalid ? ' ui-select__trigger--invalid' : ''}${size === 'sm' ? ' ui-select__trigger--sm' : ''}`}
+        className={`ui-select__trigger${open ? ' ui-select__trigger--open' : ''}${invalid ? ' ui-select__trigger--invalid' : ''}${size === 'sm' ? ' ui-select__trigger--sm' : ''}${selectedOption?.tone ? ` ui-select__trigger--tone-${selectedOption.tone}` : ''}`}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
@@ -193,6 +194,7 @@ export function Select<T extends string>({
                 className={[
                   'ui-select__option',
                   selected && 'ui-select__option--selected',
+                  option.tone && `ui-select__option--tone-${option.tone}`,
                   active && 'ui-select__option--active',
                   option.disabled && 'ui-select__option--disabled',
                 ].filter(Boolean).join(' ')}

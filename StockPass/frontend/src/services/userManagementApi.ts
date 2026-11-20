@@ -1,11 +1,11 @@
 import { api } from './api';
 import type { Atividade, Perfil, UsuarioSistema } from '../pages/Usuarios/usuariosMock';
 
-type UserDto = { id: number; name: string; email: string; role: Perfil; active: boolean; lastLoginAt: string | null };
+type UserDto = { id: number; name: string; email: string; role: Perfil; active: boolean; lastLoginAt: string | null; permissions: Record<string, import('../types').AccessLevel> };
 type ActivityDto = { id: number; createdAt: string; actor: string; action: string };
 
 function usuario(item: UserDto): UsuarioSistema {
-  return { id: item.id, nome: item.name, email: item.email, perfil: item.role, ativo: item.active, ultimoAcesso: item.lastLoginAt };
+  return { id: item.id, nome: item.name, email: item.email, perfil: item.role, ativo: item.active, ultimoAcesso: item.lastLoginAt, permissoes: item.permissions };
 }
 
 export async function listarUsuarios(): Promise<UsuarioSistema[]> {
@@ -22,8 +22,8 @@ export async function criarUsuario(dados: { nome: string; email: string; perfil:
   await api.post('/users', { name: dados.nome, email: dados.email, role: dados.perfil, password: dados.senha });
 }
 
-export async function editarUsuario(id: number, dados: { nome: string; perfil: Perfil }): Promise<void> {
-  await api.put(`/users/${id}`, { name: dados.nome, role: dados.perfil });
+export async function editarUsuario(id: number, dados: { nome: string; perfil: Perfil; permissoes: Record<string, import('../types').AccessLevel> }): Promise<void> {
+  await api.put(`/users/${id}`, { name: dados.nome, role: dados.perfil, permissions: dados.permissoes });
 }
 
 export async function alterarStatusUsuario(id: number, ativo: boolean): Promise<void> {

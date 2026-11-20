@@ -14,6 +14,7 @@ public interface SupplierOfferRepository extends JpaRepository<SupplierOffer, Lo
     List<SupplierOffer> findAllByActiveTrueAndAvailableQuantityGreaterThanOrderByNameAsc(int quantity);
     Optional<SupplierOffer> findByIdAndSupplierId(Long id, Long supplierId);
     boolean existsBySupplierIdAndSkuIgnoreCase(Long supplierId, String sku);
+    boolean existsBySupplierId(Long supplierId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select offer from SupplierOffer offer join fetch offer.supplier where offer.id = :id")

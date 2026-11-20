@@ -7,6 +7,8 @@
 
 .saida {
   height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
   padding: 24px 32px;
   display: flex;
   flex-direction: column;
@@ -31,6 +33,7 @@
 .saida-historico {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -41,7 +44,9 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 12px;
+  margin: 0 0 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .saida-filtros {
@@ -76,30 +81,25 @@
 
 .saida-tabela-area {
   flex: 1;
-  min-height: 250px;
-  overflow: hidden;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.saida-tabela-area .table {
+  width: 100%;
+  min-width: 900px;
+}
+
+.saida-tabela-area thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
 }
 
 .saida-vazio {
   padding: 24px 10px;
-}
-
-.saida-rodape {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-}
-
-.saida-paginacao {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.saida-paginacao button:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 .saida-confirmacao-flutuante {
