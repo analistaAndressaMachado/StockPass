@@ -4,6 +4,7 @@ import { Login } from './pages/Login/Login';
 import { Painel } from './pages/Painel/Painel';
 import { Perfil } from './pages/Perfil/Perfil';
 import { Relatorios } from './pages/Relatorios/Relatorios';
+import { GraficosVendas } from './pages/Graficos/GraficosVendas';
 import { Catalogo } from './pages/Catalogo/Catalogo';
 import { EntradaEstoque } from './pages/EntradaEstoque/EntradaEstoque';
 import { SaidaEstoque } from './pages/SaidaEstoque/SaidaEstoque';
@@ -18,6 +19,7 @@ import type { Produto, User } from './types';
 
 const PAGE_TITLES: Record<string, string> = {
   painel: 'Painel',
+  graficos: 'Graficos de vendas',
   catalogo: 'Catálogo de Produtos',
   entrada: 'Entrada de Estoque',
   saida: 'Saída de Estoque',
@@ -192,6 +194,8 @@ export function App() {
                        <ClientesAdmin />
          ) : page === 'relatorios' ? (
            <Relatorios onReceiveReplenishment={receberReposicao} />
+         ) : page === 'graficos' ? (
+           <GraficosVendas />
          ) : (
            <p className="muted">Essa área ainda está em construção 🚧</p>
          )}

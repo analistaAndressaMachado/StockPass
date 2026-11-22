@@ -10,6 +10,7 @@ const ROLES_INTERNOS = ['USER', 'GESTOR', 'ADMIN'];
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'painel', label: 'Painel', roles: ROLES_INTERNOS },
+  { key: 'graficos', label: 'Graficos de vendas', roles: ROLES_INTERNOS },
   { key: 'catalogo', label: 'Catálogo de Produtos', roles: ROLES_INTERNOS },
   { key: 'entrada', label: 'Entrada de Estoque', roles: ROLES_INTERNOS },
   { key: 'saida', label: 'Saída de Estoque', roles: ROLES_INTERNOS },
@@ -29,7 +30,7 @@ type Props = {
 
 const MODULE_BY_ITEM: Record<string, string> = {
   painel: 'painel', catalogo: 'catalogo', entrada: 'entrada', saida: 'saida',
-  relatorios: 'relatorios', 'clientes-admin': 'clientes', fornecedores: 'fornecedores', usuarios: 'usuarios',
+  relatorios: 'relatorios', graficos: 'relatorios', 'clientes-admin': 'clientes', fornecedores: 'fornecedores', usuarios: 'usuarios',
 };
 
 export function Sidebar({ active, onNavigate, role, permissions }: Props) {
