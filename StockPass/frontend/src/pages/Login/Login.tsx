@@ -118,9 +118,10 @@ export function Login({ onLogin }: Props) {
                 required
               />
               <input
-                placeholder="CNPJ (opcional)"
+                placeholder="CNPJ"
                 value={form.taxId}
                 onChange={(e) => setForm({ ...form, taxId: e.target.value })}
+                required
               />
               <input
                 type="tel"

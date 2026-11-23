@@ -3,6 +3,7 @@ package com.stockpass.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import java.util.Map;
 
 public class AuthDtos {
@@ -13,7 +14,7 @@ public class AuthDtos {
 	 @Email @NotBlank String email,
 	 @Size(min = 6) String password,
 	 @NotBlank String companyName,
-	 String taxId,
+	 @NotBlank @Pattern(regexp = "(?:[0-9]{14}|[0-9]{2}[.][0-9]{3}[.][0-9]{3}/[0-9]{4}-[0-9]{2})") String taxId,
 	 String phone
  ){}
  public record ClientRegisterRequest(
