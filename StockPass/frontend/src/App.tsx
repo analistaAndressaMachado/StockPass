@@ -136,7 +136,7 @@ export function App() {
          {page === 'saida' && avisoSaidaConfirmada && <p className="muted-sm" role="status">{avisoSaidaConfirmada}</p>}
          {page === 'painel' ? (
            <>
-             <Painel onRestock={iniciarReposicao} onNovaEntrada={abrirEntradaRapida} onNovaSaida={abrirSaidaRapida} onNovoProduto={abrirProdutoRapido} />
+             <Painel onRestock={iniciarReposicao} onNovaEntrada={abrirEntradaRapida} onNovaSaida={abrirSaidaRapida} onNovoProduto={abrirProdutoRapido} onNavigate={navegarPelaSidebar} />
              {quickEntryOpen && (
                <EntradaEstoque
                  openNovaEntrada

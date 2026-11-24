@@ -106,6 +106,19 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.stat-card-button {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stat-card-button:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
 .stat-card:hover {
   transform: translateY(-3px);
   box-shadow:

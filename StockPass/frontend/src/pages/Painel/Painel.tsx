@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { listarProdutos, mensagemErro } from '../../services/stockApi';
 import type { Produto } from '../../types';
 import { Brand } from '../../components/Brand/Brand';
@@ -22,12 +22,14 @@ type Props = {
   onNovaEntrada: () => void;
   onNovaSaida: () => void;
   onNovoProduto: () => void;
+  onNavigate: (page: string) => void;
 };
 
-export function Painel({ onRestock, onNovaEntrada, onNovaSaida, onNovoProduto }: Props) {
+export function Painel({ onRestock, onNovaEntrada, onNovaSaida, onNovoProduto, onNavigate }: Props) {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [erro, setErro] = useState('');
   const [mostrarTodosItens, setMostrarTodosItens] = useState(false);
+  const alertasRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     listarProdutos()
@@ -44,29 +46,29 @@ export function Painel({ onRestock, onNovaEntrada, onNovaSaida, onNovoProduto }:
     <div className="painel">
       <Brand className="brand-painel" />
       <section className="stats-grid">
-        <div className="stat-card">
+        <button type="button" className="stat-card stat-card-button" onClick={() => onNavigate('catalogo')} aria-label="Ver produtos cadastrados">
           <div className="stat-card-top"><span className="stat-label">Produtos cadastrados</span></div>
           <p className="stat-value">{produtos.length}</p>
           <p className="stat-hint">SKUs no catálogo</p>
-        </div>
-        <div className="stat-card">
+        </button>
+        <button type="button" className="stat-card stat-card-button" onClick={() => onNavigate('catalogo')} aria-label="Ver produtos e unidades em estoque">
           <div className="stat-card-top"><span className="stat-label">Unidades em estoque</span></div>
           <p className="stat-value">{unidades.toLocaleString('pt-BR')}</p>
           <p className="stat-hint">Saldo atualizado pelas movimentações</p>
-        </div>
-        <div className="stat-card">
+        </button>
+        <button type="button" className="stat-card stat-card-button" onClick={() => alertasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label="Ver produtos abaixo do estoque minimo">
           <div className="stat-card-top"><span className="stat-label">Alerta de mínimo</span></div>
           <p className="stat-value">{estoqueBaixo.length}</p>
           <p className="stat-hint">Abaixo do ponto de reposição</p>
-        </div>
-        <div className="stat-card">
+        </button>
+        <button type="button" className="stat-card stat-card-button" onClick={() => onNavigate('catalogo')} aria-label="Ver produtos sem estoque">
           <div className="stat-card-top"><span className="stat-label">Sem estoque</span></div>
           <p className="stat-value">{semEstoque}</p>
           <p className="stat-hint">Produtos com saldo zerado</p>
-        </div>
+        </button>
       </section>
 
-      <section className="panel-card panel-card--soft">
+      <section className="panel-card panel-card--soft" ref={alertasRef}>
         <div className="card-header">
           <div>
             <h2>Alertas de estoque mínimo</h2>
