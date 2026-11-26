@@ -174,13 +174,24 @@ O SQLite é utilizado como banco local e não exige a instalação de um servido
 cd backend
 ```
 
-2. Execute o projeto:
+2. (Opcional) Para criar as contas iniciais em um banco vazio, defina senhas próprias no PowerShell. O inicializador só cria contas ausentes e nunca altera usuários existentes:
 
-```bash
-mvn spring-boot:run
+```powershell
+$env:STOCKPASS_ADMIN_PASSWORD = Read-Host "Senha inicial do administrador"
+$env:STOCKPASS_MANAGER_PASSWORD = Read-Host "Senha inicial do gestor"
 ```
 
-3. O backend será iniciado em:
+3. Execute o projeto:
+
+```bash
+.\mvnw.cmd spring-boot:run
+```
+
+O perfil `local` é usado por padrão e tem uma chave JWT exclusiva para desenvolvimento local. Para substituí-la, defina `APP_JWT_SECRET` com pelo menos 32 bytes. Nos perfis `prod` e `demo`, essa variável é obrigatória e a API não inicia se estiver vazia ou curta. Não reutilize a chave local nesses ambientes.
+
+As contas de apresentação só são criadas se ainda não existirem e se as variáveis de senha acima estiverem definidas. Se o banco já possui essas contas, o login e as senhas atuais são preservados; o inicializador não redefine senhas.
+
+4. O backend será iniciado em:
 
 ```text
 http://localhost:8080
@@ -192,7 +203,7 @@ A API ficará disponível em:
 http://localhost:8080/api
 ```
 
-4. Teste o Hello World:
+5. Teste o Hello World:
 
 ```text
 GET http://localhost:8080/api/hello-world
@@ -314,13 +325,13 @@ Exige autenticação.
 
 ## Dados de teste
 
-Na primeira execução, o backend cria automaticamente dois usuários para facilitar a apresentação:
+Em um banco vazio, o backend pode criar os dois usuários de apresentação se `STOCKPASS_ADMIN_PASSWORD` e `STOCKPASS_MANAGER_PASSWORD` forem definidas antes de iniciar a API. Não há senhas padrão no código. Em banco existente, contas e senhas são preservadas.
 
 ### Administrador
 
 ```text
 E-mail: admin@stockpass.com
-Senha: 123456
+Senha: definida em STOCKPASS_ADMIN_PASSWORD ao criar a conta
 Perfil: ADMIN
 ```
 
@@ -328,11 +339,11 @@ Perfil: ADMIN
 
 ```text
 E-mail: gestor@stockpass.com
-Senha: 123456
+Senha: definida em STOCKPASS_MANAGER_PASSWORD ao criar a conta
 Perfil: GESTOR
 ```
 
-> Essas credenciais são destinadas somente ao ambiente acadêmico/local. Em um ambiente real, devem ser substituídas por senhas seguras.
+As variáveis são usadas apenas na inicialização e não devem ser salvas no repositório. Para trocar a senha de uma conta existente, use o fluxo de troca de senha do sistema.
 
 ---
 
@@ -428,3 +439,23 @@ Projeto acadêmico desenvolvido para a **FATEC Praia Grande - SP**.
 ## Licença
 
 Este projeto foi desenvolvido para fins **acadêmicos**, na disciplina de **Laboratório de Engenharia de Software — FATEC Praia Grande - SP**.
+
+### Carga de dados fictícios de demonstração
+
+O carregador opcional adiciona categorias, produtos, fornecedores, clientes, movimentações e reservas fictícias ao SQLite local. Não cria credenciais de acesso conhecidas: os clientes fictícios recebem senhas aleatórias guardadas somente como hash. O carregador não altera registros existentes e identifica os produtos de demonstração pelo prefixo `DEMO-2026-`. As descrições de produto não são carregadas porque o modelo atual não possui esse campo.
+
+No PowerShell, dentro de `backend`, execute:
+
+```powershell
+$env:APP_DEMO_DATA_ENABLED = "true"
+.\mvnw.cmd spring-boot:run
+```
+
+A carga é executada ao iniciar a API. Ela é idempotente: iniciar novamente com a variável habilitada não duplica os dados. Após a carga, pare a API com `Ctrl+C` e desabilite o carregador antes de iniciar normalmente:
+
+```powershell
+Remove-Item Env:APP_DEMO_DATA_ENABLED
+.\mvnw.cmd spring-boot:run
+```
+
+Use esta opção somente no banco local de demonstração. As entradas e saídas fictícias ficam registradas no histórico, e o saldo final de cada produto corresponde às movimentações. Uma reserva ativa de demonstração permanece válida por 30 dias.

@@ -60,4 +60,5 @@ public class StockMovement {
     public String getRegisteredBy() { return registeredBy; }
     public void setRegisteredBy(String registeredBy) { this.registeredBy = registeredBy; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
