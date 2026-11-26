@@ -77,6 +77,8 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
           <input
             type="number"
             min={1}
+            max={2147483647}
+            step={1}
             placeholder="Ex: 30"
             value={quantidade}
             onChange={(e) => setQuantidade(e.target.value)}
@@ -93,6 +95,7 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
           Nº da nota fiscal (opcional)
           <input
             type="text"
+            maxLength={80}
             placeholder="Ex: NF-4125"
             value={notaFiscal}
             onChange={(e) => setNotaFiscal(e.target.value)}

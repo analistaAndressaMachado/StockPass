@@ -74,7 +74,8 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
           <input
             type="number"
             min={1}
-            max={produto ? produto.availableQuantity : undefined}
+            max={produto ? Math.min(produto.availableQuantity, 2147483647) : undefined}
+            step={1}
             placeholder="Ex: 5"
             value={quantidade}
             onChange={(e) => setQuantidade(e.target.value)}
@@ -102,6 +103,7 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
           Observação (opcional)
           <input
             type="text"
+            maxLength={500}
             placeholder="Ex: Item danificado no transporte"
             value={observacao}
             onChange={(e) => setObservacao(e.target.value)}

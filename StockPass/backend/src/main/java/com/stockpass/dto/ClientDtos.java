@@ -14,11 +14,11 @@ import java.util.List;
 public final class ClientDtos {
     private ClientDtos() {}
 
-    public record PurchaseLineRequest(@NotNull Long productId, @NotNull @Positive Integer quantity) {}
+    public record PurchaseLineRequest(@NotNull @Positive Long productId, @NotNull @Positive Integer quantity) {}
 
     public record PurchaseRequest(
-        @NotBlank String paymentMethod,
-        @NotEmpty List<@Valid PurchaseLineRequest> items
+        @NotBlank @Size(max = 32) String paymentMethod,
+        @NotEmpty @Size(max = 100) List<@Valid PurchaseLineRequest> items
     ) {}
 
     public record StoreProductResponse(
@@ -31,18 +31,18 @@ public final class ClientDtos {
     ) {}
 
     public record CreateClientRequest(
-        @NotBlank String name,
-        @NotBlank @Email String email,
-        String phone,
-        @NotBlank @Size(min = 6) String password,
+        @NotBlank @Size(max = 120) String name,
+        @NotBlank @Email @Size(max = 254) String email,
+        @Size(max = 30) String phone,
+        @NotBlank @Size(min = 6, max = 72) String password,
         @NotNull Boolean active
     ) {}
 
     public record UpdateClientRequest(
-        @NotBlank String name,
-        @NotBlank @Email String email,
-        String phone,
-        String password,
+        @NotBlank @Size(max = 120) String name,
+        @NotBlank @Email @Size(max = 254) String email,
+        @Size(max = 30) String phone,
+        @Size(max = 72) String password,
         @NotNull Boolean active
     ) {}
 

@@ -211,13 +211,13 @@ function setaDoCampo(campo: CampoOrdenacao) {
     return (
       <Modal title="Adicionar Novo Produto" onClose={fecharModalNovoProduto}>
         <form className="modal-form" onSubmit={salvarNovoProduto}>
-          <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Ex: Café em pó 500 g" required /></label>
-          <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} placeholder="Ex: CAF-500" required /></label>
+          <label>Nome do produto<input maxLength={150} value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Ex: Café em pó 500 g" required /></label>
+          <label>Código do produto<input maxLength={64} value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} placeholder="Ex: CAF-500" required /></label>
           <label>Categoria<Select value={novo.categoryId} onChange={(categoryId) => setNovo({ ...novo, categoryId, categoria: categoriasDisponiveis.find((item) => String(item.id) === categoryId)?.name ?? '' })} ariaLabel="Categoria do produto" required options={categoriasDisponiveis.filter((item) => item.active).map((item) => ({ value: String(item.id), label: item.name }))} placeholder="Selecione uma categoria" /></label>
-          <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} placeholder="Ex: Distribuidora Central" required /></label>
-          <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} placeholder="Ex: 50" required /></label>
-          <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} placeholder="Ex: 12,90" required /></label>
-          <label>Ponto de reposição<input type="number" min={0} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} placeholder="Ex: 10" required /></label>
+          <label>Fornecedor<input maxLength={150} value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} placeholder="Ex: Distribuidora Central" required /></label>
+          <label>Quantidade inicial<input type="number" min={0} max={2147483647} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} placeholder="Ex: 50" required /></label>
+          <label>Preço unitário<input type="number" min={0} max={99999999.99} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} placeholder="Ex: 12,90" required /></label>
+          <label>Ponto de reposição<input type="number" min={0} max={2147483647} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} placeholder="Ex: 10" required /></label>
           {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
           <button className="btn-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Adicionar Produto'}</button>
         </form>
@@ -329,11 +329,11 @@ function setaDoCampo(campo: CampoOrdenacao) {
                   {emEdicao && rascunho ? (
                     <>
                       <td>
-                        <input className="edit-input" value={rascunho.nome}
+                        <input className="edit-input" maxLength={150} value={rascunho.nome}
                           onChange={(e) => setRascunho({ ...rascunho, nome: e.target.value })} />
                       </td>
                       <td>
-                        <input className="edit-input" value={rascunho.sku}
+                        <input className="edit-input" maxLength={64} value={rascunho.sku}
                           onChange={(e) => setRascunho({ ...rascunho, sku: e.target.value.toUpperCase() })} />
                       </td>
                       <td>
@@ -346,15 +346,15 @@ function setaDoCampo(campo: CampoOrdenacao) {
                         <span title="O saldo é alterado por entradas e saídas registradas">{rascunho.quantidade}</span>
                       </td>
                       <td>
-                        <input className="edit-input" value={rascunho.fornecedor}
+                        <input className="edit-input" maxLength={150} value={rascunho.fornecedor}
                           onChange={(e) => setRascunho({ ...rascunho, fornecedor: e.target.value })} />
                       </td>
                       <td>
-                        <input className="edit-input edit-input-num" type="number" min={0} step={1} value={rascunho.pontoReposicao}
+                        <input className="edit-input edit-input-num" type="number" min={0} max={2147483647} step={1} value={rascunho.pontoReposicao}
                           onChange={(e) => setRascunho({ ...rascunho, pontoReposicao: Number(e.target.value) })} />
                       </td>
                       <td>
-                        <input className="edit-input edit-input-num" type="number" min={0} step="0.01" value={rascunho.preco}
+                        <input className="edit-input edit-input-num" type="number" min={0} max={99999999.99} step="0.01" value={rascunho.preco}
                           onChange={(e) => setRascunho({ ...rascunho, preco: Number(e.target.value) })} />
                       </td>
                       <td><span className={`produto-status ${rascunho.active ? 'is-active' : ''}`}>{rascunho.active ? 'Ativo' : 'Inativo'}</span></td>

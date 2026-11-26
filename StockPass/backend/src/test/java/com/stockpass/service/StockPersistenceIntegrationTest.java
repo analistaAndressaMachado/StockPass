@@ -439,7 +439,8 @@ class StockPersistenceIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(java.util.Map.of(
                     "name", "Responsável HTTP", "email", "supplier-http-" + suffix + "@stockpass.test",
-                    "password", "senha-fornecedor-123", "companyName", "Fornecedor HTTP"))))
+                    "password", "senha-fornecedor-123", "companyName", "Fornecedor HTTP",
+                    "taxId", "12345678000190"))))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.role").value("FORNECEDOR"));
     }

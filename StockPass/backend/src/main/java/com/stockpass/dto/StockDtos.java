@@ -1,10 +1,12 @@
 package com.stockpass.dto;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.stockpass.model.ReplenishmentStatus;
@@ -12,21 +14,21 @@ public final class StockDtos {
     private StockDtos() {}
 
     public record ProductRequest(
-        @NotBlank String sku,
-        @NotBlank String name,
-        @NotNull Long categoryId,
+        @NotBlank @Size(max = 64) String sku,
+        @NotBlank @Size(max = 150) String name,
+        @NotNull @Positive Long categoryId,
         @NotNull @Min(0) Integer initialQuantity,
-        @NotNull @DecimalMin("0.0") BigDecimal price,
-        @NotBlank String supplier,
+        @NotNull @DecimalMin("0.0") @Digits(integer = 10, fraction = 2) BigDecimal price,
+        @NotBlank @Size(max = 150) String supplier,
         @NotNull @Min(0) Integer reorderPoint
     ) {}
 
     public record ProductUpdateRequest(
-        @NotBlank String sku,
-        @NotBlank String name,
-        @NotNull Long categoryId,
-        @NotNull @DecimalMin("0.0") BigDecimal price,
-        @NotBlank String supplier,
+        @NotBlank @Size(max = 64) String sku,
+        @NotBlank @Size(max = 150) String name,
+        @NotNull @Positive Long categoryId,
+        @NotNull @DecimalMin("0.0") @Digits(integer = 10, fraction = 2) BigDecimal price,
+        @NotBlank @Size(max = 150) String supplier,
         @NotNull @Min(0) Integer reorderPoint
     ) {}
 
@@ -40,10 +42,10 @@ public final class StockDtos {
     ) {}
 
     public record SupplierOfferRequest(
-        @NotBlank String sku,
-        @NotBlank String name,
-        @NotBlank String category,
-        @NotNull @DecimalMin("0.0") BigDecimal price,
+        @NotBlank @Size(max = 64) String sku,
+        @NotBlank @Size(max = 150) String name,
+        @NotBlank @Size(max = 100) String category,
+        @NotNull @DecimalMin("0.0") @Digits(integer = 10, fraction = 2) BigDecimal price,
         @NotNull @Min(0) Integer availableQuantity
     ) {}
 
@@ -101,7 +103,7 @@ public final class StockDtos {
         int availableQuantity
     ) {}
 
-    public record CategoryRequest(@NotBlank String name, String description) {}
+    public record CategoryRequest(@NotBlank @Size(max = 100) String name, @Size(max = 500) String description) {}
 
     public record CategoryResponse(Long id, String name, String description, boolean active,
         LocalDateTime createdAt, long productCount) {}
@@ -121,14 +123,14 @@ public final class StockDtos {
     ) {}
 
     public record EntryRequest(
-        @NotNull Long productId,
+        @NotNull @Positive Long productId,
         @NotNull @Positive Integer quantity,
-        String invoiceNumber,
-        Long replenishmentId
+        @Size(max = 80) String invoiceNumber,
+        @Positive Long replenishmentId
     ) {}
 
     public record ReplenishmentRequest(
-        @NotNull Long productId,
+        @NotNull @Positive Long productId,
         @NotNull @Positive Integer quantity
     ) {}
 
@@ -146,10 +148,10 @@ public final class StockDtos {
     ) {}
 
     public record ExitRequest(
-        @NotNull Long productId,
+        @NotNull @Positive Long productId,
         @NotNull @Positive Integer quantity,
-        @NotBlank String reason,
-        String observation
+        @NotBlank @Size(max = 40) String reason,
+        @Size(max = 500) String observation
     ) {}
 
     public record MovementResponse(
