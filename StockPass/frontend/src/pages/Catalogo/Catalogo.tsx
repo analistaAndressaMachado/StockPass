@@ -2,20 +2,22 @@ import { useEffect, useRef, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import { Select } from '../../components/Select/Select';
 import { atualizarProduto, criarProduto, listarProdutos, mensagemErro } from '../../services/stockApi';
+import { listarCategorias, type Categoria } from '../../services/categoriesApi';
 import type { Produto } from '../../types';
 import type { NovoProduto } from '../../services/stockApi';
 import './Catalogo.css';
 
 type CampoOrdenacao = 'nome' | 'sku' | 'categoria' | 'quantidade' | 'preco';
 type DirecaoOrdenacao = 'asc' | 'desc';
-type FormNovoProduto = Omit<NovoProduto, 'quantidadeInicial' | 'preco' | 'pontoReposicao'> & {
+type FormNovoProduto = Omit<NovoProduto, 'quantidadeInicial' | 'preco' | 'pontoReposicao' | 'categoryId'> & {
+  categoryId: string;
   quantidadeInicial: string;
   preco: string;
   pontoReposicao: string;
 };
 
 const NOVO_PRODUTO_VAZIO: FormNovoProduto = {
-  sku: '', nome: '', categoria: '', quantidadeInicial: '',
+  sku: '', nome: '', categoria: '', categoryId: '', quantidadeInicial: '',
   preco: '', fornecedor: '', pontoReposicao: '',
 };
 
@@ -49,6 +51,7 @@ type Props = {
 
 export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalClose, onModalSuccess, highlightProdutoId = null }: Props) {
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [categoriasDisponiveis, setCategoriasDisponiveis] = useState<Categoria[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [showNovoProduto, setShowNovoProduto] = useState(openNovoProduto);
@@ -69,6 +72,10 @@ export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalCl
       .then(setProdutos)
       .catch((error: unknown) => setErro(mensagemErro(error)))
       .finally(() => setCarregando(false));
+  }, []);
+
+  useEffect(() => {
+    listarCategorias().then(setCategoriasDisponiveis).catch((error: unknown) => setErro(mensagemErro(error)));
   }, []);
 
   useEffect(() => {
@@ -165,6 +172,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
     try {
       const criado = await criarProduto({
         ...novo,
+        categoryId: Number(novo.categoryId),
         quantidadeInicial: Number(novo.quantidadeInicial),
         preco: Number(novo.preco),
         pontoReposicao: Number(novo.pontoReposicao),
@@ -192,7 +200,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
         <form className="modal-form" onSubmit={salvarNovoProduto}>
           <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Ex: Café em pó 500 g" required /></label>
           <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} placeholder="Ex: CAF-500" required /></label>
-          <label>Categoria<input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} placeholder="Ex: Alimentos" required /></label>
+          <label>Categoria<Select value={novo.categoryId} onChange={(categoryId) => setNovo({ ...novo, categoryId, categoria: categoriasDisponiveis.find((item) => String(item.id) === categoryId)?.name ?? '' })} ariaLabel="Categoria do produto" required options={categoriasDisponiveis.filter((item) => item.active).map((item) => ({ value: String(item.id), label: item.name }))} placeholder="Selecione uma categoria" /></label>
           <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} placeholder="Ex: Distribuidora Central" required /></label>
           <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} placeholder="Ex: 50" required /></label>
           <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} placeholder="Ex: 12,90" required /></label>
@@ -302,8 +310,10 @@ function setaDoCampo(campo: CampoOrdenacao) {
                           onChange={(e) => setRascunho({ ...rascunho, sku: e.target.value.toUpperCase() })} />
                       </td>
                       <td>
-                        <input className="edit-input" value={rascunho.categoria}
-                          onChange={(e) => setRascunho({ ...rascunho, categoria: e.target.value })} />
+                        <Select value={String(rascunho.categoryId)} onChange={(categoryId) => {
+                          const selected = categoriasDisponiveis.find((item) => String(item.id) === categoryId);
+                          if (selected) setRascunho({ ...rascunho, categoryId: selected.id, categoria: selected.name });
+                        }} ariaLabel="Categoria do produto" size="sm" options={categoriasDisponiveis.filter((item) => item.active || item.id === rascunho.categoryId).map((item) => ({ value: String(item.id), label: `${item.name}${item.active ? '' : ' (inativa)'}` }))} />
                       </td>
                       <td>
                         <span title="O saldo é alterado por entradas e saídas registradas">{rascunho.quantidade}</span>

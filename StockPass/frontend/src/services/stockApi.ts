@@ -9,6 +9,7 @@ type ProductDto = {
   sku: string;
   name: string;
   category: string;
+  categoryId: number;
   quantity: number;
   price: number;
   supplier: string;
@@ -82,6 +83,7 @@ function produtoFromDto(item: ProductDto): Produto {
   return {
     id: item.id,
     sku: item.sku,
+    categoryId: item.categoryId,
     nome: item.name,
     categoria: item.category,
     quantidade: item.quantity,
@@ -98,7 +100,7 @@ export async function criarProduto(produto: NovoProduto) {
   const { data } = await api.post<ProductDto>('/products', {
     sku: produto.sku,
     name: produto.nome,
-    category: produto.categoria,
+    categoryId: produto.categoryId,
     initialQuantity: produto.quantidadeInicial,
     price: produto.preco,
     supplier: produto.fornecedor,
@@ -111,7 +113,7 @@ export async function atualizarProduto(produto: Produto) {
   const { data } = await api.put<ProductDto>(`/products/${produto.id}`, {
     sku: produto.sku,
     name: produto.nome,
-    category: produto.categoria,
+    categoryId: produto.categoryId,
     price: produto.preco,
     supplier: produto.fornecedor,
     reorderPoint: produto.pontoReposicao,

@@ -5,6 +5,7 @@ import com.stockpass.dto.StockDtos.ProductResponse;
 import com.stockpass.dto.StockDtos.ProductUpdateRequest;
 import com.stockpass.model.MovementType;
 import com.stockpass.model.Product;
+import com.stockpass.model.Category;
 import com.stockpass.model.StockMovement;
 import com.stockpass.repository.ProductRepository;
 import com.stockpass.repository.StockMovementRepository;
@@ -19,12 +20,14 @@ public class ProductService {
     private final ProductRepository products;
     private final StockMovementRepository movements;
     private final StockReservationRepository reservations;
+    private final CategoryService categories;
 
     public ProductService(ProductRepository products, StockMovementRepository movements,
-            StockReservationRepository reservations) {
+            StockReservationRepository reservations, CategoryService categories) {
         this.products = products;
         this.movements = movements;
         this.reservations = reservations;
+        this.categories = categories;
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +46,8 @@ public class ProductService {
         Product product = new Product();
         product.setSku(sku);
         product.setName(request.name().trim());
-        product.setCategory(request.category().trim());
+        product.setCategory(categories.requireActive(request.categoryId()));
+        product.setLegacyCategory(product.getCategory().getName());
         product.setQuantity(request.initialQuantity());
         product.setPrice(request.price());
         product.setSupplier(request.supplier().trim());
@@ -73,7 +77,10 @@ public class ProductService {
         }
         product.setSku(sku);
         product.setName(request.name().trim());
-        product.setCategory(request.category().trim());
+        Category requestedCategory = product.getCategory().getId().equals(request.categoryId())
+            ? product.getCategory() : categories.requireActive(request.categoryId());
+        product.setCategory(requestedCategory);
+        product.setLegacyCategory(requestedCategory.getName());
         product.setPrice(request.price());
         product.setSupplier(request.supplier().trim());
         product.setReorderPoint(request.reorderPoint());
@@ -87,7 +94,7 @@ public class ProductService {
 
     private static ProductResponse response(Product product, int reserved) {
         return new ProductResponse(product.getId(), product.getSku(), product.getName(),
-            product.getCategory(), product.getQuantity(), product.getPrice(),
+            product.getCategory().getId(), product.getCategory().getName(), product.getQuantity(), product.getPrice(),
             product.getSupplier(), product.getReorderPoint(), product.getQuantity(), reserved,
             product.getQuantity() - reserved);
     }

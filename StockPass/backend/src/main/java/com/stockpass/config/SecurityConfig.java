@@ -45,6 +45,8 @@ public class SecurityConfig {
   .requestMatchers(HttpMethod.DELETE,"/api/suppliers/records/**/attachments/**").hasAuthority("ACCESS_fornecedores_edit")
   .requestMatchers("/api/suppliers/records/**","/api/suppliers/contracts/**").denyAll()
   .requestMatchers("/api/suppliers/**").hasAnyRole("USER","GESTOR","ADMIN")
+  .requestMatchers(HttpMethod.GET, "/api/categories/**").hasAuthority("ACCESS_catalogo_view")
+  .requestMatchers("/api/categories/**").hasAuthority("ACCESS_catalogo_edit")
   .requestMatchers(HttpMethod.GET,"/api/products/**").hasAuthority("ACCESS_catalogo_view")
   .requestMatchers("/api/products/**").hasAuthority("ACCESS_catalogo_edit")
   .requestMatchers(HttpMethod.GET,"/api/entries/**","/api/replenishments/**").hasAuthority("ACCESS_entrada_view")

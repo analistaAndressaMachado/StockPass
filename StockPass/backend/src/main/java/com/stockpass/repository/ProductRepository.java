@@ -15,6 +15,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsBySkuIgnoreCase(String sku);
     boolean existsBySkuIgnoreCaseAndIdNot(String sku, Long id);
     Optional<Product> findBySkuIgnoreCase(String sku);
+    long countByCategory_Id(Long categoryId);
 
     // SQLite não aplica FOR UPDATE; esta atualização sem mudança obtém o bloqueio de escrita da transação.
     @Modifying(flushAutomatically = true)

@@ -14,7 +14,7 @@ public final class StockDtos {
     public record ProductRequest(
         @NotBlank String sku,
         @NotBlank String name,
-        @NotBlank String category,
+        @NotNull Long categoryId,
         @NotNull @Min(0) Integer initialQuantity,
         @NotNull @DecimalMin("0.0") BigDecimal price,
         @NotBlank String supplier,
@@ -24,7 +24,7 @@ public final class StockDtos {
     public record ProductUpdateRequest(
         @NotBlank String sku,
         @NotBlank String name,
-        @NotBlank String category,
+        @NotNull Long categoryId,
         @NotNull @DecimalMin("0.0") BigDecimal price,
         @NotBlank String supplier,
         @NotNull @Min(0) Integer reorderPoint
@@ -89,6 +89,7 @@ public final class StockDtos {
         Long id,
         String sku,
         String name,
+        Long categoryId,
         String category,
         int quantity,
         BigDecimal price,
@@ -98,6 +99,11 @@ public final class StockDtos {
         int reservedQuantity,
         int availableQuantity
     ) {}
+
+    public record CategoryRequest(@NotBlank String name, String description) {}
+
+    public record CategoryResponse(Long id, String name, String description, boolean active,
+        LocalDateTime createdAt, long productCount) {}
 
     public record StockReservationResponse(
         Long id,

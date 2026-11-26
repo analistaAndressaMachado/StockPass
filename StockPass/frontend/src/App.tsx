@@ -6,6 +6,7 @@ import { Perfil } from './pages/Perfil/Perfil';
 import { Relatorios } from './pages/Relatorios/Relatorios';
 import { GraficosVendas } from './pages/Graficos/GraficosVendas';
 import { Catalogo } from './pages/Catalogo/Catalogo';
+import { Categorias } from './pages/Categorias/Categorias';
 import { EntradaEstoque } from './pages/EntradaEstoque/EntradaEstoque';
 import { SaidaEstoque } from './pages/SaidaEstoque/SaidaEstoque';
 import { Usuarios } from './pages/Usuarios/Usuarios';
@@ -21,6 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
   painel: 'Painel',
   graficos: 'Graficos de vendas',
   catalogo: 'Catálogo de Produtos',
+  categorias: 'Categorias',
   entrada: 'Entrada de Estoque',
   saida: 'Saída de Estoque',
   relatorios: 'Relatórios',
@@ -177,6 +179,8 @@ export function App() {
            <Perfil user={user} onUserUpdated={setUser} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
          ) : page === 'catalogo' ? (
             <Catalogo highlightProdutoId={produtoParaDestacar} />
+         ) : page === 'categorias' ? (
+            <Categorias />
              ) : page === 'entrada' ? (
                        <EntradaEstoque
                          reposicao={pendingRestock}

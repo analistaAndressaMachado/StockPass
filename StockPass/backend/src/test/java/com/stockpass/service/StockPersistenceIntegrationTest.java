@@ -10,6 +10,7 @@ import com.stockpass.dto.StockDtos.EntryRequest;
 import com.stockpass.dto.StockDtos.ExitRequest;
 import com.stockpass.dto.StockDtos.ProductRequest;
 import com.stockpass.dto.StockDtos.ProductUpdateRequest;
+import com.stockpass.dto.StockDtos.CategoryRequest;
 import com.stockpass.dto.StockDtos.ReplenishmentRequest;
 import com.stockpass.dto.StockDtos.SupplierAcquisitionRequest;
 import com.stockpass.dto.StockDtos.SupplierOfferRequest;
@@ -20,6 +21,7 @@ import com.stockpass.dto.ClientDtos.PurchaseRequest;
 import com.stockpass.model.ReplenishmentStatus;
 import com.stockpass.model.User;
 import com.stockpass.repository.ProductRepository;
+import com.stockpass.repository.CategoryRepository;
 import com.stockpass.repository.StockMovementRepository;
 import com.stockpass.repository.StockReservationRepository;
 import com.stockpass.repository.StockReplenishmentRepository;
@@ -54,6 +56,8 @@ class StockPersistenceIntegrationTest {
     @Autowired private AuthService authService;
     @Autowired private ClientStoreService clientStoreService;
     @Autowired private ProductRepository products;
+    @Autowired private CategoryRepository categories;
+    @Autowired private CategoryService categoryService;
     @Autowired private StockMovementRepository movements;
     @Autowired private StockReservationRepository reservations;
     @Autowired private StockReplenishmentRepository replenishments;
@@ -68,7 +72,7 @@ class StockPersistenceIntegrationTest {
     void productAndMovementsPersistAsOneStockFlow() {
         String sku = "TEST-" + UUID.randomUUID();
         var product = productService.create(
-            new ProductRequest(sku, "Produto de integração", "Testes", 10,
+            new ProductRequest(sku, "Produto de integração", categoryId("Testes"), 10,
                 new BigDecimal("12.50"), "Fornecedor teste", 3),
             "admin@stockpass.com");
 
@@ -86,7 +90,7 @@ class StockPersistenceIntegrationTest {
     void scheduledReplenishmentIsCompletedByLinkedEntry() {
         String sku = "RESTOCK-" + UUID.randomUUID();
         var product = productService.create(
-            new ProductRequest(sku, "Produto para reposição", "Testes", 2,
+            new ProductRequest(sku, "Produto para reposição", categoryId("Testes"), 2,
                 new BigDecimal("8.00"), "Fornecedor teste", 5),
             "admin@stockpass.com");
         var scheduled = replenishmentService.schedule(
@@ -186,7 +190,7 @@ class StockPersistenceIntegrationTest {
         var anotherClient = authService.registerClient(new ClientRegisterRequest(
             "Outro cliente", "client-other-" + suffix + "@stockpass.test", "senha-cliente"));
         var product = productService.create(
-            new ProductRequest("CLIENT-" + suffix, "Produto da loja", "Teste", 8,
+            new ProductRequest("CLIENT-" + suffix, "Produto da loja", categoryId("Teste"), 8,
                 new BigDecimal("10.00"), "Fornecedor teste", 0),
             "admin@stockpass.com");
 
@@ -313,7 +317,7 @@ class StockPersistenceIntegrationTest {
 
     private com.stockpass.dto.StockDtos.ProductResponse testProduct(int quantity) {
         String suffix = UUID.randomUUID().toString();
-        return productService.create(new ProductRequest("RESERVE-" + suffix, "Produto reservado", "Teste",
+        return productService.create(new ProductRequest("RESERVE-" + suffix, "Produto reservado", categoryId("Teste"),
             quantity, new BigDecimal("10.00"), "Fornecedor teste", 0), "admin@stockpass.com");
     }
 
@@ -327,7 +331,7 @@ class StockPersistenceIntegrationTest {
         String suffix = UUID.randomUUID().toString();
         var client = authService.registerClient(new ClientRegisterRequest("Cliente com compra", "buyer-" + suffix + "@stockpass.test", "senha-cliente"));
         var emptyClient = authService.registerClient(new ClientRegisterRequest("Cliente sem compra", "empty-" + suffix + "@stockpass.test", "senha-cliente"));
-        var product = productService.create(new ProductRequest("ADMIN-" + suffix, "Produto comprado", "Teste", 5,
+        var product = productService.create(new ProductRequest("ADMIN-" + suffix, "Produto comprado", categoryId("Teste"), 5,
             new BigDecimal("10.00"), "Fornecedor teste", 0), "admin@stockpass.com");
         clientStoreService.purchase(new PurchaseRequest("PIX", java.util.List.of(new PurchaseLineRequest(product.id(), 2))), client.email());
         String staffToken = jwt.generate("admin@stockpass.com");
@@ -479,11 +483,11 @@ class StockPersistenceIntegrationTest {
         assertEquals(supplier.email(), updatedSupplier.email());
 
         var product = productService.create(
-            new ProductRequest("EDIT-" + suffix, "Produto editável", "Geral", 7,
+            new ProductRequest("EDIT-" + suffix, "Produto editável", categoryId("Geral"), 7,
                 new BigDecimal("20.00"), "Fornecedor antigo", 2),
             "admin@stockpass.com");
         var updatedProduct = productService.update(product.id(), new ProductUpdateRequest(
-            "SKU-EDIT-" + suffix, "Nome editado", "Categoria editada", new BigDecimal("25.50"),
+            "SKU-EDIT-" + suffix, "Nome editado", categoryId("Categoria editada"), new BigDecimal("25.50"),
             "Fornecedor novo", 4));
 
         assertEquals("SKU-EDIT-" + suffix, updatedProduct.sku());
@@ -491,5 +495,12 @@ class StockPersistenceIntegrationTest {
         assertEquals("Fornecedor novo", updatedProduct.supplier());
         assertEquals(4, updatedProduct.reorderPoint());
         assertEquals(7, products.findById(product.id()).orElseThrow().getQuantity());
+    }
+
+    private Long categoryId(String name) {
+        String normalized = name.toLowerCase(java.util.Locale.ROOT);
+        return categories.findByNormalizedName(normalized)
+            .map(com.stockpass.model.Category::getId)
+            .orElseGet(() -> categoryService.create(new CategoryRequest(name, null)).id());
     }
 }

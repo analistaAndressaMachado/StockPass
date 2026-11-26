@@ -55,7 +55,7 @@ public class ClientStoreService {
         LocalDateTime now = LocalDateTime.now();
         return products.findAllByOrderByNameAsc().stream()
             .map(product -> new StoreProductResponse(product.getId(), product.getSku(), product.getName(),
-                product.getCategory(), product.getPrice(), product.getQuantity() - Math.toIntExact(
+                product.getCategory().getName(), product.getPrice(), product.getQuantity() - Math.toIntExact(
                     reservations.sumActiveQuantity(product.getId(), now))))
             .filter(product -> product.availableQuantity() > 0)
             .toList();

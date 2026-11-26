@@ -5,6 +5,7 @@ export type AuthResponse={token:string;user:User};
 export type Produto = {
   id: number;
   sku: string;
+  categoryId: number;
   nome: string;
   categoria: string;
   quantidade: number;

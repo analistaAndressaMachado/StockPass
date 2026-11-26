@@ -12,6 +12,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'painel', label: 'Painel', roles: ROLES_INTERNOS },
   { key: 'graficos', label: 'Graficos de vendas', roles: ROLES_INTERNOS },
   { key: 'catalogo', label: 'Catálogo de Produtos', roles: ROLES_INTERNOS },
+  { key: 'categorias', label: 'Categorias', roles: ROLES_INTERNOS },
   { key: 'entrada', label: 'Entrada de Estoque', roles: ROLES_INTERNOS },
   { key: 'saida', label: 'Saída de Estoque', roles: ROLES_INTERNOS },
   { key: 'relatorios', label: 'Relatórios', roles: ROLES_INTERNOS },
@@ -29,7 +30,7 @@ type Props = {
 };
 
 const MODULE_BY_ITEM: Record<string, string> = {
-  painel: 'painel', catalogo: 'catalogo', entrada: 'entrada', saida: 'saida',
+  painel: 'painel', catalogo: 'catalogo', categorias: 'catalogo', entrada: 'entrada', saida: 'saida',
   relatorios: 'relatorios', graficos: 'relatorios', 'clientes-admin': 'clientes', fornecedores: 'fornecedores', usuarios: 'usuarios',
 };
 
