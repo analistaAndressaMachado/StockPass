@@ -45,6 +45,9 @@ public class Product {
     @Column(nullable = false)
     private int reorderPoint;
 
+    @Column(nullable = true)
+    private boolean active = true;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -64,5 +67,7 @@ public class Product {
     public void setSupplier(String supplier) { this.supplier = supplier; }
     public int getReorderPoint() { return reorderPoint; }
     public void setReorderPoint(int reorderPoint) { this.reorderPoint = reorderPoint; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

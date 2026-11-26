@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import { Select } from '../../components/Select/Select';
-import { atualizarProduto, criarProduto, listarProdutos, mensagemErro } from '../../services/stockApi';
+import { atualizarProduto, criarProduto, definirProdutoAtivo, listarProdutos, mensagemErro } from '../../services/stockApi';
 import { listarCategorias, type Categoria } from '../../services/categoriesApi';
 import type { Produto } from '../../types';
 import type { NovoProduto } from '../../services/stockApi';
@@ -60,6 +60,7 @@ export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalCl
   const modalCancelada = useRef(false);
   const [busca, setBusca] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
+  const [statusFiltro, setStatusFiltro] = useState('todos');
   const [campoOrdenacao, setCampoOrdenacao] = useState<CampoOrdenacao | null>(null);
   const [direcao, setDirecao] = useState<DirecaoOrdenacao>('desc');
   const [editandoSku, setEditandoSku] = useState<string | null>(null);
@@ -103,7 +104,8 @@ export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalCl
       p.sku.toLowerCase().includes(termo) ||
       p.categoria.toLowerCase().includes(termo);
     const bateCategoria = categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro;
-    return bateBusca && bateCategoria;
+    const bateStatus = statusFiltro === 'todos' || (statusFiltro === 'ativos' ? p.active : !p.active);
+    return bateBusca && bateCategoria && bateStatus;
   });
 
   // --- Ordenação por coluna ---
@@ -155,6 +157,17 @@ function setaDoCampo(campo: CampoOrdenacao) {
       setErro('');
       setEditandoSku(null);
       setRascunho(null);
+    } catch (error) {
+      setErro(mensagemErro(error));
+    }
+  }
+
+  async function alternarStatus(produto: Produto) {
+    if (produto.active && !window.confirm(`Desativar ${produto.nome} (${produto.sku})? O saldo e o histórico serão preservados. Produtos com reservas pendentes não podem ser desativados.`)) return;
+    try {
+      const atualizado = await definirProdutoAtivo(produto.id, !produto.active);
+      setProdutos((prev) => prev.map((item) => item.id === atualizado.id ? atualizado : item));
+      setErro('');
     } catch (error) {
       setErro(mensagemErro(error));
     }
@@ -265,6 +278,18 @@ function setaDoCampo(campo: CampoOrdenacao) {
               size="sm"
               options={categorias.map((cat) => ({ value: cat, label: cat }))}
             />
+            <Select
+              className="catalogo-select-categoria"
+              value={statusFiltro}
+              onChange={setStatusFiltro}
+              ariaLabel="Filtrar por status do produto"
+              size="sm"
+              options={[
+                { value: 'todos', label: 'Todos os status' },
+                { value: 'ativos', label: 'Ativos' },
+                { value: 'inativos', label: 'Inativos' },
+              ]}
+            />
             <button className="btn-secondary" onClick={() => exportarCsv(ordenados)} title="Exportar os produtos filtrados para CSV">Exportar CSV</button>
             <button className="btn-primary" onClick={novoProduto}>Novo produto</button>
           </div>
@@ -280,6 +305,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
                     <col className="col-fornecedor" />
                     <col className="col-reposicao" />
                     <col className="col-preco" />
+                    <col className="col-status" />
                     <col className="col-acoes" />
                   </colgroup>
                   <thead>
@@ -291,7 +317,8 @@ function setaDoCampo(campo: CampoOrdenacao) {
               <th>Fornecedor</th>
               <th>Ponto de reposição</th>
               <th onClick={() => alternarOrdenacao('preco')}>Preço {setaDoCampo('preco')}</th>
-              <th></th>
+              <th>Status</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -330,6 +357,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
                         <input className="edit-input edit-input-num" type="number" min={0} step="0.01" value={rascunho.preco}
                           onChange={(e) => setRascunho({ ...rascunho, preco: Number(e.target.value) })} />
                       </td>
+                      <td><span className={`produto-status ${rascunho.active ? 'is-active' : ''}`}>{rascunho.active ? 'Ativo' : 'Inativo'}</span></td>
                       <td className="acoes-col">
                         <button className="icon-btn icon-btn-ok" onClick={salvarEdicao} title="Salvar">✓</button>
                         <button className="icon-btn icon-btn-cancel" onClick={cancelarEdicao} title="Cancelar">✕</button>
@@ -344,7 +372,11 @@ function setaDoCampo(campo: CampoOrdenacao) {
                       <td>{produto.fornecedor}</td>
                       <td>{produto.pontoReposicao}</td>
                       <td>{formatarPreco(produto.preco)}</td>
+                      <td><span className={`produto-status ${produto.active ? 'is-active' : ''}`}>{produto.active ? 'Ativo' : 'Inativo'}</span></td>
                             <td className="acoes-col">
+                              <button className="btn-secondary produto-status-action" onClick={() => void alternarStatus(produto)} title={produto.active ? 'Desativar produto' : 'Reativar produto'}>
+                                {produto.active ? 'Desativar' : 'Reativar'}
+                              </button>
                                                                                                                       <button className="icon-btn" onClick={() => iniciarEdicao(produto)} title="Editar">
                                                                                                                         <svg viewBox="0 0 24 24">
                                                                                                                           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />

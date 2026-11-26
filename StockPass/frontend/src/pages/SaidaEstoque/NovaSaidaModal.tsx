@@ -26,7 +26,8 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
-  const produto = products.find((p) => p.id === Number(productId));
+  const produtoEncontrado = products.find((p) => p.id === Number(productId));
+  const produto = produtoEncontrado?.active ? produtoEncontrado : undefined;
   const quantidadeValida = Number.isInteger(Number(quantidade)) && Number(quantidade) > 0 &&
     Boolean(produto && Number(quantidade) <= produto.availableQuantity);
 
@@ -59,8 +60,8 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
             value={productId}
             onChange={setProductId}
             required
-            placeholder={products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}
-            options={products.map((p) => ({
+            placeholder={products.some((p) => p.active) ? 'Selecione um produto' : 'Nenhum produto ativo disponível'}
+            options={products.filter((p) => p.active).map((p) => ({
               value: String(p.id),
               label: `${p.nome} (${p.sku})${p.availableQuantity === 0 ? ' (sem saldo disponível)' : ''}`,
               disabled: p.availableQuantity === 0,

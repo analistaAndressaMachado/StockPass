@@ -54,6 +54,7 @@ public class ClientStoreService {
     public List<StoreProductResponse> products() {
         LocalDateTime now = LocalDateTime.now();
         return products.findAllByOrderByNameAsc().stream()
+            .filter(Product::isActive)
             .map(product -> new StoreProductResponse(product.getId(), product.getSku(), product.getName(),
                 product.getCategory().getName(), product.getPrice(), product.getQuantity() - Math.toIntExact(
                     reservations.sumActiveQuantity(product.getId(), now))))
@@ -116,6 +117,9 @@ public class ClientStoreService {
         for (PurchaseLineRequest item : orderedItems) {
             Product product = products.findByIdForUpdate(item.productId())
                 .orElseThrow(() -> new IllegalArgumentException("Um produto do carrinho não está disponível."));
+            if (!product.isActive()) {
+                throw new IllegalArgumentException("O produto " + product.getName() + " está inativo e não pode ser vendido.");
+            }
             int available = product.getQuantity() - Math.toIntExact(
                 reservations.sumActiveQuantity(product.getId(), now));
             if (item.quantity() > available) {

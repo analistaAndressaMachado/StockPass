@@ -32,8 +32,12 @@ public class StockReplenishmentService {
 
     @Transactional
     public ReplenishmentResponse schedule(ReplenishmentRequest request, String email) {
+        if (products.acquireWriteLock(request.productId()) == 0) {
+            throw new IllegalArgumentException("Produto não encontrado.");
+        }
         Product product = products.findByIdForUpdate(request.productId())
             .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado."));
+        if (!product.isActive()) throw new IllegalArgumentException("Não é possível agendar reposição para um produto inativo.");
         StockReplenishment replenishment = new StockReplenishment();
         replenishment.setProduct(product);
         replenishment.setQuantity(request.quantity());

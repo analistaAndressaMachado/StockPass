@@ -95,6 +95,7 @@ public final class StockDtos {
         BigDecimal price,
         String supplier,
         int reorderPoint,
+        boolean active,
         int physicalQuantity,
         int reservedQuantity,
         int availableQuantity

@@ -26,7 +26,8 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
-  const produto = products.find((p) => p.id === Number(productId));
+  const produtoSelecionado = products.find((p) => p.id === Number(productId));
+  const produto = produtoSelecionado?.active ? produtoSelecionado : undefined;
 
   return (
     <Modal title="Nova Entrada de Estoque" onClose={onClose}>
@@ -55,14 +56,19 @@ export function NovaEntradaModal({ products, reposicao = null, onClose, onSave }
             onChange={setProductId}
             required
             disabled={Boolean(reposicaoInicial)}
-            placeholder={products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}
-            options={products.map((p) => ({ value: String(p.id), label: `${p.nome} (${p.sku})` }))}
+            placeholder={products.some((p) => p.active) ? 'Selecione um produto' : 'Nenhum produto ativo disponível'}
+            options={products.filter((p) => p.active).map((p) => ({ value: String(p.id), label: `${p.nome} (${p.sku})` }))}
           />
         </label>
 
         {reposicaoInicial && produto && (
           <p className="muted-sm">
             Reposição sugerida para atingir o ponto de reposição de {produto.pontoReposicao} unidades.
+          </p>
+        )}
+        {reposicaoInicial && produtoSelecionado && !produtoSelecionado.active && (
+          <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>
+            Este produto está inativo. Reative-o antes de registrar a entrada desta reposição.
           </p>
         )}
 

@@ -14,6 +14,7 @@ type ProductDto = {
   price: number;
   supplier: string;
   reorderPoint: number;
+  active: boolean;
   physicalQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;
@@ -61,7 +62,7 @@ type ReplenishmentDto = {
   registeredBy: string;
 };
 
-export type NovoProduto = Omit<Produto, 'id' | 'quantidade' | 'physicalQuantity' | 'reservedQuantity' | 'availableQuantity'> & {
+export type NovoProduto = Omit<Produto, 'id' | 'quantidade' | 'physicalQuantity' | 'reservedQuantity' | 'availableQuantity' | 'active'> & {
   quantidadeInicial: number;
 };
 
@@ -90,6 +91,7 @@ function produtoFromDto(item: ProductDto): Produto {
     preco: item.price,
     fornecedor: item.supplier,
     pontoReposicao: item.reorderPoint,
+    active: item.active,
     physicalQuantity: item.physicalQuantity,
     reservedQuantity: item.reservedQuantity,
     availableQuantity: item.availableQuantity,
@@ -118,6 +120,11 @@ export async function atualizarProduto(produto: Produto) {
     supplier: produto.fornecedor,
     reorderPoint: produto.pontoReposicao,
   });
+  return produtoFromDto(data);
+}
+
+export async function definirProdutoAtivo(id: number, active: boolean) {
+  const { data } = await api.put<ProductDto>(`/products/${id}/status`, { active });
   return produtoFromDto(data);
 }
 

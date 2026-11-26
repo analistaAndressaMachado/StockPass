@@ -12,6 +12,7 @@ export type Produto = {
   preco: number;
   fornecedor: string;
   pontoReposicao: number;
+  active: boolean;
   physicalQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;

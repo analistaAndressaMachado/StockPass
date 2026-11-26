@@ -125,6 +125,16 @@ public class SupplierOfferService {
         User buyer = users.findByEmailIgnoreCase(buyerEmail)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
         Product product = offer.getInventoryProduct();
+        if (product != null) {
+            if (products.acquireWriteLock(product.getId()) == 0) {
+                throw new IllegalArgumentException("O produto vinculado a esta oferta não foi encontrado.");
+            }
+            product = products.findByIdForUpdate(product.getId())
+                .orElseThrow(() -> new IllegalArgumentException("O produto vinculado a esta oferta não foi encontrado."));
+        }
+        if (product != null && !product.isActive()) {
+            throw new IllegalArgumentException("O produto vinculado a esta oferta está inativo.");
+        }
         if (product == null) {
             product = new Product();
             product.setSku(inventorySku(offer));

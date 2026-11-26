@@ -88,6 +88,22 @@ public class ProductService {
         return response(saved, reserved(saved, LocalDateTime.now()));
     }
 
+    @Transactional
+    public ProductResponse setActive(Long id, boolean active) {
+        if (products.acquireWriteLock(id) == 0) {
+            throw new IllegalArgumentException("Produto não encontrado.");
+        }
+        Product product = products.findByIdForUpdate(id)
+            .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado."));
+        if (!active && reserved(product, LocalDateTime.now()) > 0) {
+            throw new IllegalArgumentException(
+                "Não é possível desativar este produto enquanto houver reservas pendentes. Cancele ou aguarde a expiração das reservas.");
+        }
+        product.setActive(active);
+        Product saved = products.save(product);
+        return response(saved, reserved(saved, LocalDateTime.now()));
+    }
+
     private int reserved(Product product, LocalDateTime now) {
         return Math.toIntExact(reservations.sumActiveQuantity(product.getId(), now));
     }
@@ -95,7 +111,7 @@ public class ProductService {
     private static ProductResponse response(Product product, int reserved) {
         return new ProductResponse(product.getId(), product.getSku(), product.getName(),
             product.getCategory().getId(), product.getCategory().getName(), product.getQuantity(), product.getPrice(),
-            product.getSupplier(), product.getReorderPoint(), product.getQuantity(), reserved,
+            product.getSupplier(), product.getReorderPoint(), product.isActive(), product.getQuantity(), reserved,
             product.getQuantity() - reserved);
     }
 }

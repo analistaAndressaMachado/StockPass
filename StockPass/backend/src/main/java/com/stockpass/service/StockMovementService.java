@@ -50,7 +50,7 @@ public class StockMovementService {
 
     @Transactional
     public MovementResponse entry(EntryRequest request, String email) {
-        Product product = lockedProduct(request.productId());
+        Product product = activeProduct(request.productId());
         product.setQuantity(product.getQuantity() + request.quantity());
         products.save(product);
 
@@ -89,7 +89,7 @@ public class StockMovementService {
     @Transactional
     public MovementResponse exit(ExitRequest request, String email) {
         validateReason(request.reason());
-        Product product = lockedProduct(request.productId());
+        Product product = activeProduct(request.productId());
         LocalDateTime now = LocalDateTime.now();
         expireForProduct(product.getId(), now);
         if (request.quantity() > available(product, now)) {
@@ -111,7 +111,7 @@ public class StockMovementService {
     @Transactional
     public StockReservationResponse reserveExit(ExitRequest request, String email) {
         validateReason(request.reason());
-        Product product = lockedProduct(request.productId());
+        Product product = activeProduct(request.productId());
         LocalDateTime now = LocalDateTime.now();
         expireForProduct(product.getId(), now);
         if (request.quantity() > available(product, now)) {
@@ -138,6 +138,9 @@ public class StockMovementService {
         StockReservation initial = reservations.findById(reservationId)
             .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
         Product product = lockedProduct(initial.getProduct().getId());
+        if (!product.isActive()) {
+            throw new IllegalArgumentException("Não é possível confirmar a reserva: o produto está inativo.");
+        }
         StockReservation reservation = reservations.findByIdForUpdate(reservationId)
             .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
         LocalDateTime now = LocalDateTime.now();
@@ -249,6 +252,12 @@ public class StockMovementService {
         }
         return products.findByIdForUpdate(id)
             .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado."));
+    }
+
+    private Product activeProduct(Long id) {
+        Product product = lockedProduct(id);
+        if (!product.isActive()) throw new IllegalArgumentException("Este produto está inativo e não aceita novas movimentações.");
+        return product;
     }
 
     private String userName(String email) {
