@@ -24,7 +24,7 @@ function formatarPreco(valor: number) {
 }
 
 function exportarCsv(produtos: Produto[]) {
-  const escapar = (valor: string | number) => `"${String(valor).replaceAll('"', '""')}"`;
+  const escapar = (valor: string | number) => `"${String(valor).replace(/"/g, '""')}"`;
   const linhas = [
     ['Código', 'Produto', 'Categoria', 'Quantidade', 'Fornecedor', 'Ponto de reposição', 'Preço unitário'],
     ...produtos.map((produto) => [produto.sku, produto.nome, produto.categoria, produto.quantidade,
