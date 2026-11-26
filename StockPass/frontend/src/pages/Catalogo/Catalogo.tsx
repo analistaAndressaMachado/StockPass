@@ -23,6 +23,22 @@ function formatarPreco(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function exportarCsv(produtos: Produto[]) {
+  const escapar = (valor: string | number) => `"${String(valor).replaceAll('"', '""')}"`;
+  const linhas = [
+    ['Código', 'Produto', 'Categoria', 'Quantidade', 'Fornecedor', 'Ponto de reposição', 'Preço unitário'],
+    ...produtos.map((produto) => [produto.sku, produto.nome, produto.categoria, produto.quantidade,
+      produto.fornecedor, produto.pontoReposicao, produto.preco]),
+  ];
+  const csv = '\uFEFF' + linhas.map((linha) => linha.map(escapar).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `stockpass-estoque-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 type Props = {
   openNovoProduto?: boolean;
   modalOnly?: boolean;
@@ -227,7 +243,9 @@ function setaDoCampo(campo: CampoOrdenacao) {
             <input
               className="catalogo-busca"
               type="text"
-              placeholder="Buscar por nome, código ou categoria"
+              placeholder="Buscar por nome, código de barras ou categoria"
+              aria-label="Buscar por nome, SKU ou código de barras"
+              inputMode="search"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
@@ -239,6 +257,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
               size="sm"
               options={categorias.map((cat) => ({ value: cat, label: cat }))}
             />
+            <button className="btn-secondary" onClick={() => exportarCsv(ordenados)} title="Exportar os produtos filtrados para CSV">Exportar CSV</button>
             <button className="btn-primary" onClick={novoProduto}>Novo produto</button>
           </div>
         </div>
