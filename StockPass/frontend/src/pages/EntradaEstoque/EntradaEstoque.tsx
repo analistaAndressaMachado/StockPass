@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import './EntradaEstoque.css';
 import { Select } from '../../components/Select/Select';
-import { HistoryPagination, type PageSize } from '../../components/Pagination/HistoryPagination';
-import { paginateItems } from '../../components/Pagination/paginateItems';
 import type { Produto } from '../../types';
 import { ehHoje, formatarDataHora, formatarHora, nomeDoDia } from './entradasMock';
 import type { Entrada } from './entradasMock';
@@ -36,8 +34,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
   const [erro, setErro] = useState('');
   const [periodo, setPeriodo] = useState<Periodo>('todos');
   const [busca, setBusca] = useState('');
-  const [pagina, setPagina] = useState(1);
-  const [pageSize, setPageSize] = useState<PageSize>('10');
   const [showNova, setShowNova] = useState(openNovaEntrada || Boolean(reposicao));
   const modalCancelada = useRef(false);
   const [linhaDestaqueId, setLinhaDestaqueId] = useState<number | null>(null);
@@ -67,12 +63,7 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
         [e.produto, e.sku, e.fornecedor, e.registradoPor].some((campo) => campo.toLowerCase().includes(termo))),
   );
 
-  const paginacao = paginateItems(filtradas, pagina, Number(pageSize));
-  const { items: visiveis, currentPage: paginaAtual, totalPages: totalPaginas } = paginacao;
-
-  useEffect(() => {
-    if (pagina !== paginaAtual) setPagina(paginaAtual);
-  }, [pagina, paginaAtual]);
+  const visiveis = filtradas;
 
   // Números dos cards do topo
   const entradasHoje = entradas.filter((e) => ehHoje(e.dataHora)).length;
@@ -84,7 +75,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
     try {
       const nova = await registrarEntradaApi(dados.productId, dados.quantidade, dados.notaFiscal, dados.replenishmentId);
       setEntradas((prev) => [nova, ...prev]);
-      setPagina(1);
       setProdutos((prev) => prev.map((produto) => produto.id === dados.productId
         ? { ...produto, quantidade: produto.quantidade + dados.quantidade }
         : produto));
@@ -169,7 +159,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
               value={busca}
               onChange={(e) => {
                 setBusca(e.target.value);
-                setPagina(1);
               }}
             />
             <Select<Periodo>
@@ -177,7 +166,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
               value={periodo}
               onChange={(value) => {
                 setPeriodo(value);
-                setPagina(1);
               }}
               ariaLabel="Filtrar entradas por período"
               size="sm"
@@ -224,16 +212,6 @@ export function EntradaEstoque({ openNovaEntrada = false, reposicao = null, moda
             </table>
           )}
         </div>
-        <HistoryPagination
-          totalItems={filtradas.length}
-          currentPage={paginaAtual}
-          pageSize={pageSize}
-          onPageChange={setPagina}
-          onPageSizeChange={(value) => {
-            setPageSize(value);
-            setPagina(1);
-          }}
-        />
 
       </section>
 

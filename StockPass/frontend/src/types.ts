@@ -5,14 +5,12 @@ export type AuthResponse={token:string;user:User};
 export type Produto = {
   id: number;
   sku: string;
-  categoryId: number;
   nome: string;
   categoria: string;
   quantidade: number;
   preco: number;
   fornecedor: string;
   pontoReposicao: number;
-  active: boolean;
   physicalQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;

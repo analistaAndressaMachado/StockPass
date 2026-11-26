@@ -50,7 +50,7 @@ public class StockMovementService {
 
     @Transactional
     public MovementResponse entry(EntryRequest request, String email) {
-        Product product = activeProduct(request.productId());
+        Product product = lockedProduct(request.productId());
         product.setQuantity(product.getQuantity() + request.quantity());
         products.save(product);
 
@@ -89,7 +89,7 @@ public class StockMovementService {
     @Transactional
     public MovementResponse exit(ExitRequest request, String email) {
         validateReason(request.reason());
-        Product product = activeProduct(request.productId());
+        Product product = lockedProduct(request.productId());
         LocalDateTime now = LocalDateTime.now();
         expireForProduct(product.getId(), now);
         if (request.quantity() > available(product, now)) {
@@ -111,7 +111,7 @@ public class StockMovementService {
     @Transactional
     public StockReservationResponse reserveExit(ExitRequest request, String email) {
         validateReason(request.reason());
-        Product product = activeProduct(request.productId());
+        Product product = lockedProduct(request.productId());
         LocalDateTime now = LocalDateTime.now();
         expireForProduct(product.getId(), now);
         if (request.quantity() > available(product, now)) {
@@ -132,15 +132,9 @@ public class StockMovementService {
 
     @Transactional
     public MovementResponse confirmReservation(Long reservationId) {
-        if (reservations.acquireWriteLock(reservationId) == 0) {
-            throw new IllegalArgumentException("Reserva não encontrada.");
-        }
         StockReservation initial = reservations.findById(reservationId)
             .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
         Product product = lockedProduct(initial.getProduct().getId());
-        if (!product.isActive()) {
-            throw new IllegalArgumentException("Não é possível confirmar a reserva: o produto está inativo.");
-        }
         StockReservation reservation = reservations.findByIdForUpdate(reservationId)
             .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
         LocalDateTime now = LocalDateTime.now();
@@ -149,9 +143,6 @@ public class StockMovementService {
         if (!reservation.getStatus().equals(StockReservation.ACTIVE)) {
             throw new IllegalArgumentException(reservation.getStatus().equals(StockReservation.EXPIRED)
                 ? "Esta reserva já expirou." : "Esta reserva já foi encerrada.");
-        }
-        if (available(product, now) < 0) {
-            throw new IllegalArgumentException("As reservas excedem o estoque disponível. Atualize o estoque antes de confirmar.");
         }
 
         product.setQuantity(product.getQuantity() - reservation.getQuantity());
@@ -171,9 +162,6 @@ public class StockMovementService {
 
     @Transactional
     public StockReservationResponse cancelReservation(Long reservationId) {
-        if (reservations.acquireWriteLock(reservationId) == 0) {
-            throw new IllegalArgumentException("Reserva não encontrada.");
-        }
         StockReservation initial = reservations.findById(reservationId)
             .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
         Product product = lockedProduct(initial.getProduct().getId());
@@ -247,17 +235,9 @@ public class StockMovementService {
     }
 
     private Product lockedProduct(Long id) {
-        if (products.acquireWriteLock(id) == 0) {
-            throw new IllegalArgumentException("Produto não encontrado.");
-        }
+        products.acquireWriteLock(id);
         return products.findByIdForUpdate(id)
             .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado."));
-    }
-
-    private Product activeProduct(Long id) {
-        Product product = lockedProduct(id);
-        if (!product.isActive()) throw new IllegalArgumentException("Este produto está inativo e não aceita novas movimentações.");
-        return product;
     }
 
     private String userName(String email) {

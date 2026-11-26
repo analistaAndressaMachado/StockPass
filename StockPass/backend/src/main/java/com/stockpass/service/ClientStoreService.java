@@ -15,11 +15,9 @@ import com.stockpass.model.User;
 import com.stockpass.repository.ClientPurchaseItemRepository;
 import com.stockpass.repository.ClientPurchaseRepository;
 import com.stockpass.repository.ProductRepository;
-import com.stockpass.repository.StockReservationRepository;
 import com.stockpass.repository.StockMovementRepository;
 import com.stockpass.repository.UserRepository;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,17 +31,14 @@ public class ClientStoreService {
     private static final String DEMO_PAYMENT_STATUS = "SIMULATED_PAID";
 
     private final ProductRepository products;
-    private final StockReservationRepository reservations;
     private final ClientPurchaseRepository purchases;
     private final ClientPurchaseItemRepository purchaseItems;
     private final StockMovementRepository movements;
     private final UserRepository users;
 
-    public ClientStoreService(ProductRepository products, StockReservationRepository reservations,
-            ClientPurchaseRepository purchases,
+    public ClientStoreService(ProductRepository products, ClientPurchaseRepository purchases,
             ClientPurchaseItemRepository purchaseItems, StockMovementRepository movements, UserRepository users) {
         this.products = products;
-        this.reservations = reservations;
         this.purchases = purchases;
         this.purchaseItems = purchaseItems;
         this.movements = movements;
@@ -52,13 +47,10 @@ public class ClientStoreService {
 
     @Transactional(readOnly = true)
     public List<StoreProductResponse> products() {
-        LocalDateTime now = LocalDateTime.now();
         return products.findAllByOrderByNameAsc().stream()
-            .filter(Product::isActive)
+            .filter(product -> product.getQuantity() > 0)
             .map(product -> new StoreProductResponse(product.getId(), product.getSku(), product.getName(),
-                product.getCategory().getName(), product.getPrice(), product.getQuantity() - Math.toIntExact(
-                    reservations.sumActiveQuantity(product.getId(), now))))
-            .filter(product -> product.availableQuantity() > 0)
+                product.getCategory(), product.getPrice(), product.getQuantity()))
             .toList();
     }
 
@@ -88,6 +80,7 @@ public class ClientStoreService {
 
     @Transactional
     public PurchaseResponse purchase(PurchaseRequest request, String email) {
+        User client = requireClient(email);
         String paymentMethod = request.paymentMethod().trim().toUpperCase();
         if (!PAYMENT_METHODS.contains(paymentMethod)) {
             throw new IllegalArgumentException("Selecione uma forma de pagamento demonstrativa válida.");
@@ -102,27 +95,12 @@ public class ClientStoreService {
 
         List<PurchaseLineRequest> orderedItems = request.items().stream()
             .sorted((first, second) -> first.productId().compareTo(second.productId())).toList();
-
-        // Acquire SQLite's write lock before reading inventory, in stable ID order.
-        for (PurchaseLineRequest item : orderedItems) {
-            if (products.acquireWriteLock(item.productId()) == 0) {
-                throw new IllegalArgumentException("Produto do carrinho indisponível.");
-            }
-        }
-
-        User client = requireClient(email);
         java.util.Map<Long, Product> lockedProducts = new java.util.LinkedHashMap<>();
         BigDecimal total = BigDecimal.ZERO;
-        LocalDateTime now = LocalDateTime.now();
         for (PurchaseLineRequest item : orderedItems) {
             Product product = products.findByIdForUpdate(item.productId())
                 .orElseThrow(() -> new IllegalArgumentException("Um produto do carrinho não está disponível."));
-            if (!product.isActive()) {
-                throw new IllegalArgumentException("O produto " + product.getName() + " está inativo e não pode ser vendido.");
-            }
-            int available = product.getQuantity() - Math.toIntExact(
-                reservations.sumActiveQuantity(product.getId(), now));
-            if (item.quantity() > available) {
+            if (item.quantity() > product.getQuantity()) {
                 throw new IllegalArgumentException("Estoque insuficiente para " + product.getName() + ".");
             }
             lockedProducts.put(product.getId(), product);

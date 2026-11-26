@@ -4,17 +4,12 @@ import com.stockpass.model.SupplierOffer;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 
 public interface SupplierOfferRepository extends JpaRepository<SupplierOffer, Long> {
-    @Modifying(flushAutomatically = true)
-    @Query(value = "update supplier_offers set available_quantity = available_quantity where id = :id", nativeQuery = true)
-    int acquireWriteLock(@Param("id") Long id);
-
     List<SupplierOffer> findAllBySupplierIdOrderByCreatedAtDesc(Long supplierId);
     List<SupplierOffer> findAllByActiveTrueAndAvailableQuantityGreaterThanOrderByNameAsc(int quantity);
     Optional<SupplierOffer> findByIdAndSupplierId(Long id, Long supplierId);

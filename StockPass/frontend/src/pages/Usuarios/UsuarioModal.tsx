@@ -83,14 +83,13 @@ export function UsuarioModal({ usuario, emailsExistentes, onClose, onSave }: Pro
         {secaoConteudo === 'dados' ? <>
         <label>
           Nome
-          <input type="text" maxLength={120} value={nome} onChange={(e) => { setNome(e.target.value); setErro(''); }} placeholder="Ex: Maria Silva" required />
+          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Maria Silva" required />
         </label>
 
         <label>
           E-mail
           <input
             type="email"
-            maxLength={254}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -119,9 +118,8 @@ export function UsuarioModal({ usuario, emailsExistentes, onClose, onSave }: Pro
             Senha provisória
             <input
               type="password"
-              maxLength={72}
               value={senha}
-              onChange={(e) => { setSenha(e.target.value); setErro(''); }}
+              onChange={(e) => setSenha(e.target.value)}
               placeholder="Mínimo de 6 caracteres"
               minLength={6}
               required

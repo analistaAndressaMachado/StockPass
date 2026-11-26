@@ -46,19 +46,6 @@ export function SupplierRecordsSection({ canManage }: Props) {
     }
   }
 
-  async function atualizarLista() {
-    setLoading(true);
-    setError('');
-    try {
-      await recarregarFornecedores(openSupplierId ?? undefined);
-      await recarregarIndicadoresVencimento();
-    } catch (loadError: unknown) {
-      setError(mensagemErro(loadError));
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
     let active = true;
     listarFornecedoresCadastrados()
@@ -114,9 +101,6 @@ export function SupplierRecordsSection({ canManage }: Props) {
           </div>
           <div className="fornecedores-management-actions">
             <span className="fornecedores-contagem">{suppliers.length} cadastrados</span>
-            <button className="btn-secondary" type="button" disabled={loading} onClick={() => void atualizarLista()}>
-              {loading ? 'Atualizando...' : 'Atualizar lista'}
-            </button>
             {canManage && <button className="btn-primary" type="button" disabled={loading}
               onClick={() => setModalSupplier('new')}>
               Novo fornecedor

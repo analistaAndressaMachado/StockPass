@@ -26,8 +26,7 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
-  const produtoEncontrado = products.find((p) => p.id === Number(productId));
-  const produto = produtoEncontrado?.active ? produtoEncontrado : undefined;
+  const produto = products.find((p) => p.id === Number(productId));
   const quantidadeValida = Number.isInteger(Number(quantidade)) && Number(quantidade) > 0 &&
     Boolean(produto && Number(quantidade) <= produto.availableQuantity);
 
@@ -60,8 +59,8 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
             value={productId}
             onChange={setProductId}
             required
-            placeholder={products.some((p) => p.active) ? 'Selecione um produto' : 'Nenhum produto ativo disponível'}
-            options={products.filter((p) => p.active).map((p) => ({
+            placeholder={products.length ? 'Selecione um produto' : 'Cadastre um produto primeiro'}
+            options={products.map((p) => ({
               value: String(p.id),
               label: `${p.nome} (${p.sku})${p.availableQuantity === 0 ? ' (sem saldo disponível)' : ''}`,
               disabled: p.availableQuantity === 0,
@@ -74,8 +73,7 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
           <input
             type="number"
             min={1}
-            max={produto ? Math.min(produto.availableQuantity, 2147483647) : undefined}
-            step={1}
+            max={produto ? produto.availableQuantity : undefined}
             placeholder="Ex: 5"
             value={quantidade}
             onChange={(e) => setQuantidade(e.target.value)}
@@ -103,7 +101,6 @@ export function NovaSaidaModal({ products, onClose, onSave }: Props) {
           Observação (opcional)
           <input
             type="text"
-            maxLength={500}
             placeholder="Ex: Item danificado no transporte"
             value={observacao}
             onChange={(e) => setObservacao(e.target.value)}

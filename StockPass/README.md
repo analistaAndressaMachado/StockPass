@@ -37,7 +37,7 @@ A aplicação é organizada em duas partes:
 - **Backend:** API REST responsável pelas regras de negócio, autenticação, controle de usuários e persistência dos dados.
 - **Frontend:** aplicação web responsável pela interação do usuário com o sistema.
 
-O sistema oferece controle de acesso, gestão do estoque e um portal para fornecedores publicarem ofertas que a equipe pode adquirir para abastecer o inventário.
+O sistema oferece controle de acesso, gestão do estoque, um portal para fornecedores gerenciarem suas ofertas e uma área interna para cadastro de fornecedores e contratos.
 
 ---
 
@@ -72,9 +72,8 @@ O sistema oferece controle de acesso, gestão do estoque e um portal para fornec
 
 - Cadastro e login com papel `FORNECEDOR`, separado das contas internas
 - Cadastro, edição e retirada das próprias ofertas disponíveis
-- Consulta das ofertas pelo catálogo interno de fornecedores
-- Aquisição por usuários internos, com baixa da disponibilidade do fornecedor
-- Entrada automática no estoque, histórico de movimentação e registro da compra
+- Consulta das próprias ofertas e das saídas registradas
+- Cadastro e gestão interna de fornecedores e contratos
 - APIs protegidas para que fornecedores não consultem nem alterem o estoque interno
 
 ### Clientes
@@ -418,7 +417,7 @@ GET    /api/suppliers/offers
 POST   /api/suppliers/offers/{id}/acquire
 ```
 
-As rotas `offers/mine` e `suppliers/me` são exclusivas de fornecedores. O marketplace e a aquisição são exclusivos de usuários internos. A aquisição registra imediatamente uma entrada de estoque e salva o preço, fornecedor, comprador e quantidade.
+As rotas `offers/mine`, `purchases/mine` e `suppliers/me` são exclusivas de fornecedores. As rotas de marketplace e aquisição permanecem disponíveis na API do backend, mas não são expostas pela interface atual.
 
 Na aba Relatórios, entradas, saídas, estoque e reposições são agregados por dia no período selecionado. Os dados são atualizados automaticamente a cada 15 segundos enquanto a aba está aberta.
 

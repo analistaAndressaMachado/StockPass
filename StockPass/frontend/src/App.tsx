@@ -4,9 +4,7 @@ import { Login } from './pages/Login/Login';
 import { Painel } from './pages/Painel/Painel';
 import { Perfil } from './pages/Perfil/Perfil';
 import { Relatorios } from './pages/Relatorios/Relatorios';
-import { GraficosVendas } from './pages/Graficos/GraficosVendas';
 import { Catalogo } from './pages/Catalogo/Catalogo';
-import { Categorias } from './pages/Categorias/Categorias';
 import { EntradaEstoque } from './pages/EntradaEstoque/EntradaEstoque';
 import { SaidaEstoque } from './pages/SaidaEstoque/SaidaEstoque';
 import { Usuarios } from './pages/Usuarios/Usuarios';
@@ -20,9 +18,7 @@ import type { Produto, User } from './types';
 
 const PAGE_TITLES: Record<string, string> = {
   painel: 'Painel',
-  graficos: 'Graficos de vendas',
   catalogo: 'Catálogo de Produtos',
-  categorias: 'Categorias',
   entrada: 'Entrada de Estoque',
   saida: 'Saída de Estoque',
   relatorios: 'Relatórios',
@@ -138,7 +134,7 @@ export function App() {
          {page === 'saida' && avisoSaidaConfirmada && <p className="muted-sm" role="status">{avisoSaidaConfirmada}</p>}
          {page === 'painel' ? (
            <>
-             <Painel onRestock={iniciarReposicao} onNovaEntrada={abrirEntradaRapida} onNovaSaida={abrirSaidaRapida} onNovoProduto={abrirProdutoRapido} onNavigate={navegarPelaSidebar} />
+             <Painel onRestock={iniciarReposicao} onNovaEntrada={abrirEntradaRapida} onNovaSaida={abrirSaidaRapida} onNovoProduto={abrirProdutoRapido} />
              {quickEntryOpen && (
                <EntradaEstoque
                  openNovaEntrada
@@ -179,8 +175,6 @@ export function App() {
            <Perfil user={user} onUserUpdated={setUser} onLogout={() => { localStorage.removeItem('stockpass_token'); setUser(null); }} />
          ) : page === 'catalogo' ? (
             <Catalogo highlightProdutoId={produtoParaDestacar} />
-         ) : page === 'categorias' ? (
-            <Categorias />
              ) : page === 'entrada' ? (
                        <EntradaEstoque
                          reposicao={pendingRestock}
@@ -198,8 +192,6 @@ export function App() {
                        <ClientesAdmin />
          ) : page === 'relatorios' ? (
            <Relatorios onReceiveReplenishment={receberReposicao} />
-         ) : page === 'graficos' ? (
-           <GraficosVendas />
          ) : (
            <p className="muted">Essa área ainda está em construção 🚧</p>
          )}

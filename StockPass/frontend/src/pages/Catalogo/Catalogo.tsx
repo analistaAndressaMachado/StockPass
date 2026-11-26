@@ -1,44 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from '../../components/Modal/Modal';
 import { Select } from '../../components/Select/Select';
-import { atualizarProduto, criarProduto, definirProdutoAtivo, listarProdutos, mensagemErro } from '../../services/stockApi';
-import { listarCategorias, type Categoria } from '../../services/categoriesApi';
+import { atualizarProduto, criarProduto, listarProdutos, mensagemErro } from '../../services/stockApi';
 import type { Produto } from '../../types';
 import type { NovoProduto } from '../../services/stockApi';
 import './Catalogo.css';
 
 type CampoOrdenacao = 'nome' | 'sku' | 'categoria' | 'quantidade' | 'preco';
 type DirecaoOrdenacao = 'asc' | 'desc';
-type FormNovoProduto = Omit<NovoProduto, 'quantidadeInicial' | 'preco' | 'pontoReposicao' | 'categoryId'> & {
-  categoryId: string;
+type FormNovoProduto = Omit<NovoProduto, 'quantidadeInicial' | 'preco' | 'pontoReposicao'> & {
   quantidadeInicial: string;
   preco: string;
   pontoReposicao: string;
 };
 
 const NOVO_PRODUTO_VAZIO: FormNovoProduto = {
-  sku: '', nome: '', categoria: '', categoryId: '', quantidadeInicial: '',
+  sku: '', nome: '', categoria: '', quantidadeInicial: '',
   preco: '', fornecedor: '', pontoReposicao: '',
 };
 
 function formatarPreco(valor: number) {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function exportarCsv(produtos: Produto[]) {
-  const escapar = (valor: string | number) => `"${String(valor).replace(/"/g, '""')}"`;
-  const linhas = [
-    ['Código', 'Produto', 'Categoria', 'Quantidade', 'Fornecedor', 'Ponto de reposição', 'Preço unitário'],
-    ...produtos.map((produto) => [produto.sku, produto.nome, produto.categoria, produto.quantidade,
-      produto.fornecedor, produto.pontoReposicao, produto.preco]),
-  ];
-  const csv = '\uFEFF' + linhas.map((linha) => linha.map(escapar).join(';')).join('\r\n');
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `stockpass-estoque-${new Date().toISOString().slice(0, 10)}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 type Props = {
@@ -51,7 +33,6 @@ type Props = {
 
 export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalClose, onModalSuccess, highlightProdutoId = null }: Props) {
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [categoriasDisponiveis, setCategoriasDisponiveis] = useState<Categoria[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [showNovoProduto, setShowNovoProduto] = useState(openNovoProduto);
@@ -60,7 +41,6 @@ export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalCl
   const modalCancelada = useRef(false);
   const [busca, setBusca] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
-  const [statusFiltro, setStatusFiltro] = useState('todos');
   const [campoOrdenacao, setCampoOrdenacao] = useState<CampoOrdenacao | null>(null);
   const [direcao, setDirecao] = useState<DirecaoOrdenacao>('desc');
   const [editandoSku, setEditandoSku] = useState<string | null>(null);
@@ -73,10 +53,6 @@ export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalCl
       .then(setProdutos)
       .catch((error: unknown) => setErro(mensagemErro(error)))
       .finally(() => setCarregando(false));
-  }, []);
-
-  useEffect(() => {
-    listarCategorias().then(setCategoriasDisponiveis).catch((error: unknown) => setErro(mensagemErro(error)));
   }, []);
 
   useEffect(() => {
@@ -104,8 +80,7 @@ export function Catalogo({ openNovoProduto = false, modalOnly = false, onModalCl
       p.sku.toLowerCase().includes(termo) ||
       p.categoria.toLowerCase().includes(termo);
     const bateCategoria = categoriaFiltro === 'Todas' || p.categoria === categoriaFiltro;
-    const bateStatus = statusFiltro === 'todos' || (statusFiltro === 'ativos' ? p.active : !p.active);
-    return bateBusca && bateCategoria && bateStatus;
+    return bateBusca && bateCategoria;
   });
 
   // --- Ordenação por coluna ---
@@ -162,17 +137,6 @@ function setaDoCampo(campo: CampoOrdenacao) {
     }
   }
 
-  async function alternarStatus(produto: Produto) {
-    if (produto.active && !window.confirm(`Desativar ${produto.nome} (${produto.sku})? O saldo e o histórico serão preservados. Produtos com reservas pendentes não podem ser desativados.`)) return;
-    try {
-      const atualizado = await definirProdutoAtivo(produto.id, !produto.active);
-      setProdutos((prev) => prev.map((item) => item.id === atualizado.id ? atualizado : item));
-      setErro('');
-    } catch (error) {
-      setErro(mensagemErro(error));
-    }
-  }
-
   function novoProduto() {
     setNovo({ ...NOVO_PRODUTO_VAZIO });
     setErro('');
@@ -185,7 +149,6 @@ function setaDoCampo(campo: CampoOrdenacao) {
     try {
       const criado = await criarProduto({
         ...novo,
-        categoryId: Number(novo.categoryId),
         quantidadeInicial: Number(novo.quantidadeInicial),
         preco: Number(novo.preco),
         pontoReposicao: Number(novo.pontoReposicao),
@@ -211,13 +174,13 @@ function setaDoCampo(campo: CampoOrdenacao) {
     return (
       <Modal title="Adicionar Novo Produto" onClose={fecharModalNovoProduto}>
         <form className="modal-form" onSubmit={salvarNovoProduto}>
-          <label>Nome do produto<input maxLength={150} value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Ex: Café em pó 500 g" required /></label>
-          <label>Código do produto<input maxLength={64} value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} placeholder="Ex: CAF-500" required /></label>
-          <label>Categoria<Select value={novo.categoryId} onChange={(categoryId) => setNovo({ ...novo, categoryId, categoria: categoriasDisponiveis.find((item) => String(item.id) === categoryId)?.name ?? '' })} ariaLabel="Categoria do produto" required options={categoriasDisponiveis.filter((item) => item.active).map((item) => ({ value: String(item.id), label: item.name }))} placeholder="Selecione uma categoria" /></label>
-          <label>Fornecedor<input maxLength={150} value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} placeholder="Ex: Distribuidora Central" required /></label>
-          <label>Quantidade inicial<input type="number" min={0} max={2147483647} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} placeholder="Ex: 50" required /></label>
-          <label>Preço unitário<input type="number" min={0} max={99999999.99} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} placeholder="Ex: 12,90" required /></label>
-          <label>Ponto de reposição<input type="number" min={0} max={2147483647} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} placeholder="Ex: 10" required /></label>
+          <label>Nome do produto<input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} placeholder="Ex: Café em pó 500 g" required /></label>
+          <label>Código do produto<input value={novo.sku} onChange={(e) => setNovo({ ...novo, sku: e.target.value.toUpperCase() })} placeholder="Ex: CAF-500" required /></label>
+          <label>Categoria<input value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })} placeholder="Ex: Alimentos" required /></label>
+          <label>Fornecedor<input value={novo.fornecedor} onChange={(e) => setNovo({ ...novo, fornecedor: e.target.value })} placeholder="Ex: Distribuidora Central" required /></label>
+          <label>Quantidade inicial<input type="number" min={0} step={1} value={novo.quantidadeInicial} onChange={(e) => setNovo({ ...novo, quantidadeInicial: e.target.value })} placeholder="Ex: 50" required /></label>
+          <label>Preço unitário<input type="number" min={0} step="0.01" value={novo.preco} onChange={(e) => setNovo({ ...novo, preco: e.target.value })} placeholder="Ex: 12,90" required /></label>
+          <label>Ponto de reposição<input type="number" min={0} step={1} value={novo.pontoReposicao} onChange={(e) => setNovo({ ...novo, pontoReposicao: e.target.value })} placeholder="Ex: 10" required /></label>
           {erro && <p className="muted-sm" role="alert" style={{ color: '#b91c1c' }}>{erro}</p>}
           <button className="btn-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Adicionar Produto'}</button>
         </form>
@@ -264,9 +227,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
             <input
               className="catalogo-busca"
               type="text"
-              placeholder="Buscar por nome, código de barras ou categoria"
-              aria-label="Buscar por nome, SKU ou código de barras"
-              inputMode="search"
+              placeholder="Buscar por nome, código ou categoria"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
@@ -278,19 +239,6 @@ function setaDoCampo(campo: CampoOrdenacao) {
               size="sm"
               options={categorias.map((cat) => ({ value: cat, label: cat }))}
             />
-            <Select
-              className="catalogo-select-categoria"
-              value={statusFiltro}
-              onChange={setStatusFiltro}
-              ariaLabel="Filtrar por status do produto"
-              size="sm"
-              options={[
-                { value: 'todos', label: 'Todos os status' },
-                { value: 'ativos', label: 'Ativos' },
-                { value: 'inativos', label: 'Inativos' },
-              ]}
-            />
-            <button className="btn-secondary" onClick={() => exportarCsv(ordenados)} title="Exportar os produtos filtrados para CSV">Exportar CSV</button>
             <button className="btn-primary" onClick={novoProduto}>Novo produto</button>
           </div>
         </div>
@@ -305,7 +253,6 @@ function setaDoCampo(campo: CampoOrdenacao) {
                     <col className="col-fornecedor" />
                     <col className="col-reposicao" />
                     <col className="col-preco" />
-                    <col className="col-status" />
                     <col className="col-acoes" />
                   </colgroup>
                   <thead>
@@ -317,8 +264,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
               <th>Fornecedor</th>
               <th>Ponto de reposição</th>
               <th onClick={() => alternarOrdenacao('preco')}>Preço {setaDoCampo('preco')}</th>
-              <th>Status</th>
-              <th>Ações</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -329,35 +275,32 @@ function setaDoCampo(campo: CampoOrdenacao) {
                   {emEdicao && rascunho ? (
                     <>
                       <td>
-                        <input className="edit-input" maxLength={150} value={rascunho.nome}
+                        <input className="edit-input" value={rascunho.nome}
                           onChange={(e) => setRascunho({ ...rascunho, nome: e.target.value })} />
                       </td>
                       <td>
-                        <input className="edit-input" maxLength={64} value={rascunho.sku}
+                        <input className="edit-input" value={rascunho.sku}
                           onChange={(e) => setRascunho({ ...rascunho, sku: e.target.value.toUpperCase() })} />
                       </td>
                       <td>
-                        <Select value={String(rascunho.categoryId)} onChange={(categoryId) => {
-                          const selected = categoriasDisponiveis.find((item) => String(item.id) === categoryId);
-                          if (selected) setRascunho({ ...rascunho, categoryId: selected.id, categoria: selected.name });
-                        }} ariaLabel="Categoria do produto" size="sm" options={categoriasDisponiveis.filter((item) => item.active || item.id === rascunho.categoryId).map((item) => ({ value: String(item.id), label: `${item.name}${item.active ? '' : ' (inativa)'}` }))} />
+                        <input className="edit-input" value={rascunho.categoria}
+                          onChange={(e) => setRascunho({ ...rascunho, categoria: e.target.value })} />
                       </td>
                       <td>
                         <span title="O saldo é alterado por entradas e saídas registradas">{rascunho.quantidade}</span>
                       </td>
                       <td>
-                        <input className="edit-input" maxLength={150} value={rascunho.fornecedor}
+                        <input className="edit-input" value={rascunho.fornecedor}
                           onChange={(e) => setRascunho({ ...rascunho, fornecedor: e.target.value })} />
                       </td>
                       <td>
-                        <input className="edit-input edit-input-num" type="number" min={0} max={2147483647} step={1} value={rascunho.pontoReposicao}
+                        <input className="edit-input edit-input-num" type="number" min={0} step={1} value={rascunho.pontoReposicao}
                           onChange={(e) => setRascunho({ ...rascunho, pontoReposicao: Number(e.target.value) })} />
                       </td>
                       <td>
-                        <input className="edit-input edit-input-num" type="number" min={0} max={99999999.99} step="0.01" value={rascunho.preco}
+                        <input className="edit-input edit-input-num" type="number" min={0} step="0.01" value={rascunho.preco}
                           onChange={(e) => setRascunho({ ...rascunho, preco: Number(e.target.value) })} />
                       </td>
-                      <td><span className={`produto-status ${rascunho.active ? 'is-active' : ''}`}>{rascunho.active ? 'Ativo' : 'Inativo'}</span></td>
                       <td className="acoes-col">
                         <button className="icon-btn icon-btn-ok" onClick={salvarEdicao} title="Salvar">✓</button>
                         <button className="icon-btn icon-btn-cancel" onClick={cancelarEdicao} title="Cancelar">✕</button>
@@ -372,11 +315,7 @@ function setaDoCampo(campo: CampoOrdenacao) {
                       <td>{produto.fornecedor}</td>
                       <td>{produto.pontoReposicao}</td>
                       <td>{formatarPreco(produto.preco)}</td>
-                      <td><span className={`produto-status ${produto.active ? 'is-active' : ''}`}>{produto.active ? 'Ativo' : 'Inativo'}</span></td>
                             <td className="acoes-col">
-                              <button className="btn-secondary produto-status-action" onClick={() => void alternarStatus(produto)} title={produto.active ? 'Desativar produto' : 'Reativar produto'}>
-                                {produto.active ? 'Desativar' : 'Reativar'}
-                              </button>
                                                                                                                       <button className="icon-btn" onClick={() => iniciarEdicao(produto)} title="Editar">
                                                                                                                         <svg viewBox="0 0 24 24">
                                                                                                                           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />

@@ -5,7 +5,6 @@ import com.stockpass.dto.StockDtos.ProductResponse;
 import com.stockpass.dto.StockDtos.ProductUpdateRequest;
 import com.stockpass.service.ProductService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,11 +34,4 @@ public class ProductController {
     public ProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductUpdateRequest request) {
         return service.update(id, request);
     }
-
-    @PutMapping("/{id}/status")
-    public ProductResponse setActive(@PathVariable Long id, @Valid @RequestBody ProductStatusRequest request) {
-        return service.setActive(id, request.active());
-    }
-
-    public record ProductStatusRequest(@NotNull Boolean active) {}
 }

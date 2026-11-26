@@ -8,7 +8,6 @@ import com.stockpass.dto.StockDtos.ExitRequest;
 import com.stockpass.dto.StockDtos.ProductRequest;
 import com.stockpass.model.StockReservation;
 import com.stockpass.repository.ProductRepository;
-import com.stockpass.repository.CategoryRepository;
 import com.stockpass.repository.StockMovementRepository;
 import com.stockpass.repository.StockReservationRepository;
 import java.math.BigDecimal;
@@ -32,8 +31,6 @@ class StockReservationServiceTest {
     @Autowired private ProductService productService;
     @Autowired private StockMovementService movementService;
     @Autowired private ProductRepository products;
-    @Autowired private CategoryRepository categories;
-    @Autowired private CategoryService categoryService;
     @Autowired private StockMovementRepository movements;
     @Autowired private StockReservationRepository reservations;
 
@@ -146,10 +143,7 @@ class StockReservationServiceTest {
 
     private com.stockpass.dto.StockDtos.ProductResponse createProduct(int quantity) {
         String suffix = UUID.randomUUID().toString();
-        Long categoryId = categories.findByNormalizedName("testes")
-            .map(com.stockpass.model.Category::getId)
-            .orElseGet(() -> categoryService.create(new com.stockpass.dto.StockDtos.CategoryRequest("Testes", null)).id());
-        return productService.create(new ProductRequest("RSV-" + suffix, "Produto reserva", categoryId, quantity,
+        return productService.create(new ProductRequest("RSV-" + suffix, "Produto reserva", "Testes", quantity,
             new BigDecimal("5.00"), "Fornecedor teste", 0), OPERATOR);
     }
 }

@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { User } from '../../types';
 import {
-  adquirirOferta,
   atualizarOfertaFornecedor,
   criarOfertaFornecedor,
   desativarOfertaFornecedor,
-  listarMarketplaceFornecedores,
   listarOfertasFornecedor,
   listarSaidasFornecedor,
   obterPerfilFornecedor,
@@ -37,13 +35,11 @@ function formatPrice(value: number) {
 export function Fornecedores({ user }: Props) {
   const isSupplier = user.role === 'FORNECEDOR';
   const isInternal = ['USER', 'GESTOR', 'ADMIN'].includes(user.role);
-  const [abaInterna, setAbaInterna] = useState<'adquirir' | 'gestao'>('adquirir');
   const [profile, setProfile] = useState<SupplierProfile | null>(null);
   const [offers, setOffers] = useState<SupplierOffer[]>([]);
   const [sales, setSales] = useState<SupplierSale[]>([]);
   const [form, setForm] = useState<OfferForm>({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [quantities, setQuantities] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyOfferId, setBusyOfferId] = useState<number | null>(null);
@@ -60,8 +56,6 @@ export function Fornecedores({ user }: Props) {
       setProfile(supplierProfile);
       setOffers(supplierOffers);
       setSales(supplierSales);
-    } else {
-      setOffers(await listarMarketplaceFornecedores());
     }
   }
 
@@ -146,53 +140,15 @@ export function Fornecedores({ user }: Props) {
     }
   }
 
-  async function purchaseOffer(offer: SupplierOffer) {
-    const quantity = Number(quantities[offer.id] ?? 1);
-    if (!Number.isInteger(quantity) || quantity <= 0 || quantity > offer.availableQuantity) {
-      setError(`Informe uma quantidade entre 1 e ${offer.availableQuantity}.`);
-      return;
-    }
-    setBusyOfferId(offer.id);
-    setError('');
-    setSuccess('');
-    try {
-      const purchase = await adquirirOferta(offer.id, quantity);
-      await loadOffers();
-      setQuantities((current) => ({ ...current, [offer.id]: '' }));
-      setSuccess(`${purchase.quantity} un. de ${purchase.product} adquiridas de ${purchase.supplierName} e adicionadas ao estoque (${purchase.stockAfterPurchase} un. disponíveis).`);
-    } catch (purchaseError) {
-      setError(mensagemErro(purchaseError));
-    } finally {
-      setBusyOfferId(null);
-    }
-  }
-
   return (
     <div className="fornecedores-page">
-      {isInternal && (
-        <nav className="fornecedores-tabs" aria-label="Seções de fornecedores">
-          <button type="button" className={abaInterna === 'adquirir' ? 'fornecedores-tab active' : 'fornecedores-tab'}
-            aria-pressed={abaInterna === 'adquirir'} onClick={() => setAbaInterna('adquirir')}>
-            Adquirir
-          </button>
-          <button type="button" className={abaInterna === 'gestao' ? 'fornecedores-tab active' : 'fornecedores-tab'}
-            aria-pressed={abaInterna === 'gestao'} onClick={() => setAbaInterna('gestao')}>
-            Fornecedores e contratos
-          </button>
-        </nav>
-      )}
-
-      {(!isInternal || abaInterna === 'adquirir') && <>
+      {isSupplier && <>
       <section className="panel-card panel-card--soft-padrao fornecedores-header">
         <div>
-          <h2>{isSupplier ? profile?.companyName || user.name : 'Fornecedores'}</h2>
-          <p className="muted-sm">
-            {isSupplier
-              ? 'Gerencie seus produtos disponíveis para aquisição.'
-              : 'Consulte ofertas disponíveis e adquira produtos para abastecer o estoque.'}
-          </p>
+          <h2>{profile?.companyName || user.name}</h2>
+          <p className="muted-sm">Gerencie seus produtos disponíveis para aquisição.</p>
         </div>
-        <span className="fornecedores-contagem">{offers.length} {isSupplier ? 'ofertas cadastradas' : 'ofertas disponíveis'}</span>
+        <span className="fornecedores-contagem">{offers.length} ofertas cadastradas</span>
       </section>
 
       {error && <p className="fornecedores-feedback fornecedores-feedback-error" role="alert">{error}</p>}
@@ -235,13 +191,13 @@ export function Fornecedores({ user }: Props) {
       <section className="fornecedores-offers-section">
         <div className="fornecedores-section-title">
           <div>
-            <h2>{isSupplier ? 'Meus produtos disponíveis' : 'Produtos disponíveis para aquisição'}</h2>
-            <p className="muted-sm">{isSupplier ? 'As alterações aparecem imediatamente no catálogo interno.' : 'Ao adquirir, a entrada é registrada no histórico e o saldo do estoque é atualizado.'}</p>
+            <h2>Meus produtos disponíveis</h2>
+            <p className="muted-sm">As alterações aparecem imediatamente no catálogo interno.</p>
           </div>
         </div>
 
         {loading ? <p className="muted-sm">Carregando ofertas...</p> : offers.length === 0 ? (
-          <div className="fornecedores-empty">{isSupplier ? 'Você ainda não publicou ofertas.' : 'Nenhum produto está disponível neste momento.'}</div>
+          <div className="fornecedores-empty">Você ainda não publicou ofertas.</div>
         ) : (
           <div className="fornecedores-offer-list">
             {offers.map((offer) => (
@@ -249,35 +205,18 @@ export function Fornecedores({ user }: Props) {
                 <div className="fornecedor-offer-main">
                   <span className="fornecedor-offer-category">{offer.category}</span>
                   <h3>{offer.name}</h3>
-                  <p className="muted-sm">Código {offer.sku} · {isSupplier ? offer.availableQuantity : `Fornecedor: ${offer.companyName}`} </p>
+                  <p className="muted-sm">Código {offer.sku} · {offer.availableQuantity}</p>
                 </div>
                 <div className="fornecedor-offer-price">
                   <strong>{formatPrice(offer.price)}</strong>
                   <span>{offer.availableQuantity} un. disponíveis</span>
                 </div>
-                {isSupplier ? (
-                  <div className="fornecedor-offer-actions">
-                    <button className="btn-secondary" onClick={() => editOffer(offer)}>Editar</button>
-                    <button className="btn-secondary" disabled={busyOfferId === offer.id} onClick={() => void deactivateOffer(offer)}>
-                      {busyOfferId === offer.id ? 'Removendo...' : 'Retirar oferta'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="fornecedor-purchase-actions">
-                    <label>Quantidade
-                      <input
-                        type="number"
-                        min="1"
-                        max={offer.availableQuantity}
-                        value={quantities[offer.id] ?? '1'}
-                        onChange={(event) => setQuantities({ ...quantities, [offer.id]: event.target.value })}
-                      />
-                    </label>
-                    <button className="btn-primary" disabled={busyOfferId === offer.id} onClick={() => void purchaseOffer(offer)}>
-                      {busyOfferId === offer.id ? 'Processando...' : 'Adquirir'}
-                    </button>
-                  </div>
-                )}
+                <div className="fornecedor-offer-actions">
+                  <button className="btn-secondary" onClick={() => editOffer(offer)}>Editar</button>
+                  <button className="btn-secondary" disabled={busyOfferId === offer.id} onClick={() => void deactivateOffer(offer)}>
+                    {busyOfferId === offer.id ? 'Removendo...' : 'Retirar oferta'}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
@@ -329,7 +268,7 @@ export function Fornecedores({ user }: Props) {
       )}
       </>}
 
-      {isInternal && abaInterna === 'gestao' && <SupplierRecordsSection canManage={user.role === 'GESTOR' || user.role === 'ADMIN'} />}
+      {isInternal && <SupplierRecordsSection canManage={user.role === 'GESTOR' || user.role === 'ADMIN'} />}
     </div>
   );
 }

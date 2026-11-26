@@ -54,26 +54,9 @@ public class SupplierManagementService {
         return response(saved);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<SupplierResponse> listSuppliers() {
-        synchronizeSupplierAccounts();
         return suppliers.findAll().stream().map(SupplierManagementService::response).toList();
-    }
-
-    private void synchronizeSupplierAccounts() {
-        for (var account : users.findAllByRoleOrderByNameAsc("FORNECEDOR")) {
-            String cnpj = account.getTaxId() == null ? "" : account.getTaxId().replaceAll("\\D", "");
-            if (cnpj.length() != 14 || suppliers.existsByCnpj(cnpj)) continue;
-
-            Supplier supplier = new Supplier();
-            supplier.setLegalName(account.getCompanyName() == null || account.getCompanyName().isBlank()
-                ? account.getName() : account.getCompanyName().trim());
-            supplier.setCnpj(cnpj);
-            supplier.setEmail(account.getEmail());
-            supplier.setPhone(account.getPhone());
-            supplier.setStatus(com.stockpass.model.SupplierStatus.ACTIVE);
-            suppliers.save(supplier);
-        }
     }
 
     @Transactional(readOnly = true)

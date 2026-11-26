@@ -6,9 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -25,13 +22,8 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = true)
-    private Category category;
-
-    // Mantém compatibilidade com a coluna NOT NULL existente durante a migração gradual.
-    @Column(name = "category", nullable = false)
-    private String legacyCategory;
+    @Column(nullable = false)
+    private String category;
 
     @Column(nullable = false)
     private int quantity;
@@ -45,9 +37,6 @@ public class Product {
     @Column(nullable = false)
     private int reorderPoint;
 
-    @Column(nullable = true)
-    private boolean active = true;
-
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -56,9 +45,8 @@ public class Product {
     public void setSku(String sku) { this.sku = sku; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public Category getCategory() { return category; }
-    public void setCategory(Category category) { this.category = category; }
-    public void setLegacyCategory(String legacyCategory) { this.legacyCategory = legacyCategory; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
     public BigDecimal getPrice() { return price; }
@@ -67,7 +55,5 @@ public class Product {
     public void setSupplier(String supplier) { this.supplier = supplier; }
     public int getReorderPoint() { return reorderPoint; }
     public void setReorderPoint(int reorderPoint) { this.reorderPoint = reorderPoint; }
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

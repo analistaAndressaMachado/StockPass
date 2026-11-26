@@ -29,20 +29,6 @@ export type SupplierOfferInput = {
   availableQuantity: number;
 };
 
-export type SupplierAcquisition = {
-  purchaseId: number;
-  offerId: number;
-  productId: number;
-  inventorySku: string;
-  product: string;
-  supplierName: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  stockAfterPurchase: number;
-  purchasedAt: string;
-};
-
 export type SupplierSale = {
   purchaseId: number;
   sku: string;
@@ -82,12 +68,3 @@ export async function desativarOfertaFornecedor(id: number) {
   await api.delete(`/suppliers/offers/mine/${id}`);
 }
 
-export async function listarMarketplaceFornecedores() {
-  const { data } = await api.get<SupplierOffer[]>('/suppliers/offers');
-  return data;
-}
-
-export async function adquirirOferta(id: number, quantity: number) {
-  const { data } = await api.post<SupplierAcquisition>(`/suppliers/offers/${id}/acquire`, { quantity });
-  return data;
-}

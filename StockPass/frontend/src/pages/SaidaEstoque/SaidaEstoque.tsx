@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './SaidaEstoque.css';
 import { Select } from '../../components/Select/Select';
-import { HistoryPagination, type PageSize } from '../../components/Pagination/HistoryPagination';
-import { paginateItems } from '../../components/Pagination/paginateItems';
 import type { Produto } from '../../types';
 import {
   MOTIVOS_SAIDA,
@@ -27,6 +25,8 @@ import {
 } from '../../services/stockApi';
 
 type Periodo = 'todos' | 'hoje' | '7dias' | 'mes';
+
+const MINIMO_LINHAS = 5;
 
 function segundosRestantes(expiresAt: string, agora: number) {
   return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - agora) / 1000));
@@ -69,8 +69,11 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
   const [motivoFiltro, setMotivoFiltro] = useState('Todos');
   const [busca, setBusca] = useState('');
   const [pagina, setPagina] = useState(1);
-  const [pageSize, setPageSize] = useState<PageSize>('10');
   const [showNova, setShowNova] = useState(openNovaSaida);
+
+  // Quantas linhas cabem na tela agora (mesma ideia do Painel e da Entrada).
+  const [linhasPorPagina, setLinhasPorPagina] = useState(MINIMO_LINHAS);
+  const areaTabelaRef = useRef<HTMLDivElement>(null);
   const expiracoesAvisadas = useRef(new Set<number>());
   const modalCancelada = useRef(false);
   const [saidaDestaqueId, setSaidaDestaqueId] = useState<number | null>(null);
@@ -119,6 +122,26 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
       : `${expiradas.length} reservas expiraram. Os saldos disponíveis foram liberados pelo backend.`);
   }, [agora, reservas]);
 
+  useEffect(() => {
+    const area = areaTabelaRef.current;
+    if (!area) return;
+
+    const calcular = () => {
+      const cabecalho = area.querySelector('thead');
+      const linha = area.querySelector('tbody tr');
+      if (!cabecalho || !linha) return;
+      const alturaCabecalho = cabecalho.getBoundingClientRect().height;
+      const alturaLinha = linha.getBoundingClientRect().height;
+      const cabem = Math.floor((area.clientHeight - alturaCabecalho) / alturaLinha);
+      setLinhasPorPagina(Math.max(MINIMO_LINHAS, cabem));
+    };
+
+    calcular();
+    const observer = new ResizeObserver(calcular);
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, []);
+
   const termo = busca.trim().toLowerCase();
   const filtradas = saidas.filter(
     (s) =>
@@ -127,12 +150,10 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
       (termo === '' || [s.produto, s.sku, s.registradoPor].some((campo) => campo.toLowerCase().includes(termo))),
   );
 
-  const paginacao = paginateItems(filtradas, pagina, Number(pageSize));
-  const { items: visiveis, currentPage: paginaAtual, totalPages: totalPaginas } = paginacao;
-
-  useEffect(() => {
-    if (pagina !== paginaAtual) setPagina(paginaAtual);
-  }, [pagina, paginaAtual]);
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / linhasPorPagina));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const inicio = (paginaAtual - 1) * linhasPorPagina;
+  const visiveis = filtradas;
 
   // Números dos cards do topo
   const saidasHoje = saidas.filter((s) => ehHoje(s.dataHora)).length;
@@ -345,16 +366,6 @@ export function SaidaEstoque({ openNovaSaida = false, modalOnly = false, onModal
             </table>
           )}
         </div>
-        <HistoryPagination
-          totalItems={filtradas.length}
-          currentPage={paginaAtual}
-          pageSize={pageSize}
-          onPageChange={setPagina}
-          onPageSizeChange={(value) => {
-            setPageSize(value);
-            setPagina(1);
-          }}
-        />
 
       </section>
 

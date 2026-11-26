@@ -146,11 +146,7 @@
 .col-fornecedor { width: 16%; }
 .col-reposicao { width: 11%; }
 .col-preco { width: 11%; }
-.col-status { width: 8%; }
-.col-acoes { width: 138px; }
-.produto-status { display: inline-block; padding: 4px 9px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 12px; font-weight: 600; }
-.produto-status.is-active { background: #dcfce7; color: #166534; }
-.produto-status-action { padding: 6px 8px; font-size: 12px; white-space: nowrap; }
+.col-acoes { width: 48px; }
 
 .catalogo-lista th {
   cursor: pointer;

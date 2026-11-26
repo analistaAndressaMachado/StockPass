@@ -5,7 +5,6 @@ import com.stockpass.dto.StockDtos.ProductResponse;
 import com.stockpass.dto.StockDtos.ProductUpdateRequest;
 import com.stockpass.model.MovementType;
 import com.stockpass.model.Product;
-import com.stockpass.model.Category;
 import com.stockpass.model.StockMovement;
 import com.stockpass.repository.ProductRepository;
 import com.stockpass.repository.StockMovementRepository;
@@ -20,14 +19,12 @@ public class ProductService {
     private final ProductRepository products;
     private final StockMovementRepository movements;
     private final StockReservationRepository reservations;
-    private final CategoryService categories;
 
     public ProductService(ProductRepository products, StockMovementRepository movements,
-            StockReservationRepository reservations, CategoryService categories) {
+            StockReservationRepository reservations) {
         this.products = products;
         this.movements = movements;
         this.reservations = reservations;
-        this.categories = categories;
     }
 
     @Transactional(readOnly = true)
@@ -46,8 +43,7 @@ public class ProductService {
         Product product = new Product();
         product.setSku(sku);
         product.setName(request.name().trim());
-        product.setCategory(categories.requireActive(request.categoryId()));
-        product.setLegacyCategory(product.getCategory().getName());
+        product.setCategory(request.category().trim());
         product.setQuantity(request.initialQuantity());
         product.setPrice(request.price());
         product.setSupplier(request.supplier().trim());
@@ -77,29 +73,10 @@ public class ProductService {
         }
         product.setSku(sku);
         product.setName(request.name().trim());
-        Category requestedCategory = product.getCategory().getId().equals(request.categoryId())
-            ? product.getCategory() : categories.requireActive(request.categoryId());
-        product.setCategory(requestedCategory);
-        product.setLegacyCategory(requestedCategory.getName());
+        product.setCategory(request.category().trim());
         product.setPrice(request.price());
         product.setSupplier(request.supplier().trim());
         product.setReorderPoint(request.reorderPoint());
-        Product saved = products.save(product);
-        return response(saved, reserved(saved, LocalDateTime.now()));
-    }
-
-    @Transactional
-    public ProductResponse setActive(Long id, boolean active) {
-        if (products.acquireWriteLock(id) == 0) {
-            throw new IllegalArgumentException("Produto não encontrado.");
-        }
-        Product product = products.findByIdForUpdate(id)
-            .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado."));
-        if (!active && reserved(product, LocalDateTime.now()) > 0) {
-            throw new IllegalArgumentException(
-                "Não é possível desativar este produto enquanto houver reservas pendentes. Cancele ou aguarde a expiração das reservas.");
-        }
-        product.setActive(active);
         Product saved = products.save(product);
         return response(saved, reserved(saved, LocalDateTime.now()));
     }
@@ -110,8 +87,8 @@ public class ProductService {
 
     private static ProductResponse response(Product product, int reserved) {
         return new ProductResponse(product.getId(), product.getSku(), product.getName(),
-            product.getCategory().getId(), product.getCategory().getName(), product.getQuantity(), product.getPrice(),
-            product.getSupplier(), product.getReorderPoint(), product.isActive(), product.getQuantity(), reserved,
+            product.getCategory(), product.getQuantity(), product.getPrice(),
+            product.getSupplier(), product.getReorderPoint(), product.getQuantity(), reserved,
             product.getQuantity() - reserved);
     }
 }

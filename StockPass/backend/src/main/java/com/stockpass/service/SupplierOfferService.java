@@ -8,13 +8,11 @@ import com.stockpass.dto.StockDtos.SupplierProfileResponse;
 import com.stockpass.dto.StockDtos.SupplierSaleResponse;
 import com.stockpass.model.MovementType;
 import com.stockpass.model.Product;
-import com.stockpass.model.Category;
 import com.stockpass.model.StockMovement;
 import com.stockpass.model.SupplierOffer;
 import com.stockpass.model.SupplierPurchase;
 import com.stockpass.model.User;
 import com.stockpass.repository.ProductRepository;
-import com.stockpass.repository.CategoryRepository;
 import com.stockpass.repository.StockMovementRepository;
 import com.stockpass.repository.SupplierOfferRepository;
 import com.stockpass.repository.SupplierPurchaseRepository;
@@ -31,17 +29,14 @@ public class SupplierOfferService {
     private final ProductRepository products;
     private final StockMovementRepository movements;
     private final UserRepository users;
-    private final CategoryRepository categories;
 
     public SupplierOfferService(SupplierOfferRepository offers, SupplierPurchaseRepository purchases,
-            ProductRepository products, StockMovementRepository movements, UserRepository users,
-            CategoryRepository categories) {
+            ProductRepository products, StockMovementRepository movements, UserRepository users) {
         this.offers = offers;
         this.purchases = purchases;
         this.products = products;
         this.movements = movements;
         this.users = users;
-        this.categories = categories;
     }
 
     @Transactional(readOnly = true)
@@ -112,9 +107,6 @@ public class SupplierOfferService {
 
     @Transactional
     public SupplierAcquisitionResponse acquire(Long offerId, SupplierAcquisitionRequest request, String buyerEmail) {
-        if (offers.acquireWriteLock(offerId) == 0) {
-            throw new IllegalArgumentException("Oferta não encontrada.");
-        }
         SupplierOffer offer = offers.findByIdForUpdate(offerId)
             .orElseThrow(() -> new IllegalArgumentException("Oferta não encontrada."));
         if (!offer.isActive()) throw new IllegalArgumentException("Esta oferta não está mais disponível.");
@@ -125,31 +117,11 @@ public class SupplierOfferService {
         User buyer = users.findByEmailIgnoreCase(buyerEmail)
             .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
         Product product = offer.getInventoryProduct();
-        if (product != null) {
-            if (products.acquireWriteLock(product.getId()) == 0) {
-                throw new IllegalArgumentException("O produto vinculado a esta oferta não foi encontrado.");
-            }
-            product = products.findByIdForUpdate(product.getId())
-                .orElseThrow(() -> new IllegalArgumentException("O produto vinculado a esta oferta não foi encontrado."));
-        }
-        if (product != null && !product.isActive()) {
-            throw new IllegalArgumentException("O produto vinculado a esta oferta está inativo.");
-        }
         if (product == null) {
             product = new Product();
             product.setSku(inventorySku(offer));
             product.setName(offer.getName());
-            String categoryName = offer.getCategory().trim();
-            String normalizedCategory = categoryName.toLowerCase(java.util.Locale.ROOT);
-            Category category = categories.findByNormalizedName(normalizedCategory).orElseGet(() -> {
-                Category created = new Category();
-                created.setName(categoryName);
-                created.setNormalizedName(normalizedCategory);
-                return categories.save(created);
-            });
-            if (!category.isActive()) throw new IllegalArgumentException("A categoria da oferta está inativa.");
-            product.setCategory(category);
-            product.setLegacyCategory(category.getName());
+            product.setCategory(offer.getCategory());
             product.setQuantity(0);
             product.setPrice(offer.getPrice());
             product.setSupplier(offer.getSupplier().getCompanyName());

@@ -10,7 +10,6 @@ import com.stockpass.dto.StockDtos.EntryRequest;
 import com.stockpass.dto.StockDtos.ExitRequest;
 import com.stockpass.dto.StockDtos.ProductRequest;
 import com.stockpass.dto.StockDtos.ProductUpdateRequest;
-import com.stockpass.dto.StockDtos.CategoryRequest;
 import com.stockpass.dto.StockDtos.ReplenishmentRequest;
 import com.stockpass.dto.StockDtos.SupplierAcquisitionRequest;
 import com.stockpass.dto.StockDtos.SupplierOfferRequest;
@@ -21,9 +20,7 @@ import com.stockpass.dto.ClientDtos.PurchaseRequest;
 import com.stockpass.model.ReplenishmentStatus;
 import com.stockpass.model.User;
 import com.stockpass.repository.ProductRepository;
-import com.stockpass.repository.CategoryRepository;
 import com.stockpass.repository.StockMovementRepository;
-import com.stockpass.repository.StockReservationRepository;
 import com.stockpass.repository.StockReplenishmentRepository;
 import com.stockpass.repository.SupplierOfferRepository;
 import com.stockpass.repository.SupplierPurchaseRepository;
@@ -56,10 +53,7 @@ class StockPersistenceIntegrationTest {
     @Autowired private AuthService authService;
     @Autowired private ClientStoreService clientStoreService;
     @Autowired private ProductRepository products;
-    @Autowired private CategoryRepository categories;
-    @Autowired private CategoryService categoryService;
     @Autowired private StockMovementRepository movements;
-    @Autowired private StockReservationRepository reservations;
     @Autowired private StockReplenishmentRepository replenishments;
     @Autowired private SupplierOfferRepository offers;
     @Autowired private SupplierPurchaseRepository purchases;
@@ -72,7 +66,7 @@ class StockPersistenceIntegrationTest {
     void productAndMovementsPersistAsOneStockFlow() {
         String sku = "TEST-" + UUID.randomUUID();
         var product = productService.create(
-            new ProductRequest(sku, "Produto de integração", categoryId("Testes"), 10,
+            new ProductRequest(sku, "Produto de integração", "Testes", 10,
                 new BigDecimal("12.50"), "Fornecedor teste", 3),
             "admin@stockpass.com");
 
@@ -90,7 +84,7 @@ class StockPersistenceIntegrationTest {
     void scheduledReplenishmentIsCompletedByLinkedEntry() {
         String sku = "RESTOCK-" + UUID.randomUUID();
         var product = productService.create(
-            new ProductRequest(sku, "Produto para reposição", categoryId("Testes"), 2,
+            new ProductRequest(sku, "Produto para reposição", "Testes", 2,
                 new BigDecimal("8.00"), "Fornecedor teste", 5),
             "admin@stockpass.com");
         var scheduled = replenishmentService.schedule(
@@ -190,7 +184,7 @@ class StockPersistenceIntegrationTest {
         var anotherClient = authService.registerClient(new ClientRegisterRequest(
             "Outro cliente", "client-other-" + suffix + "@stockpass.test", "senha-cliente"));
         var product = productService.create(
-            new ProductRequest("CLIENT-" + suffix, "Produto da loja", categoryId("Teste"), 8,
+            new ProductRequest("CLIENT-" + suffix, "Produto da loja", "Teste", 8,
                 new BigDecimal("10.00"), "Fornecedor teste", 0),
             "admin@stockpass.com");
 
@@ -210,128 +204,11 @@ class StockPersistenceIntegrationTest {
     }
 
     @Test
-    void storePurchaseCannotConsumeUnitsReservedForAnExit() {
-        var client = testClient();
-        var product = testProduct(10);
-        movementService.reserveExit(new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"),
-            "admin@stockpass.com");
-
-        assertThrows(IllegalArgumentException.class, () -> buy(client.email(), product.id(), 5));
-        assertEquals(10, products.findById(product.id()).orElseThrow().getQuantity());
-        assertEquals(6L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
-    }
-
-    @Test
-    void storePurchaseCanConsumeOnlyTheUnreservedBalance() {
-        var client = testClient();
-        var product = testProduct(10);
-        movementService.reserveExit(new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"),
-            "admin@stockpass.com");
-
-        assertEquals(4, clientStoreService.products().stream()
-            .filter(item -> item.id().equals(product.id())).findFirst().orElseThrow().availableQuantity());
-
-        buy(client.email(), product.id(), 4);
-
-        assertEquals(6, products.findById(product.id()).orElseThrow().getQuantity());
-        assertEquals(6L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
-    }
-
-    @Test
-    void cancellingReservationReleasesItsQuantityForStorePurchase() {
-        var client = testClient();
-        var product = testProduct(10);
-        var reservation = movementService.reserveExit(
-            new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"), "admin@stockpass.com");
-
-        movementService.cancelReservation(reservation.id());
-        assertEquals(0L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
-        buy(client.email(), product.id(), 10);
-        assertEquals(0, products.findById(product.id()).orElseThrow().getQuantity());
-    }
-
-    @Test
-    void confirmingReservationConsumesReservedStockExactlyOnce() {
-        var product = testProduct(10);
-        var reservation = movementService.reserveExit(
-            new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"), "admin@stockpass.com");
-
-        movementService.confirmReservation(reservation.id());
-
-        assertEquals(4, products.findById(product.id()).orElseThrow().getQuantity());
-        assertEquals(0L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
-    }
-
-    @Test
-    void manualExitAboveAvailableBalanceIsRejectedWhenStockIsReserved() {
-        var product = testProduct(10);
-        movementService.reserveExit(new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"),
-            "admin@stockpass.com");
-
-        assertThrows(IllegalArgumentException.class,
-            () -> movementService.exit(new ExitRequest(product.id(), 5, "Venda", ""), "admin@stockpass.com"));
-        assertEquals(10, products.findById(product.id()).orElseThrow().getQuantity());
-    }
-
-    @Test
-    @org.springframework.transaction.annotation.Transactional(
-        propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
-    void concurrentStorePurchasesCannotConsumeTheSameUnits() throws Exception {
-        var client = testClient();
-        var product = testProduct(10);
-        var ready = new java.util.concurrent.CountDownLatch(2);
-        var start = new java.util.concurrent.CountDownLatch(1);
-        var pool = java.util.concurrent.Executors.newFixedThreadPool(2);
-        java.util.concurrent.Callable<String> attempt = () -> {
-            ready.countDown();
-            if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) {
-                throw new IllegalStateException("Concurrent purchase test did not start.");
-            }
-            try {
-                buy(client.email(), product.id(), 7);
-                return "approved";
-            } catch (IllegalArgumentException rejected) {
-                return "rejected";
-            }
-        };
-        try {
-            var first = pool.submit(attempt);
-            var second = pool.submit(attempt);
-            assertTrue(ready.await(5, java.util.concurrent.TimeUnit.SECONDS));
-            start.countDown();
-            String firstResult = first.get(15, java.util.concurrent.TimeUnit.SECONDS);
-            String secondResult = second.get(15, java.util.concurrent.TimeUnit.SECONDS);
-
-            assertEquals(1, java.util.stream.Stream.of(firstResult, secondResult)
-                .filter("approved"::equals).count());
-            assertEquals(3, products.findById(product.id()).orElseThrow().getQuantity());
-        } finally {
-            pool.shutdownNow();
-        }
-    }
-
-    private com.stockpass.dto.AuthDtos.UserResponse testClient() {
-        String email = "reservation-test-" + UUID.randomUUID() + "@stockpass.test";
-        return authService.registerClient(new ClientRegisterRequest("Cliente teste", email, "senha-cliente"));
-    }
-
-    private com.stockpass.dto.StockDtos.ProductResponse testProduct(int quantity) {
-        String suffix = UUID.randomUUID().toString();
-        return productService.create(new ProductRequest("RESERVE-" + suffix, "Produto reservado", categoryId("Teste"),
-            quantity, new BigDecimal("10.00"), "Fornecedor teste", 0), "admin@stockpass.com");
-    }
-
-    private void buy(String email, Long productId, int quantity) {
-        clientStoreService.purchase(new PurchaseRequest("PIX",
-            java.util.List.of(new PurchaseLineRequest(productId, quantity))), email);
-    }
-
-    @Test
     void internalStaffCanReadClientRegistrationsAndPurchasesButClientsCannot() throws Exception {
         String suffix = UUID.randomUUID().toString();
         var client = authService.registerClient(new ClientRegisterRequest("Cliente com compra", "buyer-" + suffix + "@stockpass.test", "senha-cliente"));
         var emptyClient = authService.registerClient(new ClientRegisterRequest("Cliente sem compra", "empty-" + suffix + "@stockpass.test", "senha-cliente"));
-        var product = productService.create(new ProductRequest("ADMIN-" + suffix, "Produto comprado", categoryId("Teste"), 5,
+        var product = productService.create(new ProductRequest("ADMIN-" + suffix, "Produto comprado", "Teste", 5,
             new BigDecimal("10.00"), "Fornecedor teste", 0), "admin@stockpass.com");
         clientStoreService.purchase(new PurchaseRequest("PIX", java.util.List.of(new PurchaseLineRequest(product.id(), 2))), client.email());
         String staffToken = jwt.generate("admin@stockpass.com");
@@ -439,8 +316,7 @@ class StockPersistenceIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(java.util.Map.of(
                     "name", "Responsável HTTP", "email", "supplier-http-" + suffix + "@stockpass.test",
-                    "password", "senha-fornecedor-123", "companyName", "Fornecedor HTTP",
-                    "taxId", "12345678000190"))))
+                    "password", "senha-fornecedor-123", "companyName", "Fornecedor HTTP"))))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.role").value("FORNECEDOR"));
     }
@@ -484,11 +360,11 @@ class StockPersistenceIntegrationTest {
         assertEquals(supplier.email(), updatedSupplier.email());
 
         var product = productService.create(
-            new ProductRequest("EDIT-" + suffix, "Produto editável", categoryId("Geral"), 7,
+            new ProductRequest("EDIT-" + suffix, "Produto editável", "Geral", 7,
                 new BigDecimal("20.00"), "Fornecedor antigo", 2),
             "admin@stockpass.com");
         var updatedProduct = productService.update(product.id(), new ProductUpdateRequest(
-            "SKU-EDIT-" + suffix, "Nome editado", categoryId("Categoria editada"), new BigDecimal("25.50"),
+            "SKU-EDIT-" + suffix, "Nome editado", "Categoria editada", new BigDecimal("25.50"),
             "Fornecedor novo", 4));
 
         assertEquals("SKU-EDIT-" + suffix, updatedProduct.sku());
@@ -496,12 +372,5 @@ class StockPersistenceIntegrationTest {
         assertEquals("Fornecedor novo", updatedProduct.supplier());
         assertEquals(4, updatedProduct.reorderPoint());
         assertEquals(7, products.findById(product.id()).orElseThrow().getQuantity());
-    }
-
-    private Long categoryId(String name) {
-        String normalized = name.toLowerCase(java.util.Locale.ROOT);
-        return categories.findByNormalizedName(normalized)
-            .map(com.stockpass.model.Category::getId)
-            .orElseGet(() -> categoryService.create(new CategoryRequest(name, null)).id());
     }
 }

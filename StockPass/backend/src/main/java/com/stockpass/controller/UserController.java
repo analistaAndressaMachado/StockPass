@@ -26,11 +26,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 	private final UserManagementService service;
 
-	public record CreateRequest(@NotBlank @Size(max = 120) String name,
-		@NotBlank @Email @Size(max = 254) String email,
-		@NotBlank @Size(max = 30) String role, @NotBlank @Size(min = 6, max = 72) String password) {}
-	public record UpdateRequest(@NotBlank @Size(max = 120) String name,
-		@NotBlank @Size(max = 30) String role, Map<String, String> permissions) {}
+	public record CreateRequest(@NotBlank String name, @NotBlank @Email String email,
+		@NotBlank String role, @NotBlank @Size(min = 6) String password) {}
+	public record UpdateRequest(@NotBlank String name, @NotBlank String role, Map<String, String> permissions) {}
 	public record StatusRequest(@NotNull Boolean active) {}
 
 	public UserController(UserManagementService service) { this.service = service; }

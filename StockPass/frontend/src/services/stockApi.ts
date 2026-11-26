@@ -9,12 +9,10 @@ type ProductDto = {
   sku: string;
   name: string;
   category: string;
-  categoryId: number;
   quantity: number;
   price: number;
   supplier: string;
   reorderPoint: number;
-  active: boolean;
   physicalQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;
@@ -62,7 +60,7 @@ type ReplenishmentDto = {
   registeredBy: string;
 };
 
-export type NovoProduto = Omit<Produto, 'id' | 'quantidade' | 'physicalQuantity' | 'reservedQuantity' | 'availableQuantity' | 'active'> & {
+export type NovoProduto = Omit<Produto, 'id' | 'quantidade' | 'physicalQuantity' | 'reservedQuantity' | 'availableQuantity'> & {
   quantidadeInicial: number;
 };
 
@@ -84,14 +82,12 @@ function produtoFromDto(item: ProductDto): Produto {
   return {
     id: item.id,
     sku: item.sku,
-    categoryId: item.categoryId,
     nome: item.name,
     categoria: item.category,
     quantidade: item.quantity,
     preco: item.price,
     fornecedor: item.supplier,
     pontoReposicao: item.reorderPoint,
-    active: item.active,
     physicalQuantity: item.physicalQuantity,
     reservedQuantity: item.reservedQuantity,
     availableQuantity: item.availableQuantity,
@@ -102,7 +98,7 @@ export async function criarProduto(produto: NovoProduto) {
   const { data } = await api.post<ProductDto>('/products', {
     sku: produto.sku,
     name: produto.nome,
-    categoryId: produto.categoryId,
+    category: produto.categoria,
     initialQuantity: produto.quantidadeInicial,
     price: produto.preco,
     supplier: produto.fornecedor,
@@ -115,16 +111,11 @@ export async function atualizarProduto(produto: Produto) {
   const { data } = await api.put<ProductDto>(`/products/${produto.id}`, {
     sku: produto.sku,
     name: produto.nome,
-    categoryId: produto.categoryId,
+    category: produto.categoria,
     price: produto.preco,
     supplier: produto.fornecedor,
     reorderPoint: produto.pontoReposicao,
   });
-  return produtoFromDto(data);
-}
-
-export async function definirProdutoAtivo(id: number, active: boolean) {
-  const { data } = await api.put<ProductDto>(`/products/${id}/status`, { active });
   return produtoFromDto(data);
 }
 
