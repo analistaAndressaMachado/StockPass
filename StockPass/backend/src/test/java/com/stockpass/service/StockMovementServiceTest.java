@@ -94,6 +94,7 @@ class StockMovementServiceTest {
 
     @Test
     void exitAboveAvailableBalanceIsRejectedWithoutMovement() {
+        when(products.acquireWriteLock(1L)).thenReturn(1);
         when(products.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
             () -> service.exit(new ExitRequest(1L, 11, "Venda", ""), "operador@stockpass.test"));
@@ -107,6 +108,7 @@ class StockMovementServiceTest {
     private void configureSuccessfulMovement() {
         User user = new User();
         user.setName("Operador");
+        when(products.acquireWriteLock(1L)).thenReturn(1);
         when(users.findByEmailIgnoreCase("operador@stockpass.test")).thenReturn(Optional.of(user));
         when(products.findByIdForUpdate(1L)).thenReturn(Optional.of(product));
         when(movements.save(any(StockMovement.class))).thenAnswer(call -> call.getArgument(0));

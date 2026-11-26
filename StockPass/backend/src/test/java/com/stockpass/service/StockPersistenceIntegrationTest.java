@@ -21,6 +21,7 @@ import com.stockpass.model.ReplenishmentStatus;
 import com.stockpass.model.User;
 import com.stockpass.repository.ProductRepository;
 import com.stockpass.repository.StockMovementRepository;
+import com.stockpass.repository.StockReservationRepository;
 import com.stockpass.repository.StockReplenishmentRepository;
 import com.stockpass.repository.SupplierOfferRepository;
 import com.stockpass.repository.SupplierPurchaseRepository;
@@ -54,6 +55,7 @@ class StockPersistenceIntegrationTest {
     @Autowired private ClientStoreService clientStoreService;
     @Autowired private ProductRepository products;
     @Autowired private StockMovementRepository movements;
+    @Autowired private StockReservationRepository reservations;
     @Autowired private StockReplenishmentRepository replenishments;
     @Autowired private SupplierOfferRepository offers;
     @Autowired private SupplierPurchaseRepository purchases;
@@ -201,6 +203,123 @@ class StockPersistenceIntegrationTest {
             movement.getProduct().getId().equals(product.id()) &&
             "Venda".equals(movement.getReason()) &&
             movement.getRegisteredBy().equals(client.name())));
+    }
+
+    @Test
+    void storePurchaseCannotConsumeUnitsReservedForAnExit() {
+        var client = testClient();
+        var product = testProduct(10);
+        movementService.reserveExit(new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"),
+            "admin@stockpass.com");
+
+        assertThrows(IllegalArgumentException.class, () -> buy(client.email(), product.id(), 5));
+        assertEquals(10, products.findById(product.id()).orElseThrow().getQuantity());
+        assertEquals(6L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
+    }
+
+    @Test
+    void storePurchaseCanConsumeOnlyTheUnreservedBalance() {
+        var client = testClient();
+        var product = testProduct(10);
+        movementService.reserveExit(new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"),
+            "admin@stockpass.com");
+
+        assertEquals(4, clientStoreService.products().stream()
+            .filter(item -> item.id().equals(product.id())).findFirst().orElseThrow().availableQuantity());
+
+        buy(client.email(), product.id(), 4);
+
+        assertEquals(6, products.findById(product.id()).orElseThrow().getQuantity());
+        assertEquals(6L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
+    }
+
+    @Test
+    void cancellingReservationReleasesItsQuantityForStorePurchase() {
+        var client = testClient();
+        var product = testProduct(10);
+        var reservation = movementService.reserveExit(
+            new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"), "admin@stockpass.com");
+
+        movementService.cancelReservation(reservation.id());
+        assertEquals(0L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
+        buy(client.email(), product.id(), 10);
+        assertEquals(0, products.findById(product.id()).orElseThrow().getQuantity());
+    }
+
+    @Test
+    void confirmingReservationConsumesReservedStockExactlyOnce() {
+        var product = testProduct(10);
+        var reservation = movementService.reserveExit(
+            new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"), "admin@stockpass.com");
+
+        movementService.confirmReservation(reservation.id());
+
+        assertEquals(4, products.findById(product.id()).orElseThrow().getQuantity());
+        assertEquals(0L, reservations.sumActiveQuantity(product.id(), java.time.LocalDateTime.now()));
+    }
+
+    @Test
+    void manualExitAboveAvailableBalanceIsRejectedWhenStockIsReserved() {
+        var product = testProduct(10);
+        movementService.reserveExit(new ExitRequest(product.id(), 6, "Perda", "Reserva de teste"),
+            "admin@stockpass.com");
+
+        assertThrows(IllegalArgumentException.class,
+            () -> movementService.exit(new ExitRequest(product.id(), 5, "Venda", ""), "admin@stockpass.com"));
+        assertEquals(10, products.findById(product.id()).orElseThrow().getQuantity());
+    }
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional(
+        propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    void concurrentStorePurchasesCannotConsumeTheSameUnits() throws Exception {
+        var client = testClient();
+        var product = testProduct(10);
+        var ready = new java.util.concurrent.CountDownLatch(2);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(2);
+        java.util.concurrent.Callable<String> attempt = () -> {
+            ready.countDown();
+            if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Concurrent purchase test did not start.");
+            }
+            try {
+                buy(client.email(), product.id(), 7);
+                return "approved";
+            } catch (IllegalArgumentException rejected) {
+                return "rejected";
+            }
+        };
+        try {
+            var first = pool.submit(attempt);
+            var second = pool.submit(attempt);
+            assertTrue(ready.await(5, java.util.concurrent.TimeUnit.SECONDS));
+            start.countDown();
+            String firstResult = first.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            String secondResult = second.get(15, java.util.concurrent.TimeUnit.SECONDS);
+
+            assertEquals(1, java.util.stream.Stream.of(firstResult, secondResult)
+                .filter("approved"::equals).count());
+            assertEquals(3, products.findById(product.id()).orElseThrow().getQuantity());
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    private com.stockpass.dto.AuthDtos.UserResponse testClient() {
+        String email = "reservation-test-" + UUID.randomUUID() + "@stockpass.test";
+        return authService.registerClient(new ClientRegisterRequest("Cliente teste", email, "senha-cliente"));
+    }
+
+    private com.stockpass.dto.StockDtos.ProductResponse testProduct(int quantity) {
+        String suffix = UUID.randomUUID().toString();
+        return productService.create(new ProductRequest("RESERVE-" + suffix, "Produto reservado", "Teste",
+            quantity, new BigDecimal("10.00"), "Fornecedor teste", 0), "admin@stockpass.com");
+    }
+
+    private void buy(String email, Long productId, int quantity) {
+        clientStoreService.purchase(new PurchaseRequest("PIX",
+            java.util.List.of(new PurchaseLineRequest(productId, quantity))), email);
     }
 
     @Test

@@ -107,6 +107,9 @@ public class SupplierOfferService {
 
     @Transactional
     public SupplierAcquisitionResponse acquire(Long offerId, SupplierAcquisitionRequest request, String buyerEmail) {
+        if (offers.acquireWriteLock(offerId) == 0) {
+            throw new IllegalArgumentException("Oferta não encontrada.");
+        }
         SupplierOffer offer = offers.findByIdForUpdate(offerId)
             .orElseThrow(() -> new IllegalArgumentException("Oferta não encontrada."));
         if (!offer.isActive()) throw new IllegalArgumentException("Esta oferta não está mais disponível.");

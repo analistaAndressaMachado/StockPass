@@ -132,6 +132,9 @@ public class StockMovementService {
 
     @Transactional
     public MovementResponse confirmReservation(Long reservationId) {
+        if (reservations.acquireWriteLock(reservationId) == 0) {
+            throw new IllegalArgumentException("Reserva não encontrada.");
+        }
         StockReservation initial = reservations.findById(reservationId)
             .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
         Product product = lockedProduct(initial.getProduct().getId());
@@ -143,6 +146,9 @@ public class StockMovementService {
         if (!reservation.getStatus().equals(StockReservation.ACTIVE)) {
             throw new IllegalArgumentException(reservation.getStatus().equals(StockReservation.EXPIRED)
                 ? "Esta reserva já expirou." : "Esta reserva já foi encerrada.");
+        }
+        if (available(product, now) < 0) {
+            throw new IllegalArgumentException("As reservas excedem o estoque disponível. Atualize o estoque antes de confirmar.");
         }
 
         product.setQuantity(product.getQuantity() - reservation.getQuantity());
@@ -162,6 +168,9 @@ public class StockMovementService {
 
     @Transactional
     public StockReservationResponse cancelReservation(Long reservationId) {
+        if (reservations.acquireWriteLock(reservationId) == 0) {
+            throw new IllegalArgumentException("Reserva não encontrada.");
+        }
         StockReservation initial = reservations.findById(reservationId)
             .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
         Product product = lockedProduct(initial.getProduct().getId());
@@ -235,7 +244,9 @@ public class StockMovementService {
     }
 
     private Product lockedProduct(Long id) {
-        products.acquireWriteLock(id);
+        if (products.acquireWriteLock(id) == 0) {
+            throw new IllegalArgumentException("Produto não encontrado.");
+        }
         return products.findByIdForUpdate(id)
             .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado."));
     }
